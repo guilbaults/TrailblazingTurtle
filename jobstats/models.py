@@ -6,7 +6,7 @@
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
-
+import datetime
 
 class AcctCoordTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
@@ -193,6 +193,17 @@ class BelugaJobTable(models.Model):
         managed = False
         db_table = 'beluga_job_table'
         unique_together = (('id_job', 'time_submit'),)
+
+    def time_submit_dt(self):
+        return datetime.datetime.fromtimestamp(self.time_submit)
+    def time_eligible_dt(self):
+        return datetime.datetime.fromtimestamp(self.time_eligible)
+    def time_start_dt(self):
+        return datetime.datetime.fromtimestamp(self.time_start)
+    def time_end_dt(self):
+        return datetime.datetime.fromtimestamp(self.time_end)
+    def time_suspended_dt(self):
+        return datetime.datetime.fromtimestamp(self.time_suspended)
 
 
 class BelugaLastRanTable(models.Model):

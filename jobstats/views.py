@@ -66,12 +66,20 @@ def graph_cpu(request, user_id, job_id):
 
     query = 'rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
-    x = list(map(lambda x: x.timestamp(), stats[0]['x']))
-    y = stats[0]['y']
-    json = {
-  'x': x,
-  'y': y,
-  'type': 'scatter'
-}
-    return JsonResponse(json)
+
+    data = { 'lines': []}
+    for line in stats:
+        core_num = int(line['metric']['core'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} core {}'.format(compute_name, core_num)
+        })
+
+    return JsonResponse(data)
 

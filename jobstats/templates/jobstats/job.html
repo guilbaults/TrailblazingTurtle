@@ -12,10 +12,8 @@ Details on job {{job_id}}
 <div id="graph_cpu"></div>
 
 <script>
-$.getJSON('graph/cpu.json', function(trace){
-  console.log('sucess');
-  var data = [trace];
-  Plotly.newPlot('graph_cpu', data);
+$.getJSON('graph/cpu.json', function(data){
+  Plotly.newPlot('graph_cpu', data['lines']);
 });
 </script>
 {% endblock content %}

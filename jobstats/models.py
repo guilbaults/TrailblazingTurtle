@@ -195,16 +195,37 @@ class BelugaJobTable(models.Model):
         unique_together = (('id_job', 'time_submit'),)
 
     def time_submit_dt(self):
+        if self.time_submit == 0:
+            return None
         return datetime.datetime.fromtimestamp(self.time_submit)
     def time_eligible_dt(self):
+        if self.time_eligible == 0:
+            return None
         return datetime.datetime.fromtimestamp(self.time_eligible)
     def time_start_dt(self):
+        if self.time_start == 0:
+            return None
         return datetime.datetime.fromtimestamp(self.time_start)
     def time_end_dt(self):
+        if self.time_end == 0:
+            return None
         return datetime.datetime.fromtimestamp(self.time_end)
     def time_suspended_dt(self):
+        if self.time_suspended == 0:
+            return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
-
+    def running_time(self):
+        if self.time_start != 0 and self.time_end !=0:
+            return self.time_end - self.time_start
+        return None
+    def status(self):
+        status = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
+'Failed', 'Timeout' ,'Node failed', 'Preempted', 'Boot failed', 'End']
+        return status[self.state]
+    def status_badge(self):
+        status = ['', 'primary', 'warning', 'success', 'danger',
+'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess']
+        return 'badge-{}'.format(status[self.state])
 
 class BelugaLastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)

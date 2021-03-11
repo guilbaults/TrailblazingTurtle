@@ -6,27 +6,4 @@ Your jobs
 {% endblock title %}
 
 {% block content %}
-<h1>Your jobs</h1>
-
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">Job ID</th>
-      <th scope="col">Submit time</th>
-      <th scope="col">Start time</th>
-      <th scope="col">Resources</th>
-    </tr>
-  </thead>
-  <tbody>
-{% for job in jobs %}
-    <tr>
-      <th scope="row"><a href="/jobstats/{{job.id_job}}">{{job.id_job}}</a></th>
-      <td>{{job.time_submit_dt | naturaltime}}</td>
-      <td>{{job.time_start_dt | naturaltime}}</td>
-      <td>{{job.gres_req}}</td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-
 {% endblock content %}

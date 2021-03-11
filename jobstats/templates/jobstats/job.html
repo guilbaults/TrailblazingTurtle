@@ -1,1 +1,21 @@
-The job is {{job_id}}
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+Details on job {{job_id}}
+{% endblock title %}
+
+{% block content %}
+<h1>Details on job {{job_id}}</h1>
+{{job.job_name}}
+
+<div id="graph_cpu"></div>
+
+<script>
+$.getJSON('graph/cpu.json', function(trace){
+  console.log('sucess');
+  var data = [trace];
+  Plotly.newPlot('graph_cpu', data);
+});
+</script>
+{% endblock content %}

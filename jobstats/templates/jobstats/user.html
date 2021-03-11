@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+Your jobs
+{% endblock title %}
+
+{% block content %}
+<h1>Your jobs</h1>
+
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Job ID</th>
+      <th scope="col">Job name</th>
+      <th scope="col">Status</th>
+      <th scope="col">Submit time</th>
+      <th scope="col">Start time</th>
+      <th scope="col">End time</th>
+      <th scope="col">Used time</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for job in jobs %}
+    <tr>
+      <th scope="row"><a href="/jobstats/{{user_id}}/{{job.id_job}}">{{job.id_job}}</a></th>
+      <td>{{job.job_name}}</td>
+      <td><span class="badge {{job.status_badge}}">{{job.status}}</span></td>
+      <td>{{job.time_submit_dt}}</td>
+      <td>{{job.time_start_dt}}</td>
+      <td>{{job.time_end_dt}}</td>
+      <td>{{job.running_time}}</td>
+    </tr>
+{% endfor %}
+  </tbody>
+</table>
+
+{% endblock content %}

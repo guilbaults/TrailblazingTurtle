@@ -7,7 +7,16 @@ Details on job {{job_id}}
 
 {% block content %}
 <h1>Details on job {{job_id}}</h1>
-<p><span class="badge {{job.status_badge}}">{{job.status}}</span></p>
+<p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
+<div class="progress">
+  {% if job.wallclock_animation  %}
+  <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
+  {% else %}
+  <div class="progress-bar bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
+
+  {% endif%}
+</div>
+
 <p>{{job.job_name}}</p>
 <p>{{job.gres_req}}</p>
 {% if job.time_start_dt %}

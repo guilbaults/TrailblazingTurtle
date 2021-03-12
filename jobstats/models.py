@@ -234,9 +234,24 @@ class BelugaJobTable(models.Model):
     def status_badge(self):
         status = ['', 'primary', 'warning', 'success', 'danger',
 'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess']
-        return 'badge-{}'.format(status[self.state])
+        return '{}'.format(status[self.state])
     def asked_gpu(self):
         return 'gpu' in self.gres_req
+    def wallclock_progress(self):
+        if self.time_start == 0:
+            return 0
+        elif self.time_end != 0:
+            return 100
+        else:
+            delta = datetime.datetime.now() - self.time_start_dt()
+            return (delta.total_seconds()/(self.timelimit*60))*100
+    def wallclock_animation(self):
+        if self.time_start != 0 and self.time_end == 0:
+            print('true')
+            return True
+        else:
+            print('false')
+            return False
 
 class BelugaLastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)

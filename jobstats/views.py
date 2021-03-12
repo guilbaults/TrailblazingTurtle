@@ -83,3 +83,60 @@ def graph_cpu(request, user_id, job_id):
 
     return JsonResponse(data)
 
+def graph_mem(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+
+    data = { 'lines': []}
+
+    query_req = 'slurm_job_memory_limit{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    stats_req = prom.query_prometheus_multiple(query_req, job.time_start_dt(), job.time_end_dt())
+    for line in stats_req:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Requested {}'.format(compute_name)
+        })
+
+    query_max = 'slurm_job_memory_max{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    stats_max = prom.query_prometheus_multiple(query_max, job.time_start_dt(), job.time_end_dt())
+    for line in stats_max:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Max used {}'.format(compute_name)
+        })
+
+    query_used = 'slurm_job_memory_usage{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    stats_used = prom.query_prometheus_multiple(query_used, job.time_start_dt(), job.time_end_dt())
+    for line in stats_used:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Used {}'.format(compute_name)
+        })
+
+    data['layout'] = { 'yaxis': 
+        {
+            'ticksuffix': 'GiB'
+        }
+    }
+
+    return JsonResponse(data)
+

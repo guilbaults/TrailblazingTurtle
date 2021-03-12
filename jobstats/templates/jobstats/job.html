@@ -10,10 +10,16 @@ Details on job {{job_id}}
 {{job.job_name}}
 
 <div id="graph_cpu"></div>
+<div id="graph_mem"></div>
 
 <script>
 $.getJSON('graph/cpu.json', function(data){
   Plotly.newPlot('graph_cpu', data['lines']);
 });
+
+$.getJSON('graph/mem.json', function(data){
+  Plotly.newPlot('graph_mem', data['lines'], data['layout']);
+});
+
 </script>
 {% endblock content %}

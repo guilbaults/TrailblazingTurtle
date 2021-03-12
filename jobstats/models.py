@@ -214,10 +214,19 @@ class BelugaJobTable(models.Model):
         if self.time_suspended == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
-    def running_time(self):
+    def used_time_display(self):
         if self.time_start != 0 and self.time_end !=0:
-            return self.time_end - self.time_start
+            t = (self.time_end - self.time_start)/60
+            if t > 60*4:
+                return '{:.1f}h'.format(t/60)
+            else:
+                return '{:.1f}m'.format(t)
         return None
+    def timelimit_display(self):
+        if self.timelimit > 60*4:
+            return '{:.1f}h'.format(self.timelimit/60)
+        else:
+            return '{:.1f}m'.format(self.timelimit)
     def status(self):
         status = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
 'Failed', 'Timeout' ,'Node failed', 'Preempted', 'Boot failed', 'End']

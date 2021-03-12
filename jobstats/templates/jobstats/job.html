@@ -7,10 +7,17 @@ Details on job {{job_id}}
 
 {% block content %}
 <h1>Details on job {{job_id}}</h1>
-{{job.job_name}}
+<p><span class="badge {{job.status_badge}}">{{job.status}}</span></p>
+<p>{{job.job_name}}</p>
 
+{% if job.time_start_dt %}
+<h2>CPU</h2>
 <div id="graph_cpu"></div>
+<h2>Memory</h2>
 <div id="graph_mem"></div>
+<h2>Filesystem</h2>
+<div id="graph_lustre_mdt"></div>
+<div id="graph_lustre_ost"></div>
 
 <script>
 $.getJSON('graph/cpu.json', function(data){
@@ -20,6 +27,16 @@ $.getJSON('graph/cpu.json', function(data){
 $.getJSON('graph/mem.json', function(data){
   Plotly.newPlot('graph_mem', data['lines'], data['layout']);
 });
+
+$.getJSON('graph/lustre_mdt.json', function(data){
+  Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);
+});
+
+$.getJSON('graph/lustre_ost.json', function(data){
+  Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
+});
+
+{% endif %}
 
 </script>
 {% endblock content %}

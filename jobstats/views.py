@@ -201,3 +201,156 @@ def graph_lustre_ost(request, user_id, job_id):
         }
     }
     return JsonResponse(data)
+
+def graph_gpu_utilization(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+    query = 'slurm_job_utilization_gpu{{exported_job="{}"}}'.format(job_id)
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+    data = { 'lines': []}
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} GPU {}'.format(compute_name, gpu_num)
+        })
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' %'
+        }
+    }
+    return JsonResponse(data)
+
+def graph_gpu_memory_utilization(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+    query = 'slurm_job_utilization_gpu_memory{{exported_job="{}"}}'.format(job_id)
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+    data = { 'lines': []}
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} GPU {}'.format(compute_name, gpu_num)
+        })
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' %'
+        }
+    }
+    return JsonResponse(data)
+
+def graph_gpu_memory(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+    query = 'slurm_job_memory_usage_gpu{{exported_job="{}"}} /(1024*1024*1024)'.format(job_id)
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+    data = { 'lines': []}
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': '{} GPU {}'.format(compute_name, gpu_num)
+        })
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' GiB'
+        }
+    }
+    return JsonResponse(data)
+
+def graph_gpu_power(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+    query = 'slurm_job_power_gpu{{exported_job="{}"}}/1000'.format(job_id)
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+    data = { 'lines': []}
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} GPU {}'.format(compute_name, gpu_num)
+        })
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' W'
+        }
+    }
+    return JsonResponse(data)
+
+def graph_gpu_pcie(request, user_id, job_id):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+    except:
+        return HttpResponseNotFound('Job not found')
+
+    data = { 'lines': []}
+    # Not sure if this scale is correct, the API report both bytes and kb/s
+    query = 'slurm_job_pcie_gpu{{exported_job="{}"}}/(1024*1024)'.format(job_id)
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        direction = line['metric']['direction']
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
+        })
+
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' MB/s'
+        }
+    }
+    return JsonResponse(data)
+

@@ -9,7 +9,7 @@ Details on job {{job_id}}
 <h1>Details on job {{job_id}}</h1>
 <p><span class="badge {{job.status_badge}}">{{job.status}}</span></p>
 <p>{{job.job_name}}</p>
-
+<p>{{job.gres_req}}</p>
 {% if job.time_start_dt %}
 <h2>CPU</h2>
 <div id="graph_cpu"></div>
@@ -18,6 +18,21 @@ Details on job {{job_id}}
 <h2>Filesystem</h2>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
+
+{% if job.asked_gpu%}
+<h2>GPU</h2>
+<h3>GPU Compute cycle used</h3>
+<div id="graph_gpu_utilization"></div>
+<h3>GPU Memory access cycle used</h3>
+<div id="graph_gpu_memory_utilization"></div>
+<h3>GPU Memory used</h3>
+<div id="graph_gpu_memory"></div>
+<h3>GPU Power</h3>
+<div id="graph_gpu_power"></div>
+<h3>GPU PCIe bandwidth</h3>
+<div id="graph_gpu_pcie"></div>
+
+{% endif %}
 
 <script>
 $.getJSON('graph/cpu.json', function(data){
@@ -35,6 +50,25 @@ $.getJSON('graph/lustre_mdt.json', function(data){
 $.getJSON('graph/lustre_ost.json', function(data){
   Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
 });
+
+{% if job.asked_gpu%}
+$.getJSON('graph/gpu_utilization.json', function(data){
+  Plotly.newPlot('graph_gpu_utilization', data['lines'], data['layout']);
+});
+$.getJSON('graph/gpu_memory_utilization.json', function(data){
+  Plotly.newPlot('graph_gpu_memory_utilization', data['lines'], data['layout']);
+});
+$.getJSON('graph/gpu_memory.json', function(data){
+  Plotly.newPlot('graph_gpu_memory', data['lines'], data['layout']);
+});
+$.getJSON('graph/gpu_power.json', function(data){
+  Plotly.newPlot('graph_gpu_power', data['lines'], data['layout']);
+});
+$.getJSON('graph/gpu_pcie.json', function(data){
+  Plotly.newPlot('graph_gpu_pcie', data['lines'], data['layout']);
+});
+
+{% endif %}
 
 {% endif %}
 

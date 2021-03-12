@@ -235,6 +235,8 @@ class BelugaJobTable(models.Model):
         status = ['', 'primary', 'warning', 'success', 'danger',
 'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess']
         return 'badge-{}'.format(status[self.state])
+    def asked_gpu(self):
+        return 'gpu' in self.gres_req
 
 class BelugaLastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)

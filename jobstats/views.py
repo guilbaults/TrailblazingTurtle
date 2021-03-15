@@ -147,13 +147,13 @@ def graph_lustre_mdt(request, user_id, job_id):
     except:
         return HttpResponseNotFound('Job not found')
 
-    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",jobid=~"{}"}}[5m])) by (operation, target) !=0'.format(job_id)
+    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",jobid=~"{}"}}[5m])) by (operation, fs) !=0'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = { 'lines': []}
     for line in stats:
         operation = line['metric']['operation']
-        target = line['metric']['target']
+        fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -161,7 +161,7 @@ def graph_lustre_mdt(request, user_id, job_id):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(operation, target)
+            'name': '{} {}'.format(operation, fs)
         })
 
     data['layout'] = { 'yaxis':
@@ -180,11 +180,11 @@ def graph_lustre_ost(request, user_id, job_id):
 
     data = { 'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",jobid=~"{}",target=~".*-OST.*"}}[5m])) by (target) !=0) / (1024*1024)'.format(i, job_id)
+        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",jobid=~"{}",target=~".*-OST.*"}}[5m])) by (fs) !=0) / (1024*1024)'.format(i, job_id)
         stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
         for line in stats:
-            target = line['metric']['target']
+            fs = line['metric']['fs']
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             data['lines'].append({
@@ -192,7 +192,7 @@ def graph_lustre_ost(request, user_id, job_id):
                 'y': y,
                 'type': 'scatter',
                 'stackgroup': 'one',
-                'name': '{} {}'.format(i, target)
+                'name': '{} {}'.format(i, fs)
             })
 
     data['layout'] = { 'yaxis':

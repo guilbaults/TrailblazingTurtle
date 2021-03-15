@@ -229,11 +229,12 @@ class BelugaJobTable(models.Model):
             return '{:.1f}m'.format(self.timelimit)
     def status(self):
         status = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
-'Failed', 'Timeout' ,'Node failed', 'Preempted', 'Boot failed', 'End']
+'Failed', 'Timeout' ,'Node failed', 'Preempted', 'Boot failed', 'End', 
+'OOM']
         return status[self.state]
     def status_badge(self):
         status = ['', 'primary', 'warning', 'success', 'danger',
-'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess']
+'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess', 'danger']
         return '{}'.format(status[self.state])
     def asked_gpu(self):
         return 'gpu' in self.gres_req

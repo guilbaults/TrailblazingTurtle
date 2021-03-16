@@ -33,6 +33,10 @@
           <div class="sidebar-sticky">
             <ul class="nav flex-column">
               <li class="nav-item">
+   {% if user.is_authenticated %}
+     User: {{ user.get_username }}
+   {% endif %}
+
                 <a class="nav-link active" href="#">
                   <span data-feather="home"></span>
                   Job stats <span class="sr-only">(current)</span>

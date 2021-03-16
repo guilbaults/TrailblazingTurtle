@@ -1,11 +1,12 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
-from .models import BelugaJobTable
+from .models import BelugaJobTable, LdapUser
 import time
 from django.conf import settings
 from prometheus_api_client import PrometheusConnect
 from prometheus_api_client.utils import parse_datetime
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
 
 class Prometheus:
     def __init__(self, url):
@@ -36,31 +37,39 @@ class Prometheus:
             })
         return return_list
 
-
+@login_required
 def index(request):
     context = {}
     return render(request, 'jobstats/index.html', context)
 
-def user(request, user_id):
-    context = {'user_id': user_id}
+@login_required
+def user(request, username):
+#    print(request.META['REMOTE_USER'])
+#    print(request.user)
+    uid = LdapUser.objects.filter(username=username).get().uid
+    context = {'username': username}
     week_ago = int(time.time()) - (3600 * 24 * 7)
-    jobs = BelugaJobTable.objects.filter(id_user=user_id).order_by('-time_submit')[:100] # time_start__gt=week_ago
+    jobs = BelugaJobTable.objects.filter(id_user=uid).order_by('-time_submit')[:100] # time_start__gt=week_ago
     context['jobs'] = jobs
     return render(request, 'jobstats/user.html', context)
 
-def job(request, user_id, job_id):
+@login_required
+def job(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     context = {'job_id': job_id}
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('<h1>Job not found</h1>')
     context['job'] = job
     return render(request, 'jobstats/job.html', context)
 
-def graph_cpu(request, user_id, job_id):
+@login_required
+def graph_cpu(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -83,10 +92,12 @@ def graph_cpu(request, user_id, job_id):
 
     return JsonResponse(data)
 
-def graph_mem(request, user_id, job_id):
+@login_required
+def graph_mem(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -140,10 +151,12 @@ def graph_mem(request, user_id, job_id):
 
     return JsonResponse(data)
 
-def graph_lustre_mdt(request, user_id, job_id):
+@login_required
+def graph_lustre_mdt(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -171,10 +184,12 @@ def graph_lustre_mdt(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_lustre_ost(request, user_id, job_id):
+@login_required
+def graph_lustre_ost(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -202,10 +217,12 @@ def graph_lustre_ost(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_gpu_utilization(request, user_id, job_id):
+@login_required
+def graph_gpu_utilization(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -232,10 +249,12 @@ def graph_gpu_utilization(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_gpu_memory_utilization(request, user_id, job_id):
+@login_required
+def graph_gpu_memory_utilization(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -262,10 +281,12 @@ def graph_gpu_memory_utilization(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_gpu_memory(request, user_id, job_id):
+@login_required
+def graph_gpu_memory(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -291,10 +312,12 @@ def graph_gpu_memory(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_gpu_power(request, user_id, job_id):
+@login_required
+def graph_gpu_power(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 
@@ -321,10 +344,12 @@ def graph_gpu_power(request, user_id, job_id):
     }
     return JsonResponse(data)
 
-def graph_gpu_pcie(request, user_id, job_id):
+@login_required
+def graph_gpu_pcie(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
     try:
-        job = BelugaJobTable.objects.filter(id_user=user_id).filter(id_job=job_id).get()
+        job = BelugaJobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except:
         return HttpResponseNotFound('Job not found')
 

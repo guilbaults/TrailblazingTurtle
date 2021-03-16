@@ -6,14 +6,18 @@ class DbRouter:
     * slurm requests go to the MySQL database of slurm
     """
     def db_for_read(self, model, **hints):
+        if 'ldap' in model._meta.db_table:
+            return 'ldap'
         if model._meta.app_label == 'jobstats':
             return 'slurm'
         else:
             return None
 
     def db_for_write(self, model, **hints):
+        if 'ldap' in model._meta.db_table:
+            return False
         if model._meta.app_label == 'jobstats':
-            return 'slurm'
+            return False
         else:
             return None
 
@@ -25,6 +29,9 @@ class DbRouter:
         # by default return None - "undecided"
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
+        # disallow any migration operation on ldap engine
+        if 'ldap' in model._meta.db_table:
+            return False
         # allow migrations on the "default" (django related data) DB
         if db == 'default' and app_label != 'jobstats':
             return True

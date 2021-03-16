@@ -7,6 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 import datetime
+import ldapdb.models
+from ldapdb.models import fields
 
 class AcctCoordTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
@@ -630,3 +632,39 @@ class UserTable(models.Model):
     class Meta:
         managed = False
         db_table = 'user_table'
+
+class LdapUser(ldapdb.models.Model):
+    """
+    Class for representing an LDAP user entry.
+    """
+    # LDAP meta-data
+    base_dn = 'ou=People,dc=computecanada,dc=local'
+    object_classes = ['ccAccount']
+#    last_modified = fields.DateTimeField(db_column='modifyTimestamp', editable=False)
+
+    # inetOrgPerson
+#    first_name = fields.CharField(db_column='givenName', verbose_name="Prime name")
+#    last_name = fields.CharField("Final name", db_column='sn')
+#    full_name = fields.CharField(db_column='cn')
+#    email = fields.CharField(db_column='mail')
+#    phone = fields.CharField(db_column='telephoneNumber', blank=True)
+#    mobile_phone = fields.CharField(db_column='mobile', blank=True)
+#    photo = fields.ImageField(db_column='jpegPhoto')
+
+    # posixAccount
+    uid = fields.IntegerField(db_column='uidNumber', unique=True)
+    group = fields.IntegerField(db_column='gidNumber')
+#    gecos = fields.CharField(db_column='gecos')
+#    home_directory = fields.CharField(db_column='homeDirectory')
+#    login_shell = fields.CharField(db_column='loginShell', default='/bin/bash')
+    username = fields.CharField(db_column='uid', primary_key=True)
+#    password = fields.CharField(db_column='userPassword')
+
+    # shadowAccount
+#    last_password_change = fields.TimestampField(db_column='shadowLastChange')
+
+#    def __str__(self):
+#        return self.username
+
+#    def __unicode__(self):
+#        return self.full_name

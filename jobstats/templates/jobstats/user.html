@@ -35,6 +35,9 @@ Your jobs
 <h2>Memory</h2>
 <div id="graph_mem"></div>
 
+<div id="graph_lustre_mdt"></div>
+<div id="graph_lustre_ost"></div>
+
 <h1>Your jobs</h1>
 
 <table class="table table-striped">
@@ -73,6 +76,13 @@ $.getJSON('graph/cpu.json', function(data){
 $.getJSON('graph/mem.json', function(data){
   Plotly.newPlot('graph_mem', data['lines'], { yaxis: { range: [0, {{total_mem}}]}});
 });
+$.getJSON('graph/lustre_mdt.json', function(data){
+  Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);
+});
+$.getJSON('graph/lustre_ost.json', function(data){
+  Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
+});
+
 </script>
 
 {% endblock content %}

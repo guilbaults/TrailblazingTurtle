@@ -297,6 +297,35 @@ def graph_lustre_mdt(request, username, job_id):
 
 @login_required
 @user_or_staff
+def graph_lustre_mdt_user(request, username):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}"}}[5m])) by (operation, fs) !=0'.format(username)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours = 6), datetime.now())
+    data = { 'lines': []}
+    for line in stats:
+        operation = line['metric']['operation']
+        fs = line['metric']['fs']
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': '{} {}'.format(operation, fs)
+        })
+
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' IOPS'
+        }
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
 def graph_lustre_ost(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -309,6 +338,34 @@ def graph_lustre_ost(request, username, job_id):
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",jobid=~"{}",target=~".*-OST.*"}}[5m])) by (fs) !=0) / (1024*1024)'.format(i, job_id)
         stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+        for line in stats:
+            fs = line['metric']['fs']
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            y = line['y']
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'stackgroup': 'one',
+                'name': '{} {}'.format(i, fs)
+            })
+
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' MiB/s'
+        }
+    }
+    return JsonResponse(data)
+
+@login_required
+@user_or_staff
+def graph_lustre_ost_user(request, username):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    data = { 'lines': []}
+    for i in ['read', 'write']:
+        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*"}}[5m])) by (fs) !=0) / (1024*1024)'.format(i, username)
+        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours = 6), datetime.now())
 
         for line in stats:
             fs = line['metric']['fs']

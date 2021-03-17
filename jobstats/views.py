@@ -5,7 +5,7 @@ import time
 from django.conf import settings
 from prometheus_api_client import PrometheusConnect
 from prometheus_api_client.utils import parse_datetime
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 import functools
 import statistics
@@ -70,6 +70,28 @@ def user(request, username):
     job_end = BelugaJobTable.objects.filter(id_user=uid, time_end__gt=week_ago).order_by('-time_submit')
     
     context['jobs'] = pending_jobs | job_start | job_end
+
+    running_jobs = BelugaJobTable.objects.filter(id_user=uid, state=1).all()
+    total_cores = 0
+    total_mem = 0
+    for job in running_jobs:
+        info = job.parse_tres_req()
+        total_cores += info['total_cores']
+        total_mem += info['total_mem']
+
+    context['total_cores'] = total_cores
+    context['total_mem'] = total_mem
+
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    now = datetime.now()
+    delta = timedelta(hours = 1)
+    query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(username)
+    stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
+    context['cpu_used'] = statistics.mean(stats_cpu[1])
+    query_mem = 'sum(slurm_job_memory_max{{user="{}"}}/(1024*1024))'.format(username)
+    stats_mem = prom.query_prometheus(query_mem, now - delta, now)
+    context['mem_used'] = max(stats_mem[1])
+
     return render(request, 'jobstats/user.html', context)
 
 @login_required
@@ -146,6 +168,36 @@ def graph_cpu(request, username, job_id):
             'stackgroup': 'one',
             'name': '{} core {}'.format(compute_name, core_num)
         })
+
+    return JsonResponse(data)
+
+@login_required
+@user_or_staff
+def graph_cpu_user(request, username):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    query = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[5m])) / 1000000000'.format(username)
+    stats = prom.query_prometheus(query, datetime.now() - timedelta(hours = 6), datetime.now())
+    data = { 'lines': []}
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
+        'y': stats[1],
+        'type': 'scatter',
+    })
+
+    return JsonResponse(data)
+
+@login_required
+@user_or_staff
+def graph_mem_user(request, username):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    query = 'sum(slurm_job_memory_usage{{user="{}"}})/(1024*1024)'.format(username)
+    stats = prom.query_prometheus(query, datetime.now() - timedelta(hours = 6), datetime.now())
+    data = { 'lines': []}
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
+        'y': stats[1],
+        'type': 'scatter',
+    })
 
     return JsonResponse(data)
 

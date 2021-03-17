@@ -6,6 +6,35 @@ Your jobs
 {% endblock title %}
 
 {% block content %}
+<h1>Your current use</h1>
+
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Type</th>
+      <th scope="col">Requested</th>
+      <th scope="col">Used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>CPU cores</td>
+      <td>{{total_cores}}</td>
+      <td>{{cpu_used | floatformat:-2}}</td>
+    </tr>
+    <tr>
+      <td>Memory</td>
+      <td>{{total_mem}} MiB</td>
+      <td>{{mem_used | floatformat:0}} MiB</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>CPU cores</h2>
+<div id="graph_cpu"></div>
+<h2>Memory</h2>
+<div id="graph_mem"></div>
+
 <h1>Your jobs</h1>
 
 <table class="table table-striped">
@@ -36,5 +65,14 @@ Your jobs
 {% endfor %}
   </tbody>
 </table>
+
+<script>
+$.getJSON('graph/cpu.json', function(data){
+  Plotly.newPlot('graph_cpu', data['lines'], { yaxis: { range: [0, {{total_cores}}]}});
+});
+$.getJSON('graph/mem.json', function(data){
+  Plotly.newPlot('graph_mem', data['lines'], { yaxis: { range: [0, {{total_mem}}]}});
+});
+</script>
 
 {% endblock content %}

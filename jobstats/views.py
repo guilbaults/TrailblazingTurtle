@@ -85,12 +85,19 @@ def user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
     now = datetime.now()
     delta = timedelta(hours = 1)
-    query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(username)
-    stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
-    context['cpu_used'] = statistics.mean(stats_cpu[1])
-    query_mem = 'sum(slurm_job_memory_max{{user="{}"}}/(1024*1024))'.format(username)
-    stats_mem = prom.query_prometheus(query_mem, now - delta, now)
-    context['mem_used'] = max(stats_mem[1])
+    try:
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(username)
+        stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
+        context['cpu_used'] = statistics.mean(stats_cpu[1])
+    except ValueError:
+        context['cpu_used'] = 'N/A'
+
+    try:
+        query_mem = 'sum(slurm_job_memory_max{{user="{}"}}/(1024*1024))'.format(username)
+        stats_mem = prom.query_prometheus(query_mem, now - delta, now)
+        context['mem_used'] = max(stats_mem[1])
+    except ValueError:
+        context['mem_used'] = 'N/A'
 
     return render(request, 'jobstats/user.html', context)
 
@@ -190,14 +197,50 @@ def graph_cpu_user(request, username):
 @user_or_staff
 def graph_mem_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
-    query = 'sum(slurm_job_memory_usage{{user="{}"}})/(1024*1024)'.format(username)
-    stats = prom.query_prometheus(query, datetime.now() - timedelta(hours = 6), datetime.now())
+
     data = { 'lines': []}
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
-        'y': stats[1],
-        'type': 'scatter',
-    })
+
+    query_req = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
+    stats_req = prom.query_prometheus_multiple(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_req:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Requested'
+        })
+
+    query_max = 'sum(slurm_job_memory_max{{user="{}"}})/(1024*1024*1024)'.format(username)
+    stats_max = prom.query_prometheus_multiple(query_max, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_max:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Max used'
+        })
+
+    query_used = 'sum(slurm_job_memory_usage{{user="{}"}})/(1024*1024*1024)'.format(username)
+    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_used:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Used'
+        })
+
+    data['layout'] = { 'yaxis': 
+        {
+            'ticksuffix': 'GiB'
+        }
+    }
 
     return JsonResponse(data)
 

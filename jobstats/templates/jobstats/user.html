@@ -74,7 +74,7 @@ $.getJSON('graph/cpu.json', function(data){
   Plotly.newPlot('graph_cpu', data['lines'], { yaxis: { range: [0, {{total_cores}}]}});
 });
 $.getJSON('graph/mem.json', function(data){
-  Plotly.newPlot('graph_mem', data['lines'], { yaxis: { range: [0, {{total_mem}}]}});
+  Plotly.newPlot('graph_mem', data['lines']);
 });
 $.getJSON('graph/lustre_mdt.json', function(data){
   Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);

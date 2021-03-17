@@ -235,7 +235,7 @@ class BelugaJobTable(models.Model):
 'OOM']
         return status[self.state]
     def status_badge(self):
-        status = ['', 'primary', 'warning', 'success', 'danger',
+        status = ['info', 'primary', 'warning', 'success', 'danger',
 'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess', 'danger']
         return '{}'.format(status[self.state])
     def asked_gpu(self):

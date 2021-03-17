@@ -62,9 +62,13 @@ def index(request):
 def user(request, username):
     uid = LdapUser.objects.filter(username=username).get().uid
     context = {'username': username}
-    week_ago = int(time.time()) - (3600 * 24 * 7)
-    jobs = BelugaJobTable.objects.filter(id_user=uid).order_by('-time_submit')[:100] # time_start__gt=week_ago
-    context['jobs'] = jobs
+    pending_jobs = BelugaJobTable.objects.filter(id_user=uid, state=0).order_by('-time_submit')
+
+    week_ago = int(time.time()) - (3600 * 24 * 7)  
+    job_start = BelugaJobTable.objects.filter(id_user=uid, time_start__gt=week_ago).order_by('-time_submit')
+    job_end = BelugaJobTable.objects.filter(id_user=uid, time_end__gt=week_ago).order_by('-time_submit')
+    
+    context['jobs'] = pending_jobs | job_start | job_end
     return render(request, 'jobstats/user.html', context)
 
 @login_required

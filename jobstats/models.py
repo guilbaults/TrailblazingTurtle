@@ -238,8 +238,16 @@ class BelugaJobTable(models.Model):
         status = ['info', 'primary', 'warning', 'success', 'danger',
 'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess', 'danger']
         return '{}'.format(status[self.state])
-    def asked_gpu(self):
-        return 'gpu' in self.gres_req
+    def gpu_count(self):
+        if 'gpu' in self.gres_req:
+            return int(self.gres_req.split(':')[2])
+        else:
+            return 0
+    def gpu_type(self):
+        if 'gpu' in self.gres_req:
+            return self.gres_req.split(':')[1]
+        else:
+            return None
     def wallclock_progress(self):
         if self.time_start == 0:
             return 0
@@ -253,6 +261,17 @@ class BelugaJobTable(models.Model):
             return True
         else:
             return False
+    def parse_tres_req(self):
+        info = {}
+        for item in self.tres_req.split(','):
+            key, value = item.split('=')
+            if key == '1':
+                info['total_cores'] = int(value)
+            elif key == '2':
+                info['total_mem'] = int(value)
+            elif key == '4':
+                info['nb_nodes'] = int(value)
+        return info
 
 class BelugaLastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)

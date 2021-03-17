@@ -6,7 +6,7 @@ Details on job {{job_id}}
 {% endblock title %}
 
 {% block content %}
-<h1>Details on job {{job_id}}</h1>
+<h1>Details on job {{job.job_name}} ({{job_id}})</h1>
 <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
 <div class="progress">
   {% if job.wallclock_animation  %}
@@ -16,31 +16,63 @@ Details on job {{job_id}}
 
   {% endif%}
 </div>
+<h2>Resources</h2>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Type</th>
+      <th scope="col">Requested</th>
+      <th scope="col">Used</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Nodes</td>
+      <td>{{tres_req.nb_nodes}}</td>
+      <td></td>
+    </tr>
+    <tr>
+      <td>CPU cores</td>
+      <td>{{tres_req.total_cores}}</td>
+      <td>{{cpu_used | floatformat:-2}}</td>
+    </tr>
+    <tr>
+      <td>Memory</td>
+      <td>{{tres_req.total_mem}} MiB</td>
+      <td>{{mem_used | floatformat:0}} MiB</td>
+    </tr>
+{% if job.gpu_count > 0 %}
+    <tr>
+      <td>GPUs per node</td>
+      <td>{{job.gpu_count}}x {{job.gpu_type}}</td>
+      <td>Cycles: {{gpu_used | floatformat:-2 }}%, Memory: {{gpu_mem | floatformat:-2 }}%, Power: {{gpu_power | floatformat:-2 }}%</td>
+    </tr>
+{% endif %}
+  </tbody>
+</table>
 
-<p>{{job.job_name}}</p>
-<p>{{job.gres_req}}</p>
 {% if job.time_start_dt %}
-<h2>CPU</h2>
+<h2>Resources used (details)</h2>
+<h3>CPU</h3>
 <div id="graph_cpu"></div>
-<h2>Memory</h2>
+<h3>Memory</h3>
 <div id="graph_mem"></div>
-<h2>Filesystem</h2>
+<h3>Filesystem</h3>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
-{% if job.asked_gpu%}
-<h2>GPU</h2>
-<h3>GPU Compute cycle used</h3>
+{% if job.gpu_count > 0 %}
+<h3>GPU</h3>
+<h4>GPU Compute cycle used</h4>
 <div id="graph_gpu_utilization"></div>
-<h3>GPU Memory access cycle used</h3>
+<h4>GPU Memory access cycle used</h4>
 <div id="graph_gpu_memory_utilization"></div>
-<h3>GPU Memory used</h3>
+<h4>GPU Memory used</h4>
 <div id="graph_gpu_memory"></div>
-<h3>GPU Power</h3>
+<h4>GPU Power</h4>
 <div id="graph_gpu_power"></div>
-<h3>GPU PCIe bandwidth</h3>
+<h4>GPU PCIe bandwidth</h4>
 <div id="graph_gpu_pcie"></div>
-
 {% endif %}
 
 <script>
@@ -60,7 +92,7 @@ $.getJSON('graph/lustre_ost.json', function(data){
   Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
 });
 
-{% if job.asked_gpu%}
+{% if job.gpu_count > 0 %}
 $.getJSON('graph/gpu_utilization.json', function(data){
   Plotly.newPlot('graph_gpu_utilization', data['lines'], data['layout']);
 });

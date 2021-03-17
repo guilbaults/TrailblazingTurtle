@@ -8,6 +8,7 @@ from prometheus_api_client.utils import parse_datetime
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 import functools
+import statistics
 
 class Prometheus:
     def __init__(self, url):
@@ -81,6 +82,42 @@ def job(request, username, job_id):
     except:
         return HttpResponseNotFound('<h1>Job not found</h1>')
     context['job'] = job
+    context['tres_req'] = job.parse_tres_req()
+
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    query_cpu = 'sum(rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000)'.format(job_id)
+    stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
+    context['cpu_used'] = statistics.mean(stats_cpu[1])
+    query_mem = 'sum(slurm_job_memory_max{{exported_job="{}"}}/(1024*1024))'.format(job_id)
+    stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
+    context['mem_used'] = max(stats_mem[1])
+
+    if job.gpu_count() > 0:
+        gpu_memory = {'v100': 16}
+        gpu_full_power = {'v100': 300}
+        gpu_idle_power = {'v100': 55}
+        try:
+            query_gpu_util = 'sum(slurm_job_utilization_gpu{{exported_job="{}"}})'.format(job_id)
+            stats_gpu_util = prom.query_prometheus(query_gpu_util, job.time_start_dt(), job.time_end_dt())
+            context['gpu_used'] = statistics.mean(stats_gpu_util[1])
+        except ValueError:
+            context['gpu_used'] = 'N/A'
+
+        try:
+            query_gpu_mem = 'sum(slurm_job_memory_usage_gpu{{exported_job="{}"}})/(1024*1024*1024)'.format(job_id)
+            stats_gpu_mem = prom.query_prometheus(query_gpu_mem, job.time_start_dt(), job.time_end_dt())
+            context['gpu_mem'] = max(stats_gpu_mem[1]) / gpu_memory[job.gpu_type()] * 100
+        except ValueError:
+            context['gpu_mem'] = 'N/A'
+
+        try:
+            query_gpu_power = 'sum(slurm_job_power_gpu{{exported_job="{}"}})/(1000)'.format(job_id)
+            stats_gpu_power = prom.query_prometheus(query_gpu_power, job.time_start_dt(), job.time_end_dt())
+            used_power = statistics.mean(stats_gpu_power[1]) - gpu_idle_power[job.gpu_type()]
+            context['gpu_power'] = used_power / gpu_full_power[job.gpu_type()] * 100
+        except ValueError:
+            context['gpu_power'] = 'N/A'
+
     return render(request, 'jobstats/job.html', context)
 
 @login_required

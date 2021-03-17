@@ -250,10 +250,8 @@ class BelugaJobTable(models.Model):
             return (delta.total_seconds()/(self.timelimit*60))*100
     def wallclock_animation(self):
         if self.time_start != 0 and self.time_end == 0:
-            print('true')
             return True
         else:
-            print('false')
             return False
 
 class BelugaLastRanTable(models.Model):
@@ -640,31 +638,21 @@ class LdapUser(ldapdb.models.Model):
     # LDAP meta-data
     base_dn = 'ou=People,dc=computecanada,dc=local'
     object_classes = ['ccAccount']
-#    last_modified = fields.DateTimeField(db_column='modifyTimestamp', editable=False)
-
-    # inetOrgPerson
-#    first_name = fields.CharField(db_column='givenName', verbose_name="Prime name")
-#    last_name = fields.CharField("Final name", db_column='sn')
-#    full_name = fields.CharField(db_column='cn')
-#    email = fields.CharField(db_column='mail')
-#    phone = fields.CharField(db_column='telephoneNumber', blank=True)
-#    mobile_phone = fields.CharField(db_column='mobile', blank=True)
-#    photo = fields.ImageField(db_column='jpegPhoto')
 
     # posixAccount
-    uid = fields.IntegerField(db_column='uidNumber', unique=True)
-    group = fields.IntegerField(db_column='gidNumber')
-#    gecos = fields.CharField(db_column='gecos')
-#    home_directory = fields.CharField(db_column='homeDirectory')
-#    login_shell = fields.CharField(db_column='loginShell', default='/bin/bash')
     username = fields.CharField(db_column='uid', primary_key=True)
-#    password = fields.CharField(db_column='userPassword')
+    uid = fields.IntegerField(db_column='uidNumber', unique=True)
+    full_name = fields.CharField(db_column='cn')
+    group = fields.IntegerField(db_column='gidNumber')
+    preferredLanguage = fields.CharField(db_column='preferredLanguage')
+    ccCertSubject = fields.CharField(db_column='ccCertSubject')
+    SSHPUBLICKEY = fields.CharField(db_column='SSHPUBLICKEY')
+    employeeType = fields.CharField(db_column='employeeType')
+    home_directory = fields.CharField(db_column='homeDirectory')
+    login_shell = fields.CharField(db_column='loginShell', default='/bin/bash')
 
-    # shadowAccount
-#    last_password_change = fields.TimestampField(db_column='shadowLastChange')
+    def __str__(self):
+        return self.username
 
-#    def __str__(self):
-#        return self.username
-
-#    def __unicode__(self):
-#        return self.full_name
+    def __unicode__(self):
+        return self.full_name

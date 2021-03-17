@@ -7,6 +7,7 @@ from prometheus_api_client import PrometheusConnect
 from prometheus_api_client.utils import parse_datetime
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
+import functools
 
 class Prometheus:
     def __init__(self, url):
@@ -37,15 +38,28 @@ class Prometheus:
             })
         return return_list
 
+
+def user_or_staff(func):
+   @functools.wraps(func)
+   def wrapper(request, *args, **kwargs):
+       if request.user.username == kwargs['username']:
+           # own info
+           return func(request, *args, **kwargs)
+       elif LdapUser.objects.filter(username=request.user.username).get().employeeType == 'staff':
+           # is staff
+           return func(request, *args, **kwargs)
+       else:
+           return HttpResponseNotFound()
+   return wrapper
+
 @login_required
 def index(request):
     context = {}
     return render(request, 'jobstats/index.html', context)
 
 @login_required
+@user_or_staff
 def user(request, username):
-#    print(request.META['REMOTE_USER'])
-#    print(request.user)
     uid = LdapUser.objects.filter(username=username).get().uid
     context = {'username': username}
     week_ago = int(time.time()) - (3600 * 24 * 7)
@@ -54,6 +68,7 @@ def user(request, username):
     return render(request, 'jobstats/user.html', context)
 
 @login_required
+@user_or_staff
 def job(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     context = {'job_id': job_id}
@@ -65,6 +80,7 @@ def job(request, username, job_id):
     return render(request, 'jobstats/job.html', context)
 
 @login_required
+@user_or_staff
 def graph_cpu(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -93,6 +109,7 @@ def graph_cpu(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_mem(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -152,6 +169,7 @@ def graph_mem(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_lustre_mdt(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -185,6 +203,7 @@ def graph_lustre_mdt(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_lustre_ost(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -218,6 +237,7 @@ def graph_lustre_ost(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_gpu_utilization(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -250,6 +270,7 @@ def graph_gpu_utilization(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_gpu_memory_utilization(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -282,6 +303,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_gpu_memory(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -313,6 +335,7 @@ def graph_gpu_memory(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_gpu_power(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -345,6 +368,7 @@ def graph_gpu_power(request, username, job_id):
     return JsonResponse(data)
 
 @login_required
+@user_or_staff
 def graph_gpu_pcie(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
     prom = Prometheus(settings.PROMETHEUS['url'])

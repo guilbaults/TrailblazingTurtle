@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>Quotas</h2>
+
+<h3>Project</h3>
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">TB allocated</th>
+      <th scope="col">TB used</th>
+      <th scope="col">Inodes allocated</th>
+      <th scope="col">Inodes used</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for project in projects %}
+{% if project.name %}
+    <tr>
+      <th scope="row">{{project.name}}</th>
+      <td>{{project.project_storage_tb | floatformat:-0}}</td>
+      <td></td>
+      <td>{{project.inode_quota | floatformat:-0 }} M</td>
+      <td></td>
+    </tr>
+{% endif %}
+{% endfor %}
+  </tbody>
+</table>
+
+<h3>Nearline</h3>
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Name</th>
+      <th scope="col">TB allocated</th>
+      <th scope="col">TB used</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for nearline in nearlines %}
+{% if nearline.name %}
+    <tr>
+      <th scope="row">{{nearline.name}}</th>
+      <td>{{nearline.nearline_storage_tb | floatformat:-0}}</td>
+      <td></td>
+    </tr>
+{% endif %}
+{% endfor %}
+  </tbody>
+</table>
+
+{% endblock content %}
+

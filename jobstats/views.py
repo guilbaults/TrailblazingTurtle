@@ -488,7 +488,8 @@ def graph_gpu_utilization(request, username, job_id):
         })
     data['layout'] = { 'yaxis':
         {
-            'ticksuffix': ' %'
+            'ticksuffix': ' %',
+            'range': [0, 100],
         }
     }
     return JsonResponse(data)
@@ -549,7 +550,8 @@ def graph_gpu_memory_utilization(request, username, job_id):
         })
     data['layout'] = { 'yaxis':
         {
-            'ticksuffix': ' %'
+            'ticksuffix': ' %',
+            'range': [0, 100],
         }
     }
     return JsonResponse(data)
@@ -581,7 +583,8 @@ def graph_gpu_memory(request, username, job_id):
         })
     data['layout'] = { 'yaxis':
         {
-            'ticksuffix': ' GiB'
+            'ticksuffix': ' GiB',
+            'range': [0, 12],
         }
     }
     return JsonResponse(data)
@@ -614,7 +617,8 @@ def graph_gpu_power(request, username, job_id):
         })
     data['layout'] = { 'yaxis':
         {
-            'ticksuffix': ' W'
+            'ticksuffix': ' W',
+            'range': [0, 300],
         }
     }
     return JsonResponse(data)

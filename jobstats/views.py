@@ -182,14 +182,30 @@ def graph_cpu(request, username, job_id):
 @user_or_staff
 def graph_cpu_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
-    query = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[5m])) / 1000000000'.format(username)
-    stats = prom.query_prometheus(query, datetime.now() - timedelta(hours = 6), datetime.now())
     data = { 'lines': []}
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
-        'y': stats[1],
-        'type': 'scatter',
-    })
+    query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[5m])) / 1000000000'.format(username)
+    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_used:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Used'
+        })
+
+    query_req = 'sum(count(slurm_job_core_usage_total{{user="{}"}}))'.format(username)
+    stats_req = prom.query_prometheus_multiple(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_req:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Requested'
+        })
 
     return JsonResponse(data)
 
@@ -197,9 +213,7 @@ def graph_cpu_user(request, username):
 @user_or_staff
 def graph_mem_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
-
     data = { 'lines': []}
-
     query_req = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
     stats_req = prom.query_prometheus_multiple(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
     for line in stats_req:

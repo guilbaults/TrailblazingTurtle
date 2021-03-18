@@ -71,7 +71,7 @@ Your jobs
 
 <script>
 $.getJSON('graph/cpu.json', function(data){
-  Plotly.newPlot('graph_cpu', data['lines'], { yaxis: { range: [0, {{total_cores}}]}});
+  Plotly.newPlot('graph_cpu', data['lines']);
 });
 $.getJSON('graph/mem.json', function(data){
   Plotly.newPlot('graph_mem', data['lines']);

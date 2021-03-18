@@ -9,6 +9,7 @@ urlpatterns = [
     path('<str:username>/graph/lustre_mdt.json', views.graph_lustre_mdt_user),
     path('<str:username>/graph/lustre_ost.json', views.graph_lustre_ost_user),
     path('<str:username>/graph/gpu_utilization.json', views.graph_gpu_utilization_user),
+    path('<str:username>/graph/gpu_power.json', views.graph_gpu_power_user),
     path('<str:username>/<int:job_id>/', views.job),
     path('<str:username>/<int:job_id>/graph/cpu.json', views.graph_cpu),
     path('<str:username>/<int:job_id>/graph/mem.json', views.graph_mem),

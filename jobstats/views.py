@@ -120,12 +120,22 @@ def job(request, username, job_id):
     context['tres_req'] = job.parse_tres_req()
 
     prom = Prometheus(settings.PROMETHEUS['url'])
-    query_cpu = 'sum(rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000)'.format(job_id)
-    stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
-    context['cpu_used'] = statistics.mean(stats_cpu[1])
-    query_mem = 'sum(slurm_job_memory_max{{exported_job="{}"}}/(1024*1024))'.format(job_id)
-    stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
-    context['mem_used'] = max(stats_mem[1])
+    if job.time_start_dt() is None:
+        return render(request, 'jobstats/job.html', context)
+
+    try:
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000)'.format(job_id)
+        stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
+        context['cpu_used'] = statistics.mean(stats_cpu[1])
+    except ValueError:
+        context['cpu_used'] = 'N/A'
+
+    try:
+        query_mem = 'sum(slurm_job_memory_max{{exported_job="{}"}}/(1024*1024))'.format(job_id)
+        stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
+        context['mem_used'] = max(stats_mem[1])
+    except ValueError:
+        context['mem_used'] = 'N/A'
 
     if job.gpu_count() > 0:
         gpu_memory = {'v100': 16}
@@ -598,6 +608,40 @@ def graph_gpu_power(request, username, job_id):
             'ticksuffix': ' W'
         }
     }
+    return JsonResponse(data)
+
+@login_required
+@user_or_staff
+def graph_gpu_power_user(request, username):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    data = { 'lines': []}
+
+    # Fixme only support v100 at the moment
+    query_req = 'count(slurm_job_power_gpu{{user="{}"}}) * 300'.format(username)
+    stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
+        'y': stats_req[1],
+        'type': 'scatter',
+        'name': 'Requested'
+    })
+
+    query_used = 'sum(slurm_job_power_gpu{{user="{}"}})/1000'.format(username)
+    stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours = 6), datetime.now())
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
+        'y': stats_used[1],
+        'type': 'scatter',
+        'name': 'Used'
+    })
+
+    data['layout'] = { 'yaxis':
+        {
+            'ticksuffix': ' W'
+        }
+    }
+
     return JsonResponse(data)
 
 @login_required

@@ -211,16 +211,16 @@ def graph_cpu_user(request, username):
             'name': 'Used'
         })
 
-    query_req = 'sum(count(slurm_job_core_usage_total{{user="{}"}}))'.format(username)
-    stats_req = prom.query_prometheus_multiple(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
-    for line in stats_req:
+    query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}"}}))'.format(username)
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - timedelta(hours = 6), datetime.now())
+    for line in stats_alloc:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Requested'
+            'name': 'Allocated'
         })
 
     return JsonResponse(data)
@@ -232,13 +232,13 @@ def graph_mem_user(request, username):
     data = { 'lines': []}
 
     try:
-        query_req = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
-        stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+        query_alloc = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
+        stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours = 6), datetime.now())
         data['lines'].append({
-            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
-            'y': stats_req[1],
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+            'y': stats_alloc[1],
            'type': 'scatter',
-           'name': 'Requested'
+           'name': 'Allocated'
         })
     except ValueError:
         pass
@@ -288,9 +288,9 @@ def graph_mem(request, username, job_id):
 
     data = { 'lines': []}
 
-    query_req = 'slurm_job_memory_limit{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
-    stats_req = prom.query_prometheus_multiple(query_req, job.time_start_dt(), job.time_end_dt())
-    for line in stats_req:
+    query_alloc = 'slurm_job_memory_limit{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, job.time_start_dt(), job.time_end_dt())
+    for line in stats_alloc:
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
@@ -298,7 +298,7 @@ def graph_mem(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Requested {}'.format(compute_name)
+            'name': 'Allocated {}'.format(compute_name)
         })
 
     query_max = 'slurm_job_memory_max{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
@@ -500,13 +500,13 @@ def graph_gpu_utilization_user(request, username):
 
     data = { 'lines': []}
 
-    query_req = 'count(slurm_job_utilization_gpu{{user="{}"}})'.format(username)
-    stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+    query_alloc = 'count(slurm_job_utilization_gpu{{user="{}"}})'.format(username)
+    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours = 6), datetime.now())
     data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
-        'y': stats_req[1],
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+        'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Requested'
+        'name': 'Allocated'
     })
 
     query_used = 'sum(slurm_job_utilization_gpu{{user="{}"}})/100'.format(username)
@@ -627,13 +627,13 @@ def graph_gpu_power_user(request, username):
     data = { 'lines': []}
 
     # Fixme only support v100 at the moment
-    query_req = 'count(slurm_job_power_gpu{{user="{}"}}) * 300'.format(username)
-    stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+    query_alloc = 'count(slurm_job_power_gpu{{user="{}"}}) * 300'.format(username)
+    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours = 6), datetime.now())
     data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
-        'y': stats_req[1],
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+        'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Requested'
+        'name': 'Allocated'
     })
 
     query_used = 'sum(slurm_job_power_gpu{{user="{}"}})/1000'.format(username)

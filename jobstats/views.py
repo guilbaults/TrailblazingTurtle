@@ -231,32 +231,41 @@ def graph_mem_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = { 'lines': []}
 
-    query_req = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
-    stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
-        'y': stats_req[1],
-        'type': 'scatter',
-        'name': 'Requested'
-    })
+    try:
+        query_req = 'sum(slurm_job_memory_limit{{user="{}"}})/(1024*1024*1024)'.format(username)
+        stats_req = prom.query_prometheus(query_req, datetime.now() - timedelta(hours = 6), datetime.now())
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_req[0])),
+            'y': stats_req[1],
+           'type': 'scatter',
+           'name': 'Requested'
+        })
+    except ValueError:
+        pass
 
-    query_max = 'sum(slurm_job_memory_max{{user="{}"}})/(1024*1024*1024)'.format(username)
-    stats_max = prom.query_prometheus(query_max, datetime.now() - timedelta(hours = 6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
-        'y': stats_max[1],
-        'type': 'scatter',
-        'name': 'Max used'
-    })
+    try:
+        query_max = 'sum(slurm_job_memory_max{{user="{}"}})/(1024*1024*1024)'.format(username)
+        stats_max = prom.query_prometheus(query_max, datetime.now() - timedelta(hours = 6), datetime.now())
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
+            'y': stats_max[1],
+            'type': 'scatter',
+            'name': 'Max used'
+       })
+    except ValueError:
+        pass
 
-    query_used = 'sum(slurm_job_memory_usage{{user="{}"}})/(1024*1024*1024)'.format(username)
-    stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours = 6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
-        'y': stats_used[1],
-        'type': 'scatter',
-        'name': 'Used'
-    })
+    try:
+        query_used = 'sum(slurm_job_memory_usage{{user="{}"}})/(1024*1024*1024)'.format(username)
+        stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours = 6), datetime.now())
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
+            'y': stats_used[1],
+            'type': 'scatter',
+            'name': 'Used'
+        })
+    except ValueError:
+        pass
 
     data['layout'] = { 'yaxis': 
         {

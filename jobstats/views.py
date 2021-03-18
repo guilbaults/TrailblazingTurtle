@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
+from django.shortcuts import redirect
 from .models import JobTable, LdapUser
 import time
 from django.conf import settings
@@ -55,8 +56,7 @@ def user_or_staff(func):
 
 @login_required
 def index(request):
-    context = {}
-    return render(request, 'jobstats/index.html', context)
+    return redirect('{}/'.format(request.user.username))
 
 @login_required
 @user_or_staff

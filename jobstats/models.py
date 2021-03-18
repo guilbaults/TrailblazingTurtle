@@ -9,6 +9,7 @@ from django.db import models
 import datetime
 import ldapdb.models
 from ldapdb.models import fields
+from django.conf import settings
 
 class AcctCoordTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
@@ -36,7 +37,7 @@ class AcctTable(models.Model):
         db_table = 'acct_table'
 
 
-class BelugaAssocTable(models.Model):
+class AssocTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -72,11 +73,11 @@ class BelugaAssocTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_assoc_table'
+        db_table = settings.CLUSTER_NAME + '_assoc_table'
         unique_together = (('user', 'acct', 'partition'),)
 
 
-class BelugaAssocUsageDayTable(models.Model):
+class AssocUsageDayTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -87,11 +88,11 @@ class BelugaAssocUsageDayTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_assoc_usage_day_table'
+        db_table = settings.CLUSTER_NAME + '_assoc_usage_day_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 
-class BelugaAssocUsageHourTable(models.Model):
+class AssocUsageHourTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -102,11 +103,11 @@ class BelugaAssocUsageHourTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_assoc_usage_hour_table'
+        db_table = settings.CLUSTER_NAME + '_assoc_usage_hour_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 
-class BelugaAssocUsageMonthTable(models.Model):
+class AssocUsageMonthTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -117,11 +118,11 @@ class BelugaAssocUsageMonthTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_assoc_usage_month_table'
+        db_table = settings.CLUSTER_NAME + '_assoc_usage_month_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 
-class BelugaEventTable(models.Model):
+class EventTable(models.Model):
     time_start = models.PositiveBigIntegerField()
     time_end = models.PositiveBigIntegerField()
     node_name = models.TextField(primary_key=True)
@@ -133,11 +134,11 @@ class BelugaEventTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_event_table'
+        db_table = settings.CLUSTER_NAME + '_event_table'
         unique_together = (('node_name', 'time_start'),)
 
 
-class BelugaJobTable(models.Model):
+class JobTable(models.Model):
     job_db_inx = models.BigAutoField(primary_key=True)
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -193,7 +194,7 @@ class BelugaJobTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_job_table'
+        db_table = settings.CLUSTER_NAME + '_job_table'
         unique_together = (('id_job', 'time_submit'),)
 
     def time_submit_dt(self):
@@ -273,18 +274,18 @@ class BelugaJobTable(models.Model):
                 info['nb_nodes'] = int(value)
         return info
 
-class BelugaLastRanTable(models.Model):
+class LastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)
     daily_rollup = models.PositiveBigIntegerField()
     monthly_rollup = models.PositiveBigIntegerField()
 
     class Meta:
         managed = False
-        db_table = 'beluga_last_ran_table'
+        db_table = settings.CLUSTER_NAME + '_last_ran_table'
         unique_together = (('hourly_rollup', 'daily_rollup', 'monthly_rollup'),)
 
 
-class BelugaResvTable(models.Model):
+class ResvTable(models.Model):
     id_resv = models.PositiveIntegerField(primary_key=True)
     deleted = models.IntegerField()
     assoclist = models.TextField()
@@ -299,11 +300,11 @@ class BelugaResvTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_resv_table'
+        db_table = settings.CLUSTER_NAME + '_resv_table'
         unique_together = (('id_resv', 'time_start'),)
 
 
-class BelugaStepTable(models.Model):
+class StepTable(models.Model):
     job_db_inx = models.PositiveBigIntegerField(primary_key=True)
     deleted = models.IntegerField()
     exit_code = models.IntegerField()
@@ -348,11 +349,11 @@ class BelugaStepTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_step_table'
+        db_table = settings.CLUSTER_NAME + '_step_table'
         unique_together = (('job_db_inx', 'id_step'),)
 
 
-class BelugaSuspendTable(models.Model):
+class SuspendTable(models.Model):
     job_db_inx = models.PositiveBigIntegerField(primary_key=True)
     id_assoc = models.IntegerField()
     time_start = models.PositiveBigIntegerField()
@@ -360,11 +361,11 @@ class BelugaSuspendTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_suspend_table'
+        db_table = settings.CLUSTER_NAME + '_suspend_table'
         unique_together = (('job_db_inx', 'time_start'),)
 
 
-class BelugaUsageDayTable(models.Model):
+class UsageDayTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -380,11 +381,11 @@ class BelugaUsageDayTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_usage_day_table'
+        db_table = settings.CLUSTER_NAME + '_usage_day_table'
         unique_together = (('id_tres', 'time_start'),)
 
 
-class BelugaUsageHourTable(models.Model):
+class UsageHourTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -400,11 +401,11 @@ class BelugaUsageHourTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_usage_hour_table'
+        db_table = settings.CLUSTER_NAME +'_usage_hour_table'
         unique_together = (('id_tres', 'time_start'),)
 
 
-class BelugaUsageMonthTable(models.Model):
+class UsageMonthTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -420,11 +421,11 @@ class BelugaUsageMonthTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_usage_month_table'
+        db_table = settings.CLUSTER_NAME + '_usage_month_table'
         unique_together = (('id_tres', 'time_start'),)
 
 
-class BelugaWckeyTable(models.Model):
+class WckeyTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -435,11 +436,11 @@ class BelugaWckeyTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_wckey_table'
+        db_table = settings.CLUSTER_NAME + '_wckey_table'
         unique_together = (('wckey_name', 'user'),)
 
 
-class BelugaWckeyUsageDayTable(models.Model):
+class WckeyUsageDayTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -450,11 +451,11 @@ class BelugaWckeyUsageDayTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_wckey_usage_day_table'
+        db_table = settings.CLUSTER_NAME + '_wckey_usage_day_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 
-class BelugaWckeyUsageHourTable(models.Model):
+class WckeyUsageHourTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -465,11 +466,11 @@ class BelugaWckeyUsageHourTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_wckey_usage_hour_table'
+        db_table = settings.CLUSTER_NAME + '_wckey_usage_hour_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 
-class BelugaWckeyUsageMonthTable(models.Model):
+class WckeyUsageMonthTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -480,7 +481,7 @@ class BelugaWckeyUsageMonthTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = 'beluga_wckey_usage_month_table'
+        db_table = settings.CLUSTER_NAME + '_wckey_usage_month_table'
         unique_together = (('id', 'id_tres', 'time_start'),)
 
 

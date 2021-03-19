@@ -62,7 +62,36 @@
 {% for nearline in nearlines %}
 {% if nearline.name %}
 <h4>{{nearline.name}}</h4>
-{{nearline.nearline_storage_tb | floatformat:-0}}
+{{nearline.used.total_bytes | filesizeformat}} TBs used on {{nearline.nearline_storage_tb}} TBs
+
+<div class="progress">
+  <div class="progress-bar" role="progressbar" style="width: {{nearline.used.bytes_ratio_disk}}%">{{nearline.used.bytes_on_disk | filesizeformat}} on disk</div>
+  <div class="progress-bar bg-success" role="progressbar" style="width: {{nearline.used.bytes_ratio_tape}}%">{{nearline.used.bytes_on_tape | filesizeformat}} on tape</div>
+</div>
+
+<table class="table">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">User</th>
+      <th scope="col">Disk inodes</th>
+      <th scope="col">Disk bytes</th>
+      <th scope="col">Tape inodes</th>
+      <th scope="col">Tape bytes</th>
+    </tr>
+  </thead>
+{% for user in nearline.users %}
+  <tbody>
+    <tr>
+      <th scope="row">{{user.name}}</th>
+      <td>{{user.disk_inodes | intcomma}}</td>
+      <td>{{user.disk_bytes | filesizeformat}}</td>
+      <td>{{user.tape_inodes | intcomma}}</td>
+      <td>{{user.tape_bytes | filesizeformat}}</td>
+    </tr>
+  </tbody>
+{% endfor %}
+</table>
+
 {% endif %}
 {% endfor %}
 

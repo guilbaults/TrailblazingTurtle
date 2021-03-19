@@ -8,52 +8,63 @@
 <h2>Quotas</h2>
 
 <h3>Project</h3>
-<table class="table">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">Name</th>
-      <th scope="col">TB allocated</th>
-      <th scope="col">TB used</th>
-      <th scope="col">Inodes allocated</th>
-      <th scope="col">Inodes used</th>
-    </tr>
-  </thead>
-  <tbody>
 {% for project in projects %}
 {% if project.name %}
-    <tr>
-      <th scope="row">{{project.name}}</th>
-      <td>{{project.project_storage_tb | floatformat:-0}}</td>
-      <td></td>
-      <td>{{project.inode_quota | floatformat:-0 }} M</td>
-      <td></td>
-    </tr>
-{% endif %}
-{% endfor %}
-  </tbody>
-</table>
+<h4>{{project.name}}</h4>
 
-<h3>Nearline</h3>
+{% if project.used.bytes_ratio > 100 %}
+{{project.used.TBs |floatformat:-1}} TBs used on {{project.project_storage_tb}} TBs
+<div class="progress">
+  <div class="progress-bar bg-danger" role="progressbar" style="width: {{project.used.bytes_ratio}}%;">{{project.used.TBs | floatformat:-1}} TB</div>
+</div>
+{% else %}
+{{project.used.TBs |floatformat:-1}} TBs used on {{project.project_storage_tb}} TBs
+<div class="progress">
+  <div class="progress-bar" role="progressbar" style="width: {{project.used.bytes_ratio}}%;">{{project.used.TBs | floatformat:-1}} TB</div>
+</div>
+{% endif %}
+
+{% if project.used.inodes_ratio > 100 %}
+{{project.used.inodes | intcomma}} Inodes used on {{project.inode_quota}} M
+<div class="progress">
+  <div class="progress-bar bg-danger" role="progressbar" style="width: {{project.used.inodes_ratio}}%;">{{project.used.inodes | intcomma}} Inodes</div>
+</div>
+{% else %}
+{{project.used.inodes | intcomma}} Inodes used on {{project.inode_quota}} M
+<div class="progress">
+  <div class="progress-bar" role="progressbar" style="width: {{project.used.inodes_ratio}}%;">{{project.used.inodes | intcomma}} Inodes</div>
+</div>
+{% endif %}
+
 <table class="table">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">Name</th>
-      <th scope="col">TB allocated</th>
-      <th scope="col">TB used</th>
+      <th scope="col">User</th>
+      <th scope="col">Inodes</th>
+      <th scope="col">Bytes</th>
     </tr>
   </thead>
+{% for user in project.users %}
   <tbody>
-{% for nearline in nearlines %}
-{% if nearline.name %}
     <tr>
-      <th scope="row">{{nearline.name}}</th>
-      <td>{{nearline.nearline_storage_tb | floatformat:-0}}</td>
-      <td></td>
+      <th scope="row">{{user.uid_string}}</th>
+      <td>{{user.count__sum | intcomma}}</td>
+      <td>{{user.bytes__sum | filesizeformat}}</td>
     </tr>
+  </tbody>
+{% endfor %}
+</table>
+
 {% endif %}
 {% endfor %}
-  </tbody>
-</table>
+
+<h3>Nearline</h3>
+{% for nearline in nearlines %}
+{% if nearline.name %}
+<h4>{{nearline.name}}</h4>
+{{nearline.nearline_storage_tb | floatformat:-0}}
+{% endif %}
+{% endfor %}
 
 {% endblock content %}
 

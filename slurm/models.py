@@ -7,9 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from django.db import models
 import datetime
-import ldapdb.models
-from ldapdb.models import fields
 from django.conf import settings
+
 
 class AcctCoordTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
@@ -201,54 +200,66 @@ class JobTable(models.Model):
         if self.time_submit == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_submit)
+
     def time_eligible_dt(self):
         if self.time_eligible == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_eligible)
+
     def time_start_dt(self):
         if self.time_start == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_start)
+
     def time_end_dt(self):
         if self.time_end == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_end)
+
     def time_suspended_dt(self):
         if self.time_suspended == 0:
             return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
+
     def used_time_display(self):
-        if self.time_start != 0 and self.time_end !=0:
+        if self.time_start != 0 and self.time_end != 0:
             t = (self.time_end - self.time_start)/60
             if t > 60*4:
                 return '{:.1f}h'.format(t/60)
             else:
                 return '{:.1f}m'.format(t)
         return None
+
     def timelimit_display(self):
         if self.timelimit > 60*4:
             return '{:.1f}h'.format(self.timelimit/60)
         else:
             return '{:.1f}m'.format(self.timelimit)
+
     def status(self):
         status = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
-'Failed', 'Timeout' ,'Node failed', 'Preempted', 'Boot failed', 'End',
-'OOM']
+                  'Failed', 'Timeout', 'Node failed', 'Preempted',
+                  'Boot failed', 'End', 'OOM']
         return status[self.state]
+
     def status_badge(self):
         status = ['info', 'primary', 'warning', 'success', 'danger',
-'danger', 'danger' ,'danger', 'warning', 'danger', 'sucess', 'danger']
+                  'danger', 'danger', 'danger', 'warning', 'danger',
+                  'sucess', 'danger']
         return '{}'.format(status[self.state])
+
     def gpu_count(self):
         if 'gpu' in self.gres_req:
             return int(self.gres_req.split(':')[2])
         else:
             return 0
+
     def gpu_type(self):
         if 'gpu' in self.gres_req:
             return self.gres_req.split(':')[1]
         else:
             return None
+
     def wallclock_progress(self):
         if self.time_start == 0:
             return 0
@@ -257,11 +268,13 @@ class JobTable(models.Model):
         else:
             delta = datetime.datetime.now() - self.time_start_dt()
             return (delta.total_seconds()/(self.timelimit*60))*100
+
     def wallclock_animation(self):
         if self.time_start != 0 and self.time_end == 0:
             return True
         else:
             return False
+
     def parse_tres_req(self):
         info = {}
         for item in self.tres_req.split(','):
@@ -273,6 +286,7 @@ class JobTable(models.Model):
             elif key == '4':
                 info['nb_nodes'] = int(value)
         return info
+
 
 class LastRanTable(models.Model):
     hourly_rollup = models.PositiveBigIntegerField(primary_key=True)
@@ -401,7 +415,7 @@ class UsageHourTable(models.Model):
 
     class Meta:
         managed = False
-        db_table = settings.CLUSTER_NAME +'_usage_hour_table'
+        db_table = settings.CLUSTER_NAME + '_usage_hour_table'
         unique_together = (('id_tres', 'time_start'),)
 
 

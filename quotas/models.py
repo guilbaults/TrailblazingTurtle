@@ -1,5 +1,4 @@
 from django.db import models
-from django.conf import settings
 from django.utils.encoding import smart_str
 
 
@@ -26,7 +25,7 @@ class AcctStat(models.Model):
     gid = models.CharField(max_length=127)
     type = models.CharField(
         max_length=7,
-        choices = FileType.choices,
+        choices=FileType.choices,
     )
     lhsm_status = models.CharField(
         max_length=10,

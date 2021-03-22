@@ -31,10 +31,7 @@ class DbRouter:
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
         # disallow any migration operation on ldap engine
-        if 'ldap' in model._meta.db_table:
-            return False
-        # allow migrations on the "default" (django related data) DB
-        if db == 'default' and app_label != 'jobstats':
+        if db == 'default':
             return True
         else:
             return False

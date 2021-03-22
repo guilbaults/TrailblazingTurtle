@@ -1,8 +1,7 @@
-from django.db import models
 import ldapdb.models
 from ldapdb.models import fields
 from django.conf import settings
-from django.utils.encoding import smart_str
+
 
 class LdapUser(ldapdb.models.Model):
     """
@@ -30,6 +29,7 @@ class LdapUser(ldapdb.models.Model):
     def __unicode__(self):
         return self.full_name
 
+
 class LdapAllocation(ldapdb.models.Model):
     base_dn = 'dc=computecanada,dc=local'
     object_classes = ['ccAllocation']
@@ -50,7 +50,6 @@ class LdapAllocation(ldapdb.models.Model):
             if 'expired' in res or 'startdate' in res:
                 continue
             s = res.split(':')
-            name = s[0]
             resource_name = s[1]
             if settings.STORAGE_NAME in resource_name:
                 quota_info = {}

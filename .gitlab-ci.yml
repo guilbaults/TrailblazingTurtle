@@ -1,0 +1,18 @@
+---
+variables:
+ GIT_SUBMODULE_STRATEGY: "recursive"
+ DEBIAN_FRONTEND: "noninteractive"
+ NOKOGIRI_USE_SYSTEM_LIBRARIES: "true"
+
+stages:
+ - linting
+
+flake8:
+ tags:
+  - k8s
+ stage: linting
+ image: registry.gitlab.com/pipeline-components/flake8:latest
+ script:
+  - flake8 --verbose --max-line-length 200 .
+
+# no blank lines after this

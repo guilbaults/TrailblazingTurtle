@@ -4,27 +4,28 @@ class DbRouter:
 
     * Django related data - DB alias `default`
     * slurm requests go to the MySQL database of slurm
+    * ldap requests go to the LDAP backend
     """
     def db_for_read(self, model, **hints):
-        if 'ldap' in model._meta.db_table:
+        if model._meta.app_label == 'ccldap':
             return 'ldap'
-        if model._meta.app_label == 'jobstats':
+        elif model._meta.app_label == 'slurm':
             return 'slurm'
         else:
             return None
 
     def db_for_write(self, model, **hints):
-        if 'ldap' in model._meta.db_table:
+        if model._meta.app_label == 'ccldap':
             return False
-        if model._meta.app_label == 'jobstats':
+        elif model._meta.app_label == 'slurm':
             return False
         else:
             return None
 
     def allow_relation(self, obj1, obj2, **hints):
-        if obj1._meta.app_label == 'jobstats' and obj2._meta.app_label == 'jobstats':
+        if obj1._meta.app_label == 'slurm' and obj2._meta.app_label == 'slurm':
             return True
-        elif 'jobstats' not in [obj1._meta.app_label, obj2._meta.app_label]:
+        elif 'slurm' not in [obj1._meta.app_label, obj2._meta.app_label]:
             return True
         # by default return None - "undecided"
 

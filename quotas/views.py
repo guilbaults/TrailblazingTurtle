@@ -1,10 +1,32 @@
-from django.shortcuts import render
-from .models import LdapAllocation, AcctStat
+from django.shortcuts import render, redirect
+from ccldap.models import LdapAllocation, LdapUser
+from .models import AcctStat
 from django.db.models import Q, Avg, Count, Min, Sum
+from django.contrib.auth.decorators import login_required
+import functools
 
+def user_or_staff(func):
+   @functools.wraps(func)
+   def wrapper(request, *args, **kwargs):
+       if request.user.username == kwargs['username']:
+           # own info
+           return func(request, *args, **kwargs)
+       elif LdapUser.objects.filter(username=request.user.username).get().employeeType == 'staff':
+           # is staff
+           return func(request, *args, **kwargs)
+       else:
+           return HttpResponseNotFound()
+   return wrapper
+
+@login_required
 def index(request):
+    return redirect('{}/'.format(request.user.username))
+
+@login_required
+@user_or_staff
+def user(request, username):
     context = {}
-    allocations = LdapAllocation.objects.filter(members='poq', status='active').all()
+    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
     context['projects'] = []
     context['nearlines'] = []
     for alloc in allocations:

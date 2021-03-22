@@ -1,7 +1,7 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseNotFound, JsonResponse
-from django.shortcuts import redirect
-from .models import JobTable, LdapUser
+from slurm.models import JobTable
+from ccldap.models import LdapUser
 import time
 from django.conf import settings
 from prometheus_api_client import PrometheusConnect

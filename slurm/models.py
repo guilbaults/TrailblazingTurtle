@@ -223,16 +223,16 @@ class JobTable(models.Model):
 
     def used_time_display(self):
         if self.time_start != 0 and self.time_end != 0:
-            t = (self.time_end - self.time_start)/60
-            if t > 60*4:
-                return '{:.1f}h'.format(t/60)
+            t = (self.time_end - self.time_start) / 60
+            if t > 60 * 4:
+                return '{:.1f}h'.format(t / 60)
             else:
                 return '{:.1f}m'.format(t)
         return None
 
     def timelimit_display(self):
-        if self.timelimit > 60*4:
-            return '{:.1f}h'.format(self.timelimit/60)
+        if self.timelimit > 60 * 4:
+            return '{:.1f}h'.format(self.timelimit / 60)
         else:
             return '{:.1f}m'.format(self.timelimit)
 
@@ -267,7 +267,7 @@ class JobTable(models.Model):
             return 100
         else:
             delta = datetime.datetime.now() - self.time_start_dt()
-            return (delta.total_seconds()/(self.timelimit*60))*100
+            return (delta.total_seconds() / (self.timelimit * 60)) * 100
 
     def wallclock_animation(self):
         if self.time_start != 0 and self.time_end == 0:
@@ -285,6 +285,11 @@ class JobTable(models.Model):
                 info['total_mem'] = int(value)
             elif key == '4':
                 info['nb_nodes'] = int(value)
+
+        # Sometime the total_mem is not in TRES, so we use the other column
+        # in the DB
+        if 'total_mem' not in info:
+            info['total_mem'] = self.mem_req
         return info
 
 

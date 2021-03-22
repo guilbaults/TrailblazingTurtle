@@ -94,7 +94,7 @@ def user(request, username):
                 'inodes': project_used['count'],
                 'TBs': project_used['blocks'] * 512 / 1024 / 1024 / 1024 / 1024,
                 'bytes_ratio': project_used['blocks'] * 512 / (project['project_storage_tb'] * 1024 * 1024 * 1024 * 1024) * 100,
-                'inodes_ratio':  project_used['count'] / (project['inode_quota'] * 1000000) * 100,
+                'inodes_ratio': project_used['count'] / (project['inode_quota'] * 1000000) * 100,
             }
         project['users'] = prepared_user_quota
         context['projects'].append(project)

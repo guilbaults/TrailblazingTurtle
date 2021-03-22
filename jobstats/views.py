@@ -200,7 +200,8 @@ def graph_cpu(request, username, job_id):
             'name': '{} core {}'.format(compute_name, core_num)
         })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'range': [0, job.parse_tres_req()['total_cores']],
         }
     }
@@ -231,7 +232,8 @@ def graph_cpu_user(request, username):
         'name': 'Allocated'
     })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'range': [0, max(stats_alloc[1])],
         }
     }
@@ -280,7 +282,8 @@ def graph_mem_user(request, username):
     except ValueError:
         pass
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': 'GiB',
             'range': [0, max(stats_alloc[1])],
         }
@@ -340,7 +343,8 @@ def graph_mem(request, username, job_id):
             'name': 'Used {}'.format(compute_name)
         })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': 'GiB'
         }
     }
@@ -375,7 +379,8 @@ def graph_lustre_mdt(request, username, job_id):
             'name': '{} {}'.format(operation, fs)
         })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' IOPS'
         }
     }
@@ -403,7 +408,8 @@ def graph_lustre_mdt_user(request, username):
             'name': '{} {}'.format(operation, fs)
         })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' IOPS'
         }
     }
@@ -437,7 +443,8 @@ def graph_lustre_ost(request, username, job_id):
                 'name': '{} {}'.format(i, fs)
             })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' MiB/s'
         }
     }
@@ -465,7 +472,8 @@ def graph_lustre_ost_user(request, username):
                 'name': '{} {}'.format(i, fs)
             })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' MiB/s'
         }
     }
@@ -497,7 +505,8 @@ def graph_gpu_utilization(request, username, job_id):
             'type': 'scatter',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
         }
@@ -558,7 +567,8 @@ def graph_gpu_memory_utilization(request, username, job_id):
             'type': 'scatter',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
         }
@@ -591,7 +601,8 @@ def graph_gpu_memory(request, username, job_id):
             'type': 'scatter',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' GiB',
             'range': [0, 12],
         }
@@ -624,7 +635,8 @@ def graph_gpu_power(request, username, job_id):
             'type': 'scatter',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' W',
             'range': [0, 300],
         }
@@ -658,7 +670,8 @@ def graph_gpu_power_user(request, username):
         'name': 'Used'
     })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' W'
         }
     }
@@ -695,7 +708,8 @@ def graph_gpu_pcie(request, username, job_id):
             'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
         })
 
-    data['layout'] = {'yaxis': {
+    data['layout'] = {
+        'yaxis': {
             'ticksuffix': ' MB/s'
         }
     }

@@ -1,26 +1,30 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponseNotFound
 from ccldap.models import LdapAllocation, LdapUser
 from .models import AcctStat
-from django.db.models import Q, Avg, Count, Min, Sum
+from django.db.models import Q, Sum
 from django.contrib.auth.decorators import login_required
 import functools
 
+
 def user_or_staff(func):
-   @functools.wraps(func)
-   def wrapper(request, *args, **kwargs):
-       if request.user.username == kwargs['username']:
-           # own info
-           return func(request, *args, **kwargs)
-       elif LdapUser.objects.filter(username=request.user.username).get().employeeType == 'staff':
-           # is staff
-           return func(request, *args, **kwargs)
-       else:
-           return HttpResponseNotFound()
-   return wrapper
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if request.user.username == kwargs['username']:
+            # own info
+            return func(request, *args, **kwargs)
+        elif LdapUser.objects.filter(username=request.user.username).get().employeeType == 'staff':
+            # is staff
+            return func(request, *args, **kwargs)
+        else:
+            return HttpResponseNotFound()
+    return wrapper
+
 
 @login_required
 def index(request):
     return redirect('{}/'.format(request.user.username))
+
 
 @login_required
 @user_or_staff
@@ -39,7 +43,7 @@ def user(request, username):
             'nearline_storage_tb': 0.0,
         }
         for resource in resources:
-            if 'project_storage_tb' in resource or inode_quota in resource:
+            if 'project_storage_tb' in resource or 'inode_quota' in resource:
                 project['name'] = alloc.name
                 if 'project_storage_tb' in resource:
                     project['project_storage_tb'] = resource['project_storage_tb']
@@ -50,15 +54,17 @@ def user(request, username):
                 nearline['name'] = alloc.name
                 nearline['nearline_storage_tb'] = resource['nearline_storage_tb']
 
-        project_user_quota = AcctStat.objects.using('rbh-lustre03')\
-.filter(gid=alloc.name)\
-.exclude(uid='root')\
-.filter(Q(lhsm_status='') | Q(lhsm_status='new'))\
-.annotate(Sum('count'))\
-.annotate(Sum('blocks'))\
-.filter(count__sum__gt=2)\
-.order_by('-blocks__sum')\
-.all()
+        project_user_quota = (
+            AcctStat.objects.using('rbh-lustre03')
+            .filter(gid=alloc.name)
+            .exclude(uid='root')
+            .filter(Q(lhsm_status='') | Q(lhsm_status='new'))
+            .annotate(Sum('count'))
+            .annotate(Sum('blocks'))
+            .filter(count__sum__gt=2)
+            .order_by('-blocks__sum')
+            .all()
+        )
         prepared_user_quota = []
         for item in project_user_quota.iterator():
             prepared_user_quota.append({
@@ -68,11 +74,13 @@ def user(request, username):
             })
         project['users'] = prepared_user_quota
 
-        project_used = AcctStat.objects.using('rbh-lustre03')\
-.all()\
-.filter(gid=alloc.name)\
-.filter(Q(lhsm_status='') | Q(lhsm_status='new'))\
-.aggregate(count=Sum('count'), blocks=Sum('blocks'))
+        project_used = (
+            AcctStat.objects.using('rbh-lustre03')
+            .all()
+            .filter(gid=alloc.name)
+            .filter(Q(lhsm_status='') | Q(lhsm_status='new'))
+            .aggregate(count=Sum('count'), blocks=Sum('blocks'))
+        )
 
         if project_used['count'] is None:
             project['used'] = {
@@ -94,40 +102,48 @@ def user(request, username):
         if nearline['nearline_storage_tb'] == float(0.0):
             continue
 
-        nearline_user_on_disk = AcctStat.objects.using('rbh-lustre03')\
-.filter(gid=alloc.name)\
-.exclude(uid='root')\
-.exclude(lhsm_status='')\
-.exclude(lhsm_status='new')\
-.exclude(lhsm_status='released')\
-.annotate(Sum('count'))\
-.annotate(Sum('blocks'))\
-.filter(count__sum__gt=2)\
-.order_by('-blocks__sum')\
-.all()
+        nearline_user_on_disk = (
+            AcctStat.objects.using('rbh-lustre03')
+            .filter(gid=alloc.name)
+            .exclude(uid='root')
+            .exclude(lhsm_status='')
+            .exclude(lhsm_status='new')
+            .exclude(lhsm_status='released')
+            .annotate(Sum('count'))
+            .annotate(Sum('blocks'))
+            .filter(count__sum__gt=2)
+            .order_by('-blocks__sum')
+            .all()
+        )
 
-        nearline_user_on_tape = AcctStat.objects.using('rbh-lustre03')\
-.filter(gid=alloc.name)\
-.exclude(uid='root')\
-.filter(lhsm_status='released')\
-.annotate(Sum('count'))\
-.annotate(Sum('size'))\
-.filter(size__sum__gt=2)\
-.order_by('-size__sum')\
-.all()
+        nearline_user_on_tape = (
+            AcctStat.objects.using('rbh-lustre03')
+            .filter(gid=alloc.name)
+            .exclude(uid='root')
+            .filter(lhsm_status='released')
+            .annotate(Sum('count'))
+            .annotate(Sum('size'))
+            .filter(size__sum__gt=2)
+            .order_by('-size__sum')
+            .all()
+        )
 
-        nearline_on_disk = AcctStat.objects.using('rbh-lustre03')\
-.all()\
-.filter(gid=alloc.name)\
-.exclude(lhsm_status='')\
-.exclude(lhsm_status='new')\
-.exclude(lhsm_status='released')\
-.aggregate(count=Sum('count'), blocks=Sum('blocks'))
-        nearline_on_tape = AcctStat.objects.using('rbh-lustre03')\
-.all()\
-.filter(gid=alloc.name)\
-.filter(lhsm_status='released')\
-.aggregate(count=Sum('count'), size=Sum('size'))
+        nearline_on_disk = (
+            AcctStat.objects.using('rbh-lustre03')
+            .all()
+            .filter(gid=alloc.name)
+            .exclude(lhsm_status='')
+            .exclude(lhsm_status='new')
+            .exclude(lhsm_status='released')
+            .aggregate(count=Sum('count'), blocks=Sum('blocks'))
+        )
+        nearline_on_tape = (
+            AcctStat.objects.using('rbh-lustre03')
+            .all()
+            .filter(gid=alloc.name)
+            .filter(lhsm_status='released')
+            .aggregate(count=Sum('count'), size=Sum('size'))
+        )
 
         nearline_per_user = {}
         for item in nearline_user_on_disk.iterator():
@@ -168,7 +184,7 @@ def user(request, username):
             nearline_on_disk['blocks'] = 0
         if nearline_on_tape['size'] is None:
             nearline_on_tape['size'] = 0
-        nearline_inodes = nearline_on_disk['count'] + nearline_on_tape['count'] 
+        nearline_inodes = nearline_on_disk['count'] + nearline_on_tape['count']
         nearline_storage = (nearline_on_disk['blocks'] * 512) + (nearline_on_tape['size'])
 
         nearline['used'] = {

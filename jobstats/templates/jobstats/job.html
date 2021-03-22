@@ -77,7 +77,7 @@ Details on job {{job_id}}
 
 <script>
 $.getJSON('graph/cpu.json', function(data){
-  Plotly.newPlot('graph_cpu', data['lines']);
+  Plotly.newPlot('graph_cpu', data['lines'], data['layout']);
 });
 
 $.getJSON('graph/mem.json', function(data){

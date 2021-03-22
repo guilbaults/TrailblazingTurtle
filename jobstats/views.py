@@ -192,6 +192,12 @@ def graph_cpu(request, username, job_id):
             'name': '{} core {}'.format(compute_name, core_num)
         })
 
+    data['layout'] = { 'yaxis':
+        {
+            'range': [0, job.parse_tres_req()['total_cores']],
+        }
+    }
+
     return JsonResponse(data)
 
 @login_required
@@ -483,7 +489,6 @@ def graph_gpu_utilization(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'stackgroup': 'one',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
     data['layout'] = { 'yaxis':
@@ -545,7 +550,6 @@ def graph_gpu_memory_utilization(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'stackgroup': 'one',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
     data['layout'] = { 'yaxis':
@@ -612,7 +616,6 @@ def graph_gpu_power(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'stackgroup': 'one',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
     data['layout'] = { 'yaxis':

@@ -1,29 +1,14 @@
 from django.shortcuts import render, redirect
-from django.http import HttpResponseNotFound
-from ccldap.models import LdapAllocation, LdapUser
+from ccldap.models import LdapAllocation
+from userportal.common import user_or_staff
 from .models import AcctStat
 from django.db.models import Q, Sum
 from django.contrib.auth.decorators import login_required
-import functools
-
-
-def user_or_staff(func):
-    @functools.wraps(func)
-    def wrapper(request, *args, **kwargs):
-        if request.user.username == kwargs['username']:
-            # own info
-            return func(request, *args, **kwargs)
-        elif LdapUser.objects.filter(username=request.user.username).get().employeeType == 'staff':
-            # is staff
-            return func(request, *args, **kwargs)
-        else:
-            return HttpResponseNotFound()
-    return wrapper
 
 
 @login_required
 def index(request):
-    return redirect('{}/'.format(request.user.username))
+    return redirect('{}/'.format(request.user.username.split('@')[0]))
 
 
 @login_required

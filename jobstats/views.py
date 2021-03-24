@@ -2,12 +2,12 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable
 from ccldap.models import LdapUser
+from userportal.common import user_or_staff
 import time
 from django.conf import settings
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
-import functools
 import statistics
 
 
@@ -41,24 +41,9 @@ class Prometheus:
         return return_list
 
 
-def user_or_staff(func):
-    @functools.wraps(func)
-    def wrapper(request, *args, **kwargs):
-        if request.user.username == kwargs['username']:
-            # own info
-            return func(request, *args, **kwargs)
-        elif LdapUser.objects.filter(
-                username=request.user.username).get().employeeType == 'staff':
-            # is staff
-            return func(request, *args, **kwargs)
-        else:
-            return HttpResponseNotFound()
-    return wrapper
-
-
 @login_required
 def index(request):
-    return redirect('{}/'.format(request.user.username))
+    return redirect('{}/'.format(request.user.username.split('@')[0]))
 
 
 @login_required

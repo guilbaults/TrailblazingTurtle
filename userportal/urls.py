@@ -18,6 +18,6 @@ from django.urls import include, path
 
 urlpatterns = [
     path('', include('pages.urls')),
-    path('jobstats/', include('jobstats.urls')),
-    path('quotas/', include('quotas.urls'))
+    path('secure/jobstats/', include('jobstats.urls')),
+    path('secure/quotas/', include('quotas.urls'))
 ]

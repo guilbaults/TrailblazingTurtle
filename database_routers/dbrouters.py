@@ -30,8 +30,7 @@ class DbRouter:
         # by default return None - "undecided"
 
     def allow_migrate(self, db, app_label, model_name=None, **hints):
-        # disallow any migration operation on ldap engine
-        if db == 'default':
-            return True
-        else:
+        if app_label in ['slurm', 'ccldap', 'quotas']:
             return False
+        else:
+            return True

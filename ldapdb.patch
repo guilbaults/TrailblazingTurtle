@@ -1,0 +1,14 @@
+--- env/lib/python3.6/site-packages/ldapdb/backends/ldap/base.py.orig   2021-03-31 14:45:19.622731347 +0000
++++ env/lib/python3.6/site-packages/ldapdb/backends/ldap/base.py        2021-03-31 14:45:45.454651492 +0000
+@@ -365,10 +365,4 @@
+                     if dn is not None:
+                         yield dn, attrs
+
+-                page_control = page_controls[0]
+-                page += 1
+-                if page_control.cookie:
+-                    ldap_control.cookie = page_control.cookie
+-                else:
+-                    # End of pages
+-                    break
++                break

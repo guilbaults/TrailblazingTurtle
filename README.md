@@ -10,25 +10,55 @@ RPMs required for production
 * `gcc`
 * `mariadb-devel`
 
+A file in the python env need to be patched, check the diff in `ldapdb.patch`
 
 Apache virtualhost config
 ```
-WSGIDaemonProcess userportal python-home=/var/www/django-env python-path=/var/www/django/userportal/
-WSGIProcessGroup userportal
-WSGIApplicationGroup %{GLOBAL}
-WSGIScriptAlias / /var/www/django/userportal/userportal/wsgi.py
+<VirtualHost *:443>
+  ServerName userportal.int.ets1.calculquebec.ca
 
-<Directory /var/www/django/userportal/>
+  ## Vhost docroot
+  DocumentRoot "/var/www/userportal"
+  ## Alias declarations for resources outside the DocumentRoot
+  Alias /static "/var/www/userportal-static"
+  Alias /favicon.ico "/var/www/userportal-static/favicon.ico"
+
+  ## Directories, there should at least be a declaration for /var/www/userportal
+
+  <Directory "/var/www/userportal/">
+    AllowOverride None
     Require all granted
-</Directory>
+  </Directory>
 
-<Location />
-  AuthType shibboleth
-  ShibRequestSetting requireSession 1
-  require shib-session
-</Location>
+  <Directory "/var/www/userportal/static">
+    AllowOverride None
+    Require all granted
+  </Directory>
 
-<Location /Shibboleth.sso>
-  SetHandler shib
-</Location>
+  <Location "/secure">
+    Require shib-session
+    AuthType shibboleth
+    ShibRequestSetting requireSession 1
+  </Location>
+
+  <Location "/Shibboleth.sso">
+    Require all granted
+    SetHandler shib
+  </Location>
+
+  ## Logging
+  ErrorLog "/var/log/httpd/userportal.int.ets1.calculquebec.ca_error_ssl.log"
+  ServerSignature Off
+  CustomLog "/var/log/httpd/userportal.int.ets1.calculquebec.ca_access_ssl.log" combined
+
+  ## SSL directives
+  SSLEngine on
+  SSLCertificateFile      "/etc/pki/tls/certs/userportal.int.ets1.calculquebec.ca.crt"
+  SSLCertificateKeyFile   "/etc/pki/tls/private/userportal.int.ets1.calculquebec.ca.key"
+  WSGIApplicationGroup %{GLOBAL}
+  WSGIDaemonProcess userportal python-home=/var/www/userportal-env python-path=/var/www/userportal/
+  WSGIProcessGroup userportal
+  WSGIScriptAlias / "/var/www/userportal/userportal/wsgi.py"
+  ## Shibboleth
+</VirtualHost>
 ```

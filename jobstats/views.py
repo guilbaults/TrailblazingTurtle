@@ -589,7 +589,7 @@ def graph_gpu_memory(request, username, job_id):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' GiB',
-            'range': [0, 12],
+            'range': [0, 16],
         }
     }
     return JsonResponse(data)

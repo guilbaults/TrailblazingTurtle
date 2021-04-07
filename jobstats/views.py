@@ -116,14 +116,14 @@ def job(request, username, job_id):
         return render(request, 'jobstats/job.html', context)
 
     try:
-        query_cpu = 'sum(rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000)'.format(job_id)
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}"}}[2m]) / 1000000000)'.format(job_id)
         stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
         context['cpu_used'] = statistics.mean(stats_cpu[1])
     except ValueError:
         context['cpu_used'] = 'N/A'
 
     try:
-        query_mem = 'sum(slurm_job_memory_max{{exported_job="{}"}}/(1024*1024))'.format(job_id)
+        query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}"}}/(1024*1024))'.format(job_id)
         stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
         context['mem_used'] = max(stats_mem[1])
     except ValueError:
@@ -134,21 +134,21 @@ def job(request, username, job_id):
         gpu_full_power = {'v100': 300}
         gpu_idle_power = {'v100': 55}
         try:
-            query_gpu_util = 'sum(slurm_job_utilization_gpu{{exported_job="{}"}})'.format(job_id)
+            query_gpu_util = 'sum(slurm_job_utilization_gpu{{slurmjobid="{}"}})'.format(job_id)
             stats_gpu_util = prom.query_prometheus(query_gpu_util, job.time_start_dt(), job.time_end_dt())
             context['gpu_used'] = statistics.mean(stats_gpu_util[1])
         except ValueError:
             context['gpu_used'] = 'N/A'
 
         try:
-            query_gpu_mem = 'sum(slurm_job_memory_usage_gpu{{exported_job="{}"}})/(1024*1024*1024)'.format(job_id)
+            query_gpu_mem = 'sum(slurm_job_memory_usage_gpu{{slurmjobid="{}"}})/(1024*1024*1024)'.format(job_id)
             stats_gpu_mem = prom.query_prometheus(query_gpu_mem, job.time_start_dt(), job.time_end_dt())
             context['gpu_mem'] = max(stats_gpu_mem[1]) / gpu_memory[job.gpu_type()] * 100
         except ValueError:
             context['gpu_mem'] = 'N/A'
 
         try:
-            query_gpu_power = 'sum(slurm_job_power_gpu{{exported_job="{}"}})/(1000)'.format(job_id)
+            query_gpu_power = 'sum(slurm_job_power_gpu{{slurmjobid="{}"}})/(1000)'.format(job_id)
             stats_gpu_power = prom.query_prometheus(query_gpu_power, job.time_start_dt(), job.time_end_dt())
             used_power = statistics.mean(stats_gpu_power[1]) - gpu_idle_power[job.gpu_type()]
             context['gpu_power'] = used_power / gpu_full_power[job.gpu_type()] * 100
@@ -168,7 +168,7 @@ def graph_cpu(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'rate(slurm_job_core_usage_total{{exported_job="{}"}}[2m]) / 1000000000'.format(job_id)
+    query = 'rate(slurm_job_core_usage_total{{slurmjobid="{}"}}[2m]) / 1000000000'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = {'lines': []}
@@ -199,7 +199,7 @@ def graph_cpu(request, username, job_id):
 def graph_cpu_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
-    query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[5m])) / 1000000000'.format(username)
+    query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[1m])) / 1000000000'.format(username)
     stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
     data['lines'].append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
@@ -289,7 +289,7 @@ def graph_mem(request, username, job_id):
 
     data = {'lines': []}
 
-    query_alloc = 'slurm_job_memory_limit{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    query_alloc = 'slurm_job_memory_limit{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
     stats_alloc = prom.query_prometheus_multiple(query_alloc, job.time_start_dt(), job.time_end_dt())
     for line in stats_alloc:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -302,7 +302,7 @@ def graph_mem(request, username, job_id):
             'name': 'Allocated {}'.format(compute_name)
         })
 
-    query_max = 'slurm_job_memory_max{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    query_max = 'slurm_job_memory_max{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
     stats_max = prom.query_prometheus_multiple(query_max, job.time_start_dt(), job.time_end_dt())
     for line in stats_max:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -315,7 +315,7 @@ def graph_mem(request, username, job_id):
             'name': 'Max used {}'.format(compute_name)
         })
 
-    query_used = 'slurm_job_memory_usage{{exported_job="{}"}}/(1024*1024*1024)'.format(job_id)
+    query_used = 'slurm_job_memory_usage{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
     stats_used = prom.query_prometheus_multiple(query_used, job.time_start_dt(), job.time_end_dt())
     for line in stats_used:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -475,7 +475,7 @@ def graph_gpu_utilization(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'slurm_job_utilization_gpu{{exported_job="{}"}}'.format(job_id)
+    query = 'slurm_job_utilization_gpu{{slurmjobid="{}"}}'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = {'lines': []}
@@ -537,7 +537,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'slurm_job_utilization_gpu_memory{{exported_job="{}"}}'.format(job_id)
+    query = 'slurm_job_utilization_gpu_memory{{slurmjobid="{}"}}'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = {'lines': []}
@@ -571,7 +571,7 @@ def graph_gpu_memory(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'slurm_job_memory_usage_gpu{{exported_job="{}"}} /(1024*1024*1024)'.format(job_id)
+    query = 'slurm_job_memory_usage_gpu{{slurmjobid="{}"}} /(1024*1024*1024)'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = {'lines': []}
@@ -605,7 +605,7 @@ def graph_gpu_power(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'slurm_job_power_gpu{{exported_job="{}"}}/1000'.format(job_id)
+    query = 'slurm_job_power_gpu{{slurmjobid="{}"}}/1000'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     data = {'lines': []}
@@ -676,7 +676,7 @@ def graph_gpu_pcie(request, username, job_id):
 
     data = {'lines': []}
     # Not sure if this scale is correct, the API report both bytes and kb/s
-    query = 'slurm_job_pcie_gpu{{exported_job="{}"}}/(1024*1024)'.format(job_id)
+    query = 'slurm_job_pcie_gpu{{slurmjobid="{}"}}/(1024*1024)'.format(job_id)
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
     for line in stats:

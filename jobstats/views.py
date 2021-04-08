@@ -11,6 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 import statistics
 
+
 class Prometheus:
     def __init__(self, url):
         self.url = url

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 """
 
 from pathlib import Path
+from django.utils.translation import gettext_lazy as _
 import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -26,7 +27,7 @@ SECRET_KEY = 'changeme'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['portail.beluga.calculquebec.ca', 'localhost']
 
 
 # Application definition
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -88,15 +90,19 @@ WSGI_APPLICATION = 'userportal.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'userportal',
+        'USER': 'userportal',
+        'PASSWORD': 'changeme',
+        'HOST': 'dbhost1',
+        'PORT': '3306',
     },
     'slurm': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'slurmdb',
         'USER': 'slurm-stats',
         'PASSWORD': 'changeme',
-        'HOST': '127.0.0.1',
+        'HOST': '10.75.73.155',
         'PORT': '3306',
     },
     'ldap': {
@@ -110,7 +116,7 @@ DATABASES = {
         'NAME': 'rbh-lustre03',
         'USER': 'rbh-lustre03-ro',
         'PASSWORD': 'changeme',
-        'HOST': '127.0.0.1',
+        'HOST': 'dbhost2',
         'PORT': '3306',
     },
 }
@@ -118,7 +124,7 @@ DATABASES = {
 DATABASE_ROUTERS = ['database_routers.dbrouters.DbRouter']
 
 PROMETHEUS = {
-    'url': 'http://127.0.0.1:9090',
+    'url': 'http://prometheus:9090',
 }
 
 # Password validation
@@ -153,11 +159,20 @@ USE_L10N = True
 
 USE_TZ = True
 
+LANGUAGES = [
+    ('fr', _('French')),
+    ('en', _('English')),
+]
+
+LOCALE_PATHS = (
+    os.path.join(BASE_DIR, 'locale'),
+)
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/userportal-static/'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.RemoteUserBackend',

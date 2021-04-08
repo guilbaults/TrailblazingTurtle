@@ -413,7 +413,7 @@ def graph_lustre_ost(request, username, job_id):
 
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",jobid=~"{}",target=~".*-OST.*"}}[5m])) by (fs) !=0) / (1024*1024)'.format(i, job_id)
+        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",jobid=~"{}",target=~".*-OST.*"}}[5m])) by (fs)) / (1024*1024)'.format(i, job_id)
         stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
 
         for line in stats:
@@ -442,7 +442,7 @@ def graph_lustre_ost_user(request, username):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*"}}[5m])) by (fs) !=0) / (1024*1024)'.format(i, username)
+        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*"}}[5m])) by (fs)) / (1024*1024)'.format(i, username)
         stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
         for line in stats:

@@ -8,8 +8,8 @@ from django.conf import settings
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext as _
 import statistics
-
 
 class Prometheus:
     def __init__(self, url):
@@ -205,7 +205,7 @@ def graph_cpu_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
-        'name': 'Used'
+        'name': _('Used')
     })
 
     query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}"}}))'.format(username)
@@ -214,7 +214,7 @@ def graph_cpu_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Allocated'
+        'name': _('Allocated')
     })
 
     data['layout'] = {
@@ -238,7 +238,7 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
             'y': stats_alloc[1],
             'type': 'scatter',
-            'name': 'Allocated'
+            'name': _('Allocated')
         })
     except ValueError:
         pass
@@ -250,7 +250,7 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
             'y': stats_max[1],
             'type': 'scatter',
-            'name': 'Max used'
+            'name': _('Max used')
         })
     except ValueError:
         pass
@@ -262,7 +262,7 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
             'y': stats_used[1],
             'type': 'scatter',
-            'name': 'Used'
+            'name': _('Used')
         })
     except ValueError:
         pass
@@ -512,7 +512,7 @@ def graph_gpu_utilization_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Allocated'
+        'name': _('Allocated')
     })
 
     query_used = 'sum(slurm_job_utilization_gpu{{user="{}"}})/100'.format(username)
@@ -521,7 +521,7 @@ def graph_gpu_utilization_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
-        'name': 'Used'
+        'name': _('Used')
     })
 
     return JsonResponse(data)
@@ -643,7 +643,7 @@ def graph_gpu_power_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Allocated'
+        'name': _('Allocated')
     })
 
     query_used = 'sum(slurm_job_power_gpu{{user="{}"}})/1000'.format(username)
@@ -652,7 +652,7 @@ def graph_gpu_power_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
-        'name': 'Used'
+        'name': _('Used')
     })
 
     data['layout'] = {

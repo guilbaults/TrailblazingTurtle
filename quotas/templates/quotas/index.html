@@ -1,36 +1,37 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
 {% block title %}
 {% endblock title %}
 
 {% block content %}
-<h2>Quotas</h2>
+<h2>{% translate "Quotas" %}</h2>
 
-<h3>Project</h3>
+<h3>{% translate "Project" %}</h3>
 {% for project in projects %}
 {% if project.name %}
 <h4>{{project.name}}</h4>
 
 {% if project.used.bytes_ratio > 100 %}
-{{project.used.TBs |floatformat:-1}} TBs used on {{project.project_storage_tb}} TBs
+{{project.used.TBs |floatformat:-1}} {% translate "TBs used on" %} {{project.project_storage_tb}} TBs
 <div class="progress">
   <div class="progress-bar bg-danger" role="progressbar" style="width: {{project.used.bytes_ratio}}%;">{{project.used.TBs | floatformat:-1}} TB</div>
 </div>
 {% else %}
-{{project.used.TBs |floatformat:-1}} TBs used on {{project.project_storage_tb}} TBs
+{{project.used.TBs |floatformat:-1}} {% translate "TBs used on" %} {{project.project_storage_tb}} TBs
 <div class="progress">
   <div class="progress-bar" role="progressbar" style="width: {{project.used.bytes_ratio}}%;">{{project.used.TBs | floatformat:-1}} TB</div>
 </div>
 {% endif %}
 
 {% if project.used.inodes_ratio > 100 %}
-{{project.used.inodes | intcomma}} Inodes used on {{project.inode_quota}} M
+{{project.used.inodes | intcomma}} {% translate "Inodes used on" %} {{project.inode_quota}} M
 <div class="progress">
   <div class="progress-bar bg-danger" role="progressbar" style="width: {{project.used.inodes_ratio}}%;">{{project.used.inodes | intcomma}} Inodes</div>
 </div>
 {% else %}
-{{project.used.inodes | intcomma}} Inodes used on {{project.inode_quota}} M
+{{project.used.inodes | intcomma}} {% translate "Inodes used on" %} {{project.inode_quota}} M
 <div class="progress">
   <div class="progress-bar" role="progressbar" style="width: {{project.used.inodes_ratio}}%;">{{project.used.inodes | intcomma}} Inodes</div>
 </div>
@@ -39,9 +40,9 @@
 <table class="table">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">User</th>
-      <th scope="col">Inodes</th>
-      <th scope="col">Bytes</th>
+      <th scope="col">{% translate "User" %}</th>
+      <th scope="col">{% translate "Inodes" %}</th>
+      <th scope="col">{% translate "Bytes" %}</th>
     </tr>
   </thead>
 {% for user in project.users %}
@@ -58,25 +59,25 @@
 {% endif %}
 {% endfor %}
 
-<h3>Nearline</h3>
+<h3>{% translate "Nearline" %}</h3>
 {% for nearline in nearlines %}
 {% if nearline.name %}
 <h4>{{nearline.name}}</h4>
-{{nearline.used.total_bytes | filesizeformat}} TBs used on {{nearline.nearline_storage_tb}} TBs
+{{nearline.used.total_bytes | filesizeformat}} {% translate "TBs used on" %} {{nearline.nearline_storage_tb}} TBs
 
 <div class="progress">
-  <div class="progress-bar" role="progressbar" style="width: {{nearline.used.bytes_ratio_disk}}%">{{nearline.used.bytes_on_disk | filesizeformat}} on disk</div>
-  <div class="progress-bar bg-success" role="progressbar" style="width: {{nearline.used.bytes_ratio_tape}}%">{{nearline.used.bytes_on_tape | filesizeformat}} on tape</div>
+  <div class="progress-bar" role="progressbar" style="width: {{nearline.used.bytes_ratio_disk}}%">{{nearline.used.bytes_on_disk | filesizeformat}} {% translate "on disk" %}</div>
+  <div class="progress-bar bg-success" role="progressbar" style="width: {{nearline.used.bytes_ratio_tape}}%">{{nearline.used.bytes_on_tape | filesizeformat}} {% translate "on tape" %}</div>
 </div>
 
 <table class="table">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">User</th>
-      <th scope="col">Disk inodes</th>
-      <th scope="col">Disk bytes</th>
-      <th scope="col">Tape inodes</th>
-      <th scope="col">Tape bytes</th>
+      <th scope="col">{% translate "User" %}</th>
+      <th scope="col">{% translate "Disk inodes" %}</th>
+      <th scope="col">{% translate "Disk bytes" %}</th>
+      <th scope="col">{% translate "Tape inodes" %}</th>
+      <th scope="col">{% translate "Tape bytes" %}</th>
     </tr>
   </thead>
 {% for user in nearline.users %}

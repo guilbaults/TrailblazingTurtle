@@ -1,11 +1,13 @@
 {% load static %}
+{% load i18n %}
+{% get_current_language as LANGUAGE_CODE %}
 <!doctype html>
-<html lang="en">
+<html lang="{{ LANGUAGE_CODE }}">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <title>{% block title %}My amazing site{% endblock %}</title>
+    <title>{% block title %} - {% translate "User portal" %}{% endblock %}</title>
 
     <!-- Bootstrap core CSS -->
     <link href="{% static '/bootstrap.min.css' %}" rel="stylesheet">
@@ -23,7 +25,7 @@
       <ul class="navbar-nav px-3">
 {% if user.is_authenticated %}
         <li class="nav-item text-nowrap">
-          <a class="nav-link" href="https://idp.computecanada.ca/idp/profile/Logout">Sign out</a>
+          <a class="nav-link" href="https://idp.computecanada.ca/idp/profile/Logout">{% translate "Logout" %}</a>
         </li>
 {% endif %}
       </ul>
@@ -37,19 +39,19 @@
               <li class="nav-item">
                 <a class="nav-link" href="/">
                   <span data-feather="home"></span>
-                  Home<span class="sr-only"></span>
+                  {% translate "Home" %}<span class="sr-only"></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="/secure/jobstats/">
                   <span data-feather="activity"></span>
-                  Job stats<span class="sr-only"></span>
+                  {% translate "Job stats" %}<span class="sr-only"></span>
                 </a>
               </li>
               <li class="nav-item">
                 <a class="nav-link" href="/secure/quotas/">
                   <span data-feather="hard-drive"></span>
-                  Filesystem quotas<span class="sr-only"></span>
+                  {% translate "Filesystem quotas" %}<span class="sr-only"></span>
                 </a>
               </li>
             </ul>
@@ -58,7 +60,7 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-            <h1 class="h2">User portal</h1>
+            <h1 class="h2">{% translate "User portal" %}</h1>
           </div>
 {% block content %}
 {% endblock %}

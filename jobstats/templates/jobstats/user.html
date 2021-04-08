@@ -1,68 +1,69 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
 {% block title %}
-Your jobs
+{% translate "Your jobs" %}
 {% endblock title %}
 
 {% block content %}
-<h1>Your current use</h1>
+<h1>{% translate "Your current use" %}</h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">Type</th>
-      <th scope="col">Allocated</th>
-      <th scope="col">Used</th>
+      <th scope="col">{% translate "Type" %}</th>
+      <th scope="col">{% translate "Allocated" %}</th>
+      <th scope="col">{% translate "Used" %}</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td>CPU cores</td>
+      <td>{% translate "CPU cores" %}</td>
       <td>{{total_cores}}</td>
       <td>{{cpu_used | floatformat:-2}}</td>
     </tr>
     <tr>
-      <td>Memory</td>
+      <td>{% translate "Memory" %}</td>
       <td>{{total_mem}} MiB</td>
       <td>{{mem_used | floatformat:0}} MiB</td>
     </tr>
     <tr>
-      <td>GPUs</td>
+      <td>{% translate "GPUs" %}</td>
       <td>{{total_gpus}}</td>
       <td>{{gpu_used | floatformat:-2}}</td>
     </tr>
   </tbody>
 </table>
 
-<h2>CPU cores</h2>
+<h2>{% translate "CPU cores" %}</h2>
 <div id="graph_cpu"></div>
-<h2>Memory</h2>
+<h2>{% translate "Memory" %}</h2>
 <div id="graph_mem"></div>
 
-<h2>Filesystem</h2>
+<h2>{% translate "Filesystem" %}</h2>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
 {% if gpu_used > 0 %}
-<h2>GPUs</h2>
+<h2>{% translate "GPUs" %}</h2>
 <div id="graph_gpu_utilization"></div>
 <div id="graph_gpu_power"></div>
 {% endif %}
 
-<h1>Your jobs</h1>
+<h1>{% translate "Your jobs" %}</h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">Job ID</th>
-      <th scope="col">Status</th>
-      <th scope="col">Job name</th>
-      <th scope="col">Submit time</th>
-      <th scope="col">Start time</th>
-      <th scope="col">End time</th>
-      <th scope="col">Asked time</th>
-      <th scope="col">Used time</th>
+      <th scope="col">{% translate "Job ID" %}</th>
+      <th scope="col">{% translate "Status" %}</th>
+      <th scope="col">{% translate "Job name" %}</th>
+      <th scope="col">{% translate "Submit time" %}</th>
+      <th scope="col">{% translate "Start time" %}</th>
+      <th scope="col">{% translate "End time" %}</th>
+      <th scope="col">{% translate "Asked time" %}</th>
+      <th scope="col">{% translate "Used time" %}</th>
     </tr>
   </thead>
   <tbody>

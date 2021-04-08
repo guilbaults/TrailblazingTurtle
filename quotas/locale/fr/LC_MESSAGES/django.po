@@ -1,0 +1,75 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2021-04-08 17:38+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+#: quotas/templates/quotas/index.html:9
+msgid "Quotas"
+msgstr ""
+
+#: quotas/templates/quotas/index.html:11
+msgid "Project"
+msgstr ""
+
+#: quotas/templates/quotas/index.html:17 quotas/templates/quotas/index.html:22
+#: quotas/templates/quotas/index.html:66
+msgid "TBs used on"
+msgstr "TBs utilisé sur"
+
+#: quotas/templates/quotas/index.html:29 quotas/templates/quotas/index.html:34
+msgid "Inodes used on"
+msgstr "Fichiers utilisé sur"
+
+#: quotas/templates/quotas/index.html:43 quotas/templates/quotas/index.html:76
+msgid "User"
+msgstr "Utilisateur"
+
+#: quotas/templates/quotas/index.html:44
+msgid "Inodes"
+msgstr "Fichiers"
+
+#: quotas/templates/quotas/index.html:45
+msgid "Bytes"
+msgstr "Octets"
+
+#: quotas/templates/quotas/index.html:62
+msgid "Nearline"
+msgstr ""
+
+#: quotas/templates/quotas/index.html:69
+msgid "on disk"
+msgstr "sur disque"
+
+#: quotas/templates/quotas/index.html:70
+msgid "on tape"
+msgstr "sur ruban"
+
+#: quotas/templates/quotas/index.html:77
+msgid "Disk inodes"
+msgstr "Fichiers sur disque"
+
+#: quotas/templates/quotas/index.html:78
+msgid "Disk bytes"
+msgstr "Octets sur disque"
+
+#: quotas/templates/quotas/index.html:79
+msgid "Tape inodes"
+msgstr "Fichiers sur ruban"
+
+#: quotas/templates/quotas/index.html:80
+msgid "Tape bytes"
+msgstr "Octets sur ruban"

@@ -1,7 +1,7 @@
 import functools
 from django.http import HttpResponseNotFound
 from prometheus_api_client import PrometheusConnect
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 def user_or_staff(func):

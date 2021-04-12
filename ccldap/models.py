@@ -9,6 +9,30 @@ class LdapUser(ldapdb.models.Model):
     """
     # LDAP meta-data
     base_dn = 'ou=People,dc=computecanada,dc=local'
+    object_classes = ['PosixAccount']
+
+    # posixAccount
+    username = fields.CharField(db_column='uid', primary_key=True)
+    uid = fields.IntegerField(db_column='uidNumber', unique=True)
+    full_name = fields.CharField(db_column='cn')
+    group = fields.IntegerField(db_column='gidNumber')
+    home_directory = fields.CharField(db_column='homeDirectory')
+    login_shell = fields.CharField(db_column='loginShell', default='/bin/bash')
+
+    def __str__(self):
+        return self.username
+
+    def __unicode__(self):
+        return self.full_name
+
+
+class LdapCCAccount(ldapdb.models.Model):
+    """
+    Class for representing an LDAP user entry in ccAccount.
+    Pseudo users does not have a ccAccount, only a posixAccount.
+    """
+    # LDAP meta-data
+    base_dn = 'ou=People,dc=computecanada,dc=local'
     object_classes = ['ccAccount']
 
     # posixAccount

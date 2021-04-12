@@ -27,6 +27,11 @@ Details on job {{job_id}}
   </thead>
   <tbody>
     <tr>
+      <td>Time</td>
+      <td>{{job.timelimit_display | default_if_none:'' }}</td>
+      <td>{{job.used_time_display | default_if_none:'' }}</td>
+    </tr>
+    <tr>
       <td>Nodes</td>
       <td>{{tres_req.nb_nodes}}</td>
       <td></td>

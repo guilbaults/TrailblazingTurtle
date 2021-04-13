@@ -21,5 +21,6 @@ urlpatterns = [
     path('', include('pages.urls')),
     path('secure/jobstats/', include('jobstats.urls')),
     path('secure/quotas/', include('quotas.urls')),
+    path('secure/top/', include('top.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
 ]

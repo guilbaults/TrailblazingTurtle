@@ -44,6 +44,7 @@ INSTALLED_APPS = [
     'ccldap',
     'jobstats',
     'quotas',
+    'top',
     'debug_toolbar',
 ]
 

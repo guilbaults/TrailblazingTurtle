@@ -18,6 +18,17 @@ def user_or_staff(func):
     return wrapper
 
 
+def staff(func):
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if request.META['affiliation'] == 'staff@computecanada.ca':
+            # is staff
+            return func(request, *args, **kwargs)
+        else:
+            return HttpResponseNotFound()
+    return wrapper
+
+
 class Prometheus:
     def __init__(self, url):
         self.url = url

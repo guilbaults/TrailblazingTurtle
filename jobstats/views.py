@@ -301,7 +301,8 @@ def graph_mem(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'GiB'
+            'ticksuffix': 'GiB',
+            'range': [0, max(max(map(lambda x: x['y'], stats_alloc)))],
         }
     }
 

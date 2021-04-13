@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Top compute users" %}</h1>
+
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">{% translate "Username" %}</th>
+      <th scope="col">{% translate "Job ID" %}</th>
+      <th scope="col">{% translate "Allocated cores" %}</th>
+      <th scope="col">{% translate "Used cores" %}</th>
+      <th scope="col">{% translate "Allocated memory" %}</th>
+      <th scope="col">{% translate "Max memory" %}</th>
+    </tr>
+  </thead>
+  <tbody>
+{% for job in jobs %}
+    <tr>
+      <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}</a></td>
+      <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
+      <td>{{job.cpu_asked}}</td>
+      <td>{{job.cpu_used | floatformat:-2}}</td>
+      <td>{{job.mem_asked | filesizeformat}}</td>
+      <td>{{job.mem_max | filesizeformat}}</td>
+    </tr>
+{% endfor %}
+
+{% endblock content %}

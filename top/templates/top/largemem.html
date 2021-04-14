@@ -6,13 +6,14 @@
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Top compute users" %}</h1>
+<h1>{% translate "Users on largemem" %}</h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
       <th scope="col">{% translate "Job ID" %}</th>
+      <th scope="col">{% translate "Start time" %}</th>
       <th scope="col">{% translate "Allocated cores" %}</th>
       <th scope="col">{% translate "Used cores" %}</th>
       <th scope="col">{% translate "Allocated memory" %}</th>
@@ -24,6 +25,7 @@
     <tr>
       <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}</a></td>
       <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}}</span></td>
       <td>{{job.cpu_asked}}</td>
       <td>{{job.cpu_used | floatformat:-2}}</td>
       <td>{{job.mem_asked | filesizeformat}}</td>

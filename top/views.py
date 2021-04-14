@@ -55,7 +55,7 @@ def largemem(request):
     week_ago = int(time.time()) - (3600 * 24 * 7)
 
     jobs_running = JobTable.objects.filter(
-        time_start__gt=hour_ago,
+        time_start__lt=hour_ago,
         time_eligible__gt=week_ago,  # until time_start is indexed...
         partition__icontains='large',
         state=1).order_by('-time_submit')
@@ -76,6 +76,7 @@ def largemem(request):
             jobs.append({
                 'user': LdapUser.objects.filter(uid=job.id_user).get().username,
                 'job_id': job.id_job,
+                'time_start_dt': job.time_start_dt,
                 'cpu_asked': stats_cpu_asked[0]['value'][1],
                 'cpu_used': stats_cpu_used[0]['value'][1],
                 'mem_asked': stats_mem_asked[0]['value'][1],

@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'slurm',
     'ccldap',
     'jobstats',
+    'accountstats',
     'quotas',
     'top',
     'debug_toolbar',

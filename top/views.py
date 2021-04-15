@@ -73,6 +73,18 @@ def largemem(request):
             query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid="{}"}})'.format(job.id_job)
             stats_mem_max = prom.query_last(query_mem_max)
 
+            if int(stats_mem_max[0]['value'][1]) < 4 * 1024 * 1024 * 1024:
+                mem_badge = 'danger'
+            elif int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1]) < 0.5:
+                mem_badge = 'warning'
+            else:
+                mem_badge = None
+
+            if float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked[0]['value'][1]) < 0.9:
+                cpu_badge = 'danger'
+            else:
+                cpu_badge = None
+
             jobs.append({
                 'user': LdapUser.objects.filter(uid=job.id_user).get().username,
                 'job_id': job.id_job,
@@ -81,6 +93,8 @@ def largemem(request):
                 'cpu_used': stats_cpu_used[0]['value'][1],
                 'mem_asked': stats_mem_asked[0]['value'][1],
                 'mem_max': stats_mem_max[0]['value'][1],
+                'mem_badge': mem_badge,
+                'cpu_badge': cpu_badge,
             })
         except IndexError:
             jobs.append({

@@ -27,9 +27,21 @@
       <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}}</span></td>
       <td>{{job.cpu_asked}}</td>
-      <td>{{job.cpu_used | floatformat:-2}}</td>
+      <td>
+{% if job.cpu_badge %}
+<span class="badge bg-{{job.cpu_badge}}">{{job.cpu_used | floatformat:-2}}</span>
+{% else %}
+{{job.cpu_used | floatformat:-2}}
+{% endif %}
+      </td>
       <td>{{job.mem_asked | filesizeformat}}</td>
-      <td>{{job.mem_max | filesizeformat}}</td>
+      <td>
+{% if job.mem_badge %}
+<span class="badge bg-{{job.mem_badge}}">{{job.mem_max | filesizeformat}}</span>
+{% else %}
+{{job.mem_max | filesizeformat}}
+{% endif %}
+      </td>
     </tr>
 {% endfor %}
 

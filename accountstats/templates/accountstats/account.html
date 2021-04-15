@@ -52,16 +52,18 @@
 <div id="graph_mem_wasted"></div>
 
 <h2>{% translate "Filesystem" %}</h2>
-todo
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
-{% if gpu_used > 0 %}
 <h2>{% translate "GPUs" %}</h2>
-todo
-<div id="graph_gpu_utilization"></div>
+<h3>{% translate "Allocated GPUs" %}</h3>
+<div id="graph_gpu_allocated"></div>
+<h3>{% translate "Used GPUs" %}</h3>
+<div id="graph_gpu_used"></div>
+<h3>{% translate "Wasted GPUs" %}</h3>
+<div id="graph_gpu_wasted"></div>
+
 <div id="graph_gpu_power"></div>
-{% endif %}
 
 <script>
 $.getJSON('graph/cpu_allocated.json', function(data){
@@ -90,14 +92,21 @@ $.getJSON('graph/lustre_mdt.json', function(data){
 $.getJSON('graph/lustre_ost.json', function(data){
   Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
 });
-{% if gpu_used > 0 %}
-$.getJSON('graph/gpu_utilization.json', function(data){
-  Plotly.newPlot('graph_gpu_utilization', data['lines']);
+
+$.getJSON('graph/gpu_allocated.json', function(data){
+  Plotly.newPlot('graph_gpu_allocated', data['lines']);
 });
+$.getJSON('graph/gpu_used.json', function(data){
+  Plotly.newPlot('graph_gpu_used', data['lines']);
+});
+$.getJSON('graph/gpu_wasted.json', function(data){
+  Plotly.newPlot('graph_gpu_wasted', data['lines']);
+});
+
+
 $.getJSON('graph/gpu_power.json', function(data){
   Plotly.newPlot('graph_gpu_power', data['lines'], data['layout']);
 });
-{% endif %}
 
 </script>
 

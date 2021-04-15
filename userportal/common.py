@@ -2,6 +2,7 @@ import functools
 from django.http import HttpResponseNotFound
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime
+from ccldap.models import LdapAllocation
 
 
 def user_or_staff(func):
@@ -15,6 +16,27 @@ def user_or_staff(func):
             return func(request, *args, **kwargs)
         else:
             return HttpResponseNotFound()
+    return wrapper
+
+
+def account_or_staff(func):
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        username = request.user.username.split('@')[0]
+        alloc_name = kwargs['account'].split('_')[0]
+        if request.META['affiliation'] == 'staff@computecanada.ca':
+            # is staff
+            return func(request, *args, **kwargs)
+
+        try:
+            LdapAllocation.objects.filter(
+                name=alloc_name,
+                members=username,
+                status='active').get()
+        except LdapAllocation.DoesNotExist:
+            # This user is not in the allocation
+            return HttpResponseNotFound()
+        return func(request, *args, **kwargs)
     return wrapper
 
 

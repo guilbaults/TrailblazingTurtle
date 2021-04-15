@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import JsonResponse
-from userportal.common import staff
+from userportal.common import account_or_staff
 from userportal.common import Prometheus
 from django.conf import settings
 from datetime import datetime, timedelta
@@ -13,7 +13,7 @@ def index(request):
 
 
 @login_required
-@staff
+@account_or_staff
 def account(request, account):
     context = {}
     if account.endswith('_gpu'):
@@ -24,7 +24,7 @@ def account(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_cpu_allocated(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -47,7 +47,7 @@ def graph_cpu_allocated(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_cpu_used(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -70,7 +70,7 @@ def graph_cpu_used(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_cpu_wasted(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -93,7 +93,7 @@ def graph_cpu_wasted(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_mem_allocated(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -122,7 +122,7 @@ def graph_mem_allocated(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_mem_used(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -151,7 +151,7 @@ def graph_mem_used(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_mem_wasted(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -180,7 +180,7 @@ def graph_mem_wasted(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_lustre_mdt(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -209,7 +209,7 @@ def graph_lustre_mdt(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_lustre_ost(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
     data = {'lines': []}
@@ -239,7 +239,7 @@ def graph_lustre_ost(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_allocated(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -262,7 +262,7 @@ def graph_gpu_allocated(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_used(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -285,7 +285,7 @@ def graph_gpu_used(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_wasted(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -308,7 +308,7 @@ def graph_gpu_wasted(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_power_allocated(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -336,7 +336,7 @@ def graph_gpu_power_allocated(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_power_used(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 
@@ -364,7 +364,7 @@ def graph_gpu_power_used(request, account):
 
 
 @login_required
-@staff
+@account_or_staff
 def graph_gpu_power_wasted(request, account):
     prom = Prometheus(settings.PROMETHEUS['url'])
 

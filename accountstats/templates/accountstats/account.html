@@ -36,16 +36,20 @@
   </tbody>
 </table>
 
-<h2>{% translate "Allocated CPU cores" %}</h2>
+<h3>{% translate "Allocated CPU cores" %}</h3>
 <div id="graph_cpu_allocated"></div>
-<h2>{% translate "Used CPU cores" %}</h2>
+<h3>{% translate "Used CPU cores" %}</h3>
 <div id="graph_cpu_used"></div>
-<h2>{% translate "Wasted CPU cores" %}</h2>
+<h3>{% translate "Wasted CPU cores" %}</h3>
 <div id="graph_cpu_wasted"></div>
 
 <h2>{% translate "Memory" %}</h2>
-todo
-<div id="graph_mem"></div>
+<h3>{% translate "Allocated memory" %}</h3>
+<div id="graph_mem_allocated"></div>
+<h3>{% translate "Used memory" %}</h3>
+<div id="graph_mem_used"></div>
+<h3>{% translate "Wasted memory" %}</h3>
+<div id="graph_mem_wasted"></div>
 
 <h2>{% translate "Filesystem" %}</h2>
 todo
@@ -70,9 +74,16 @@ $.getJSON('graph/cpu_wasted.json', function(data){
   Plotly.newPlot('graph_cpu_wasted', data['lines'], data['layout']);
 });
 
-$.getJSON('graph/mem.json', function(data){
-  Plotly.newPlot('graph_mem', data['lines'], data['layout']);
+$.getJSON('graph/mem_allocated.json', function(data){
+  Plotly.newPlot('graph_mem_allocated', data['lines'], data['layout']);
 });
+$.getJSON('graph/mem_used.json', function(data){
+  Plotly.newPlot('graph_mem_used', data['lines'], data['layout']);
+});
+$.getJSON('graph/mem_wasted.json', function(data){
+  Plotly.newPlot('graph_mem_wasted', data['lines'], data['layout']);
+});
+
 $.getJSON('graph/lustre_mdt.json', function(data){
   Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);
 });

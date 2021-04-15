@@ -15,5 +15,7 @@ urlpatterns = [
     path('<str:account>/graph/gpu_allocated.json', views.graph_gpu_allocated),
     path('<str:account>/graph/gpu_used.json', views.graph_gpu_used),
     path('<str:account>/graph/gpu_wasted.json', views.graph_gpu_wasted),
-    # path('<str:account>/graph/gpu_power.json', views.graph_gpu_power_account),
+    path('<str:account>/graph/gpu_power_allocated.json', views.graph_gpu_power_allocated),
+    path('<str:account>/graph/gpu_power_used.json', views.graph_gpu_power_used),
+    path('<str:account>/graph/gpu_power_wasted.json', views.graph_gpu_power_wasted),
 ]

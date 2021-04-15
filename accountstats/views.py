@@ -16,6 +16,10 @@ def index(request):
 @staff
 def account(request, account):
     context = {}
+    if account.endswith('_gpu'):
+        context['gpu'] = True
+    else:
+        context['gpu'] = False
     return render(request, 'accountstats/account.html', context)
 
 
@@ -299,5 +303,89 @@ def graph_gpu_wasted(request, account):
             'stackgroup': 'one',
             'name': line['metric']['user']
         })
+
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def graph_gpu_power_allocated(request, account):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    query = 'count(slurm_job_power_gpu{{account="{}"}}) by (user) * 300'.format(account)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+
+    data = {'lines': []}
+    for line in stats:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['user']
+        })
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' W',
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def graph_gpu_power_used(request, account):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    query = 'sum(slurm_job_power_gpu{{account="{}"}}) by (user) / 1000'.format(account)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+
+    data = {'lines': []}
+    for line in stats:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['user']
+        })
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' W',
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def graph_gpu_power_wasted(request, account):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    query = '(count(slurm_job_power_gpu{{account="{}"}}) by (user) * 300) - (sum(slurm_job_power_gpu{{account="{}"}}) by (user) / 1000)'.format(account, account)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+
+    data = {'lines': []}
+    for line in stats:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['user']
+        })
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' W',
+        }
+    }
 
     return JsonResponse(data)

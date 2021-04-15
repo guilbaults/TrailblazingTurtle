@@ -43,8 +43,8 @@ Details on job {{job_id}}
     </tr>
     <tr>
       <td>Memory</td>
-      <td>{{tres_req.total_mem}} MiB</td>
-      <td>{{mem_used | floatformat:0}} MiB</td>
+      <td>{{total_mem | filesizeformat}} </td>
+      <td>{{mem_used | filesizeformat}}</td>
     </tr>
 {% if job.gpu_count > 0 %}
     <tr>

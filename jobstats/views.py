@@ -40,7 +40,7 @@ def user(request, username):
     for job in running_jobs:
         info = job.parse_tres_req()
         context['total_cores'] += info['total_cores']
-        context['total_mem'] += info['total_mem']
+        context['total_mem'] += (info['total_mem'] * 1024 * 1024)
         context['total_gpus'] += job.gpu_count()
 
     prom = Prometheus(settings.PROMETHEUS['url'])
@@ -54,7 +54,7 @@ def user(request, username):
         context['cpu_used'] = 'N/A'
 
     try:
-        query_mem = 'sum(slurm_job_memory_max{{user="{}"}}/(1024*1024))'.format(username)
+        query_mem = 'sum(slurm_job_memory_max{{user="{}"}})'.format(username)
         stats_mem = prom.query_prometheus(query_mem, now - delta, now)
         context['mem_used'] = max(stats_mem[1])
     except ValueError:
@@ -81,6 +81,7 @@ def job(request, username, job_id):
         return HttpResponseNotFound('<h1>Job not found</h1>')
     context['job'] = job
     context['tres_req'] = job.parse_tres_req()
+    context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
 
     prom = Prometheus(settings.PROMETHEUS['url'])
     if job.time_start_dt() is None:
@@ -94,7 +95,7 @@ def job(request, username, job_id):
         context['cpu_used'] = 'N/A'
 
     try:
-        query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}"}}/(1024*1024))'.format(job_id)
+        query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}"}})'.format(job_id)
         stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
         context['mem_used'] = max(stats_mem[1])
     except ValueError:

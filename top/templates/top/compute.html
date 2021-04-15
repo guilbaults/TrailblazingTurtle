@@ -22,10 +22,22 @@
 {% for cpu_user in cpu_users %}
     <tr>
       <td><a href="/secure/jobstats/{{cpu_user.user}}">{{cpu_user.user}}</a></td>
-      <td>{{cpu_user.core_asked}}</td>
-      <td>{{cpu_user.core_used | floatformat:-2}}</td>
+      <td>{{cpu_user.cpu_asked}}</td>
+      <td>
+{% if cpu_user.cpu_badge %}
+<span class="badge bg-{{cpu_user.cpu_badge}}">{{cpu_user.cpu_used | floatformat:-2}}</span>
+{% else %}
+{{cpu_user.cpu_used | floatformat:-2}}
+{% endif %}
+      </td>
       <td>{{cpu_user.mem_asked | filesizeformat}}</td>
-      <td>{{cpu_user.mem_max | filesizeformat}}</td>
+      <td>
+{% if cpu_user.mem_badge %}
+<span class="badge bg-{{cpu_user.mem_badge}}">{{cpu_user.mem_max | filesizeformat}}</span>
+{% else %}
+{{cpu_user.mem_max | filesizeformat}}
+{% endif %}
+      </td>
     </tr>
 {% endfor %}
 

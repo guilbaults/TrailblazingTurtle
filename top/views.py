@@ -25,20 +25,39 @@ def compute(request):
     cpu_users = []
     for line in stats_cpu:
         user = line['metric']['user']
-        query_cpu_user = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(user)
-        stats_cpu_user = prom.query_last(query_cpu_user)
+        stats_cpu_asked = line['value'][1]
+        query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(user)
+        stats_cpu_used = prom.query_last(query_cpu_used)
 
         query_mem_asked = 'sum(slurm_job_memory_limit{{user="{}"}})'.format(user)
         stats_mem_asked = prom.query_last(query_mem_asked)
         query_mem_max = 'sum(slurm_job_memory_max{{user="{}"}})'.format(user)
         stats_mem_max = prom.query_last(query_mem_max)
 
+        mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])
+        if int(stats_mem_asked[0]['value'][1]) < 1 * 1024 * 1024 * 1024:
+            # Asking under 1 GB, ignoring it
+            mem_badge = None
+        elif mem_ratio < 0.1:
+            mem_badge = 'danger'
+        elif mem_ratio < 0.5:
+            mem_badge = 'warning'
+        else:
+            mem_badge = None
+
+        if float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked) < 0.9:
+            cpu_badge = 'danger'
+        else:
+            cpu_badge = None
+
         cpu_users.append({
             'user': user,
-            'core_asked': line['value'][1],
-            'core_used': stats_cpu_user[0]['value'][1],
+            'cpu_asked': stats_cpu_asked,
+            'cpu_used': stats_cpu_used[0]['value'][1],
             'mem_asked': stats_mem_asked[0]['value'][1],
             'mem_max': stats_mem_max[0]['value'][1],
+            'mem_badge': mem_badge,
+            'cpu_badge': cpu_badge,
         })
 
     context['cpu_users'] = cpu_users

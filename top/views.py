@@ -61,6 +61,31 @@ def compute(request):
         })
 
     context['cpu_users'] = cpu_users
+
+    query_gpu = 'topk(100, count(slurm_job_utilization_gpu) by (user))'
+    stats_gpu = prom.query_last(query_gpu)
+    gpu_users = []
+    for line in stats_gpu:
+        user = line['metric']['user']
+        stats_gpu_asked = line['value'][1]
+        query_gpu_util = 'sum(slurm_job_utilization_gpu{{user="{}"}})/100'.format(user)
+        stats_gpu_util = prom.query_last(query_gpu_util)
+        gpu_util = stats_gpu_util[0]['value'][1]
+
+        query_gpu_used = 'count(slurm_job_utilization_gpu{{user="{}"}} !=0)'.format(user)
+        stats_gpu_used = prom.query_last(query_gpu_used)
+        try:
+            gpu_used = stats_gpu_used[0]['value'][1]
+        except IndexError:
+            gpu_used = 0
+
+        gpu_users.append({
+            'user': user,
+            'gpu_asked': stats_gpu_asked,
+            'gpu_util': gpu_util,
+            'gpu_used': gpu_used,
+        })
+    context['gpu_users'] = gpu_users
     return render(request, 'top/compute.html', context)
 
 

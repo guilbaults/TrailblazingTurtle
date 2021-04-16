@@ -8,11 +8,10 @@ from ccldap.models import LdapAllocation
 def user_or_staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.user.username.split('@')[0] == kwargs['username']:
+        if request.META['username'] == kwargs['username']:
             # own info
             return func(request, *args, **kwargs)
-        elif request.META['affiliation'] == 'staff@computecanada.ca':
-            # is staff
+        elif request.META['is_staff']:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseNotFound()
@@ -22,16 +21,14 @@ def user_or_staff(func):
 def account_or_staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        username = request.user.username.split('@')[0]
         alloc_name = kwargs['account'].split('_')[0]
-        if request.META['affiliation'] == 'staff@computecanada.ca':
-            # is staff
+        if request.META['is_staff']:
             return func(request, *args, **kwargs)
 
         try:
             LdapAllocation.objects.filter(
                 name=alloc_name,
-                members=username,
+                members=request.META['username'],
                 status='active').get()
         except LdapAllocation.DoesNotExist:
             # This user is not in the allocation
@@ -43,8 +40,7 @@ def account_or_staff(func):
 def staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['affiliation'] == 'staff@computecanada.ca':
-            # is staff
+        if request.META['is_staff']:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseNotFound()

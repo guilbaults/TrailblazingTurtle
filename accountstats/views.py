@@ -9,8 +9,8 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def index(request):
-    return redirect('{}/'.format(request.user.username.split('@')[0]))
-
+    context = {}
+    return render(request, 'accountstats/index.html', context)
 
 @login_required
 @account_or_staff

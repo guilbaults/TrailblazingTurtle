@@ -1,13 +1,12 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
 {% block title %}
+{% translate "Your accounts" %}
 {% endblock title %}
 
 {% block content %}
-<ul>
-  <li><a href="compute">Computes</a></li>
-  <li><a href="largemem">Large memory nodes</a></li>
-</ul>
+<h1>{% translate "Your accounts" %}</h1>
+TODO
 {% endblock content %}
-

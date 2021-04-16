@@ -55,10 +55,18 @@
     <tr>
       <td><a href="/secure/jobstats/{{gpu_user.user}}">{{gpu_user.user}}</a></td>
       <td>{{gpu_user.gpu_asked}}</td>
-      <td>{{gpu_user.gpu_util | floatformat:-2}}</td>
+      <td>
+{% if gpu_user.gpu_used == 0 %}
+<span class="badge bg-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
+{% else %}
+{{gpu_user.gpu_util | floatformat:-1}}
+{% endif %}
+      </td>
       <td>
 {% if gpu_user.gpu_used == 0 %}
 <span class="badge bg-danger">{{gpu_user.gpu_used}}</span>
+{% elif gpu_user.gpu_used < gpu_user.gpu_asked %}
+<span class="badge bg-warning">{{gpu_user.gpu_used}}</span>
 {% else %}
 {{gpu_user.gpu_used}}
 {% endif %}

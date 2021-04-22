@@ -397,7 +397,6 @@ def graph_lustre_ost(request, username, job_id):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'stackgroup': 'one',
                 'name': '{} {}'.format(i, fs)
             })
 
@@ -426,7 +425,6 @@ def graph_lustre_ost_user(request, username):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'stackgroup': 'one',
                 'name': '{} {}'.format(i, fs)
             })
 

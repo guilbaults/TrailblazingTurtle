@@ -5,4 +5,7 @@ urlpatterns = [
     path('', views.index),
     path('compute/', views.compute),
     path('largemem/', views.largemem),
+    path('lustre/', views.lustre),
+    path('lustre/graph/lustre_mdt/<str:fs>.json', views.graph_lustre_mdt),
+    path('lustre/graph/lustre_ost_<str:rw>/<str:fs>.json', views.graph_lustre_ost),
 ]

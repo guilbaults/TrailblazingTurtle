@@ -1,4 +1,5 @@
 from django.shortcuts import render
+from django.http import HttpResponseNotFound, JsonResponse
 from userportal.common import staff
 from userportal.common import Prometheus
 from slurm.models import JobTable
@@ -6,6 +7,7 @@ from ccldap.models import LdapUser
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import time
+from datetime import datetime, timedelta
 
 
 @login_required
@@ -149,3 +151,76 @@ def largemem(request):
             })
         context['jobs'] = jobs
     return render(request, 'top/largemem.html', context)
+
+
+@login_required
+@staff
+def lustre(request):
+    context = {}
+
+    # Could be autodetected with 'count(lustre_stats_total{component="mdt"}) by (target)'
+    context['lustre_fs_names'] = settings.LUSTRE_FS_NAMES
+    return render(request, 'top/lustre.html', context)
+
+
+@login_required
+@staff
+def graph_lustre_mdt(request, fs):
+    prom = Prometheus(settings.PROMETHEUS['url'])
+
+    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root"}}[5m])))'.format(fs)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    data = {'lines': []}
+    for line in stats:
+        try:
+            user = line['metric']['user']
+        except KeyError:
+            user = 'others'
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': user
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' IOPS'
+        }
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def graph_lustre_ost(request, fs, rw):
+    if rw not in ['read', 'write']:
+        return HttpResponseNotFound
+
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    data = {'lines': []}
+    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*"}}[5m])))/1024/1024'.format(rw, fs)
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+
+    for line in stats:
+        try:
+            user = line['metric']['user']
+        except KeyError:
+            user = 'others'
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': '{} {}'.format(rw, user)
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' MiB/s'
+        }
+    }
+    return JsonResponse(data)

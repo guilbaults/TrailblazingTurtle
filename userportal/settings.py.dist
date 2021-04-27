@@ -185,6 +185,7 @@ LOGIN_REDIRECT_URL = '/'
 
 CLUSTER_NAME = 'beluga'
 STORAGE_NAME = 'ndc-calculquebec'
+LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 
 INTERNAL_IPS = [
     '127.0.0.1',

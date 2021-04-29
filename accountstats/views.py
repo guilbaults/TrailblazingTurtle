@@ -227,7 +227,6 @@ def graph_lustre_ost(request, account):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'stackgroup': 'one',
                 'name': '{} {} {}'.format(i, fs, user)
             })
 

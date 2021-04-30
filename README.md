@@ -1,8 +1,38 @@
 
 # Userportal
+This portal is intended to give users a view of their cluster use, including job level performance.
+
+## UI
+
+Each user can see their current uses on the cluster and a few hours in the past. All stats on the jobs in the past week are available. The users can also see the aggregated use of the users in the same group.
+
+<a href="docs/user.png"><img src="docs/user.png" alt="Stats per user" width="100"/></a>
+<a href="docs/job.png"><img src="docs/job.png" alt="Stats per job" width="100"/></a>
+<a href="docs/accountstats.png"><img src="docs/accountstats.png" alt="Stats per account" width="100"/></a>
+
+### Storage
+Each user can see their current storage allocations and who within their group are using the group quota.
+
+![HSM](docs/quota.png)
+
+Info about HSM state (Tape) are also available.
+
+![HSM](docs/hsm.png)
+
+### Top users
+These pages are only available to staff and are meant to visualize poor cluster utilization:
+
+* Largest compute users, CPU cores and GPUs
+* Jobs on large memory nodes
+* Top users on Lustre
+
+<a href="docs/top_compute.png"><img src="docs/top_compute.png" alt="Top compute user (CPU)" width="100"/></a>
+<a href="docs/top_compute_gpu.png"><img src="docs/top_compute_gpu.png" alt="Top compute user(GPU)" width="100"/></a>
+<a href="docs/top_largemem.png"><img src="docs/top_largemem.png" alt="Jobs on large memory nodes" width="100"/></a>
+<a href="docs/top_lustre.png"><img src="docs/top_lustre.png" alt="Top users on Lustre" width="100"/></a>
 
 ## Design
-Jobs and filesystems metrics are stored in Prometheus, 3 exporters are essentials to get this data.
+Jobs and filesystems metrics are stored in Prometheus, 3 exporters are essentials to get this data:
 
 ### slurm-job-exporter
 [slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture informations from cgroup managed by slurm on each compute nodes. This gather CPU, memory and GPU utilization.

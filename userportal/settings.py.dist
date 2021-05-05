@@ -110,7 +110,7 @@ DATABASES = {
     },
     'ldap': {
         'ENGINE': 'ldapdb.backends.ldap',
-        'NAME': 'ldap://lproxy01',
+        'NAME': 'ldaps://lproxy01',
         'USER': 'cn=ldapuser,dc=computecanada,dc=local',
         'PASSWORD': 'changeme',
     },

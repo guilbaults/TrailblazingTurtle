@@ -31,7 +31,7 @@ def user(request, username):
     job_end = JobTable.objects.filter(
         id_user=uid, time_end__gt=week_ago).order_by('-time_submit')
 
-    context['jobs'] = pending_jobs | job_start | job_end
+    context['jobs'] = (pending_jobs | job_start | job_end)[:10000]
 
     running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
     context['total_cores'] = 0

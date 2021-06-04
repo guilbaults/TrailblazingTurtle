@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['portail.beluga.calculquebec.ca', 'localhost']
 # Application definition
 
 INSTALLED_APPS = [
+    'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -47,6 +48,8 @@ INSTALLED_APPS = [
     'quotas',
     'top',
     'debug_toolbar',
+    'rest_framework',
+    'rest_framework.authtoken',
 ]
 
 MIDDLEWARE = [
@@ -94,8 +97,8 @@ WSGI_APPLICATION = 'userportal.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'userportal',
-        'USER': 'userportal',
+        'NAME': 'userportaldev',
+        'USER': 'userportaldev',
         'PASSWORD': 'changeme',
         'HOST': 'dbhost1',
         'PORT': '3306',
@@ -179,6 +182,7 @@ STATIC_ROOT = '/var/www/userportal-static/'
 
 AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.RemoteUserBackend',
+    'django.contrib.auth.backends.ModelBackend',
 ]
 
 LOGIN_REDIRECT_URL = '/'
@@ -190,3 +194,14 @@ LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAdminUser',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+}

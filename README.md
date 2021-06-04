@@ -50,6 +50,7 @@ The Django portal will also access various MySQL databases to gather some inform
 
 ## Test environment
 To test localy without having to use the SSO:
+
 `REMOTE_USER=sigui4@computecanada.ca affiliation=staff@computecanada.ca python manage.py runserver`
 
 ## Production
@@ -64,6 +65,34 @@ RPMs required for production
 * `mariadb-devel`
 
 A file in the python env need to be patched, check the diff in `ldapdb.patch`
+
+Static files are handled by Apache and need to be collected since python will not serve them:
+
+```
+python manage.py collectstatic
+```
+
+## API
+An API is available to modify resources in the database. A local superuser need to be created:
+
+```
+python manage.py createsuperuser
+```
+
+The token can be created with:
+
+```
+manage.py drf_create_token
+```
+
+## Slurm prolog script
+The script `slurm_prolog/slurm_prolog_userportal.py` can be used to add the submited script to the database of the portal. This should run as a slurm prolog script. This script use the API to push to job script and will need a user/token.
+
+## Upgrades
+When SQL models are modified, the automated migration script need to run once:
+```
+python manage.py migrate
+```
 
 ### Apache virtualhost config
 

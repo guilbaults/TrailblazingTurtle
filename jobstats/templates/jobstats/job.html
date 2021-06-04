@@ -1,8 +1,9 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
 {% block title %}
-Details on job {{job_id}}
+{% translate "Details on job" %} {{job_id}}
 {% endblock title %}
 
 {% block content %}
@@ -16,13 +17,33 @@ Details on job {{job_id}}
 
   {% endif%}
 </div>
+
+{% if job_script %}
+<p>
+  <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_script" aria-expanded="false" aria-controls="collapse_job_script">
+    {% translate "Show submited job script" %}
+  </button>
+</p>
+<div class="collapse" id="collapse_job_script">
+  <div class="card card-body">
+{{job_script.submit_script | linebreaks}}
+  </div>
+</div>
+{% else %}
+<p>
+  <button class="btn btn-secondary" type="button">
+    {% translate "Submited job script is not available" %}
+  </button>
+</p>
+{% endif %}
+
 <h2>Resources</h2>
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">Type</th>
-      <th scope="col">Allocated</th>
-      <th scope="col">Used</th>
+      <th scope="col">{% translate "Type" %}</th>
+      <th scope="col">{% translate "Allocated" %}</th>
+      <th scope="col">{% translate "Used" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -32,51 +53,51 @@ Details on job {{job_id}}
       <td>{{job.used_time_display | default_if_none:'' }}</td>
     </tr>
     <tr>
-      <td>Nodes</td>
+      <td>{% translate "Nodes" %}</td>
       <td>{{tres_req.nb_nodes}}</td>
       <td></td>
     </tr>
     <tr>
-      <td>CPU cores</td>
+      <td>{% translate "CPU cores" %}</td>
       <td>{{tres_req.total_cores}}</td>
       <td>{{cpu_used | floatformat:-2}}</td>
     </tr>
     <tr>
-      <td>Memory</td>
+      <td>{% translate "Memory" %}</td>
       <td>{{total_mem | filesizeformat}} </td>
       <td>{{mem_used | filesizeformat}}</td>
     </tr>
 {% if job.gpu_count > 0 %}
     <tr>
-      <td>GPUs per node</td>
+      <td>{% translate "GPUs per node" %}</td>
       <td>{{job.gpu_count}}x {{job.gpu_type}}</td>
-      <td>Cycles: {{gpu_used | floatformat:-2 }}%, Memory: {{gpu_mem | floatformat:-2 }}%, Power: {{gpu_power | floatformat:-2 }}%</td>
+      <td>{% translate "Cycles" %}: {{gpu_used | floatformat:-2 }}%, {% translate "Memory" %}: {{gpu_mem | floatformat:-2 }}%, {% translate "Power" %}: {{gpu_power | floatformat:-2 }}%</td>
     </tr>
 {% endif %}
   </tbody>
 </table>
 
 {% if job.time_start_dt %}
-<h2>Resources used (details)</h2>
-<h3>CPU</h3>
+<h2>{% translate "Resources used (details)" %}</h2>
+<h3>{% translate "CPU" %}</h3>
 <div id="graph_cpu"></div>
-<h3>Memory</h3>
+<h3>{% translate "Memory" %}</h3>
 <div id="graph_mem"></div>
-<h3>Filesystem</h3>
+<h3>{% translate "Filesystem" %}</h3>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
 {% if job.gpu_count > 0 %}
-<h3>GPU</h3>
-<h4>GPU Compute cycle used</h4>
+<h3>{% translate "GPU" %}</h3>
+<h4>{% translate "GPU Compute cycle used" %}</h4>
 <div id="graph_gpu_utilization"></div>
-<h4>GPU Memory access cycle used</h4>
+<h4>{% translate "GPU Memory access cycle used" %}</h4>
 <div id="graph_gpu_memory_utilization"></div>
-<h4>GPU Memory used</h4>
+<h4>{% translate "GPU Memory used" %}</h4>
 <div id="graph_gpu_memory"></div>
-<h4>GPU Power</h4>
+<h4>{% translate "GPU Power" %}</h4>
 <div id="graph_gpu_power"></div>
-<h4>GPU PCIe bandwidth</h4>
+<h4>{% translate "GPU PCIe bandwidth" %}</h4>
 <div id="graph_gpu_pcie"></div>
 {% endif %}
 

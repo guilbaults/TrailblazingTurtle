@@ -9,6 +9,10 @@ from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
+from rest_framework import viewsets
+from rest_framework import permissions
+from jobstats.models import JobScript
+from jobstats.serializers import JobScriptSerializer
 import statistics
 
 
@@ -82,6 +86,11 @@ def job(request, username, job_id):
     context['job'] = job
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
+
+    try:
+        context['job_script'] = JobScript.objects.filter(id_job=job_id).get()
+    except JobScript.DoesNotExist:
+        context['job_script'] = None
 
     prom = Prometheus(settings.PROMETHEUS['url'])
     if job.time_start_dt() is None:
@@ -670,3 +679,9 @@ def graph_gpu_pcie(request, username, job_id):
         }
     }
     return JsonResponse(data)
+
+
+class JobScriptViewSet(viewsets.ModelViewSet):
+    queryset = JobScript.objects.all().order_by('-last_modified')
+    serializer_class = JobScriptSerializer
+    permission_classes = [permissions.IsAdminUser]

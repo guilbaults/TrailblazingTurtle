@@ -15,7 +15,13 @@ Including another URLconf
 """
 
 from django.urls import include, path
+from django.contrib import admin
 import debug_toolbar
+from rest_framework import routers
+from jobstats.views import JobScriptViewSet
+
+router = routers.DefaultRouter()
+router.register(r'jobscripts', JobScriptViewSet)
 
 urlpatterns = [
     path('', include('pages.urls')),
@@ -24,4 +30,7 @@ urlpatterns = [
     path('secure/quotas/', include('quotas.urls')),
     path('secure/top/', include('top.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
+    path('admin/', admin.site.urls),
+    path('api/', include((router.urls, 'app_name'))),
+    path('api-auth/', include('rest_framework.urls')),
 ]

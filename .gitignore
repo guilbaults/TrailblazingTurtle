@@ -139,5 +139,6 @@ cython_debug/
 
 *.swp
 userportal/settings.py
+slurm_prolog/api_config.ini
 
 .DS_Store

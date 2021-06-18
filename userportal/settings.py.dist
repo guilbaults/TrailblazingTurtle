@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'accountstats',
     'quotas',
     'top',
+    'usersummary',
     'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',

@@ -29,6 +29,7 @@ urlpatterns = [
     path('secure/accountstats/', include('accountstats.urls')),
     path('secure/quotas/', include('quotas.urls')),
     path('secure/top/', include('top.urls')),
+    path('secure/usersummary/', include('usersummary.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
     path('api/', include((router.urls, 'app_name'))),

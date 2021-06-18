@@ -7,38 +7,17 @@
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your current use" %}</h1>
+<h1>{% translate "Your filesystem quotas" %} <a href="/secure/jobstats/{{username}}">({% translate "More details" %})</a></h1>
+<h3>{% translate "Home" %}</h3>
+<h3>{% translate "Scratch" %}</h3>
+<h3>{% translate "Projects" %}</h3>
+{% for project in projects %}
+{% if project.name %}
+<h4>{{project.name}}</h4>
+{% endif %}
+{% endfor %}
 
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">{% translate "Type" %}</th>
-      <th scope="col">{% translate "Allocated" %}</th>
-      <th scope="col">{% translate "Used" %}</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>{% translate "CPU cores" %}</td>
-      <td>{{total_cores}}</td>
-      <td>{{cpu_used | floatformat:-2}}</td>
-    </tr>
-    <tr>
-      <td>{% translate "Memory" %}</td>
-      <td>{{total_mem | filesizeformat}}</td>
-      <td>{{mem_used | filesizeformat}}</td>
-    </tr>
-    <tr>
-      <td>{% translate "GPUs" %}</td>
-      <td>{{total_gpus}}</td>
-      <td>{{gpu_used | floatformat:-2}}</td>
-    </tr>
-  </tbody>
-</table>
-
-<h1>{% translate "Your filesystem quotas" %}</h1>
-
-<h1>{% translate "Your latest jobs" %}</h1>
+<h1>{% translate "Your latest 10 jobs" %} <a href="/secure/quotas/{{username}}">({% translate "More details" %})</a></h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">

@@ -33,4 +33,4 @@ def user(request, username):
         nearline['used'] = nearline_used(alloc['name'], alloc)
         context['nearlines'].append(nearline)
 
-    return render(request, 'quotas/index.html', context)
+    return render(request, 'quotas/user.html', context)

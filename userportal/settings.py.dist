@@ -188,7 +188,7 @@ AUTHENTICATION_BACKENDS = [
 LOGIN_REDIRECT_URL = '/'
 
 CLUSTER_NAME = 'beluga'
-STORAGE_NAME = 'ndc-calculquebec'
+STORAGE_NAME = 'beluga-storage'
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 
 INTERNAL_IPS = [

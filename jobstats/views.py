@@ -681,6 +681,199 @@ def graph_gpu_pcie(request, username, job_id):
     return JsonResponse(data)
 
 
+@login_required
+@user_or_staff
+def graph_infiniband_bdw(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+    nodes = job.nodes()
+    instances = '|'.join([s + ':9100' for s in nodes])
+
+    data = {'lines': []}
+
+    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{}",job=~"node"}}[2m]) * 8 / (1000*1000*1000)'.format(instances)
+    stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt())
+    for line in stats_received:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Received {}'.format(compute_name)
+        })
+
+    query_transmitted = 'rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{}",job=~"node"}}[2m]) * 8 /(1000*1000*1000)'.format(instances)
+    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, job.time_start_dt(), job.time_end_dt())
+    for line in stats_transmitted:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Transmitted {}'.format(compute_name)
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' Gb/s'
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_disk_iops(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+    nodes = job.nodes()
+    instances = '|'.join([s + ':9100' for s in nodes])
+
+    data = {'lines': []}
+
+    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme0n1|sda",job=~"node"}}[2m])'.format(instances)
+    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt())
+    for line in stats_read:
+        compute_name = "{} {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['device'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Read {}'.format(compute_name)
+        })
+
+    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme0n1|sda",job=~"node"}}[2m])'.format(instances)
+    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt())
+    for line in stats_write:
+        compute_name = "{} {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['device'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Write {}'.format(compute_name)
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' IOPS'
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_disk_bdw(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+    nodes = job.nodes()
+    instances = '|'.join([s + ':9100' for s in nodes])
+
+    data = {'lines': []}
+
+    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{}",device=~"nvme0n1|sda",job=~"node"}}[2m])'.format(instances)
+    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt())
+    for line in stats_read:
+        compute_name = "{} {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['device'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Read {}'.format(compute_name)
+        })
+
+    query_write = 'rate(node_disk_written_bytes_total{{instance=~"{}",device=~"nvme0n1|sda",job=~"node"}}[2m])'.format(instances)
+    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt())
+    for line in stats_write:
+        compute_name = "{} {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['device'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Write {}'.format(compute_name)
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': 'B/s'
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_disk_used(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    prom = Prometheus(settings.PROMETHEUS['url'])
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+    nodes = job.nodes()
+    instances = '|'.join([s + ':9100' for s in nodes])
+
+    data = {'lines': []}
+
+    query_disk = '(node_filesystem_size_bytes{{instance=~"{}",job=~"node",mountpoint="/localscratch"}} - node_filesystem_avail_bytes{{instance=~"{}",job=~"node",mountpoint="/localscratch"}})/(1000*1000*1000)'.format(instances, instances)
+    stats_disk = prom.query_prometheus_multiple(query_disk, job.time_start_dt(), job.time_end_dt())
+    for line in stats_disk:
+        compute_name = "{} {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['device'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': compute_name
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' GB'
+        }
+    }
+
+    return JsonResponse(data)
+
+
 class JobScriptViewSet(viewsets.ModelViewSet):
     queryset = JobScript.objects.all().order_by('-last_modified')
     serializer_class = JobScriptSerializer

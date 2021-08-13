@@ -101,6 +101,17 @@
 <div id="graph_gpu_pcie"></div>
 {% endif %}
 
+<h2>{% translate "Whole node resources" %}</h2>
+<p>Those stats are not accurate when the node is shared with multiple users</p>
+<h3>{% translate "Infiniband" %}</h3>
+<div id="graph_infiniband_bdw"></div>
+<h3>{% translate "Localscratch IOPS" %}</h3>
+<div id="graph_disk_iops"></div>
+<h3>{% translate "Localscratch bandwidth" %}</h3>
+<div id="graph_disk_bdw"></div>
+<h3>{% translate "Localscratch space used" %}</h3>
+<div id="graph_disk_used"></div>
+
 <script>
 $.getJSON('graph/cpu.json', function(data){
   Plotly.newPlot('graph_cpu', data['lines'], data['layout']);
@@ -136,6 +147,20 @@ $.getJSON('graph/gpu_pcie.json', function(data){
 });
 
 {% endif %}
+
+$.getJSON('graph/infiniband_bdw.json', function(data){
+  Plotly.newPlot('graph_infiniband_bdw', data['lines'], data['layout']);
+});
+
+$.getJSON('graph/disk_iops.json', function(data){
+  Plotly.newPlot('graph_disk_iops', data['lines'], data['layout']);
+});
+$.getJSON('graph/disk_bdw.json', function(data){
+  Plotly.newPlot('graph_disk_bdw', data['lines'], data['layout']);
+});
+$.getJSON('graph/disk_used.json', function(data){
+  Plotly.newPlot('graph_disk_used', data['lines'], data['layout']);
+});
 
 {% endif %}
 

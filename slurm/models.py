@@ -10,6 +10,32 @@ import datetime
 from django.conf import settings
 
 
+# from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
+def expand_nodelist(nlist: str, as_list=False) -> str:
+    """ translate a nodelist like 'nid[02516-02575,02580-02635,02836]' into a
+        list of explicitly-named nodes, eg 'nid02516 nid02517 ...'
+    """
+    nodes = []
+    if nlist.count('[') != nlist.count(']'):
+        raise Exception("Incomplete nodelist: {}".format(nlist))
+    prefix, sep0, nl = nlist.partition('[')
+    if sep0:
+        for component in nl.rstrip(']').split(','):
+            first, sep1, last = component.partition('-')
+            width = '0{:d}'.format(len(first))
+            if sep1:
+                nodes += ['{0:s}{2:{1:s}d}'.format(prefix, width, i)
+                          for i in range(int(first), int(last) + 1)]
+            else:
+                nodes += ['{0:s}{2:{1:s}d}'.format(prefix, width, int(first))]
+    else:
+        nodes += [prefix]
+    if as_list:
+        return nodes
+    else:
+        return ' '.join(nodes)
+
+
 class AcctCoordTable(models.Model):
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
@@ -291,6 +317,9 @@ class JobTable(models.Model):
         if 'total_mem' not in info:
             info['total_mem'] = self.mem_req
         return info
+
+    def nodes(self):
+        return expand_nodelist(self.nodelist, as_list=True)
 
 
 class LastRanTable(models.Model):

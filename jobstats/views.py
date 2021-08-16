@@ -270,49 +270,39 @@ def graph_mem(request, username, job_id):
 
     data = {'lines': []}
 
-    query_alloc = 'slurm_job_memory_limit{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, job.time_start_dt(), job.time_end_dt())
-    for line in stats_alloc:
-        compute_name = line['metric']['instance'].split(':')[0]
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data['lines'].append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Allocated {}'.format(compute_name)
-        })
+    stat_types = [
+        ('slurm_job_memory_limit', _('Allocated')),
+        ('slurm_job_memory_max', _('Max used')),
+        ('slurm_job_memory_usage', _('Used')),
+        ('slurm_job_memory_cache', _('Cache')),
+        ('slurm_job_memory_rss', _('RSS')),
+        ('slurm_job_memory_rss_huge', _('RSS Huge')),
+        ('slurm_job_memory_mapped_file', _('Memory mapped file')),
+        ('slurm_job_memory_active_file', _('Active file')),
+        ('slurm_job_memory_inactive_file', _('Inactive file')),
+        ('slurm_job_memory_unevictable', _('Unevictable')),
+    ]
 
-    query_max = 'slurm_job_memory_max{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
-    stats_max = prom.query_prometheus_multiple(query_max, job.time_start_dt(), job.time_end_dt())
-    for line in stats_max:
-        compute_name = line['metric']['instance'].split(':')[0]
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data['lines'].append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Max used {}'.format(compute_name)
-        })
-
-    query_used = 'slurm_job_memory_usage{{slurmjobid="{}"}}/(1024*1024*1024)'.format(job_id)
-    stats_used = prom.query_prometheus_multiple(query_used, job.time_start_dt(), job.time_end_dt())
-    for line in stats_used:
-        compute_name = line['metric']['instance'].split(':')[0]
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data['lines'].append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Used {}'.format(compute_name)
-        })
+    for stat in stat_types:
+        query = '{}{{slurmjobid="{}"}}/(1024*1024*1024)'.format(stat[0], job_id)
+        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+        for line in stats:
+            compute_name = line['metric']['instance'].split(':')[0]
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            y = line['y']
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(stat[1], compute_name)
+            })
+        if stat[0] == 'slurm_job_memory_limit':
+            maximum = max(max(map(lambda x: x['y'], stats)))
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
-            'range': [0, max(max(map(lambda x: x['y'], stats_alloc)))],
+            'range': [0, maximum],
         }
     }
 

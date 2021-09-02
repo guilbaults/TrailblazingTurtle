@@ -37,6 +37,18 @@ def account_or_staff(func):
     return wrapper
 
 
+def openstackproject_or_staff(func):
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if request.META['is_staff']:
+            return func(request, *args, **kwargs)
+        else:
+            # TODO search in LDAP
+            return HttpResponseNotFound()
+        return func(request, *args, **kwargs)
+    return wrapper
+
+
 def staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):

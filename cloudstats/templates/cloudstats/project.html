@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}
+{% translate "Your cloud use" %}
+{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Your cloud use" %}</h1>
+
+<h3>{% translate "CPU cores" %}</h3>
+<div id="graph_cpu"></div>
+
+<h3>{% translate "Memory" %}</h3>
+<div id="graph_memory"></div>
+
+<h3>{% translate "Disk bandwidth" %}</h3>
+<div id="graph_disk_bandwidth"></div>
+
+<h3>{% translate "Disk IOPS" %}</h3>
+<div id="graph_disk_iops"></div>
+
+<h3>{% translate "Network bandwidth" %}</h3>
+<div id="graph_network_bandwidth"></div>
+
+<script>
+$.getJSON('graph/cpu.json', function(data){
+  Plotly.newPlot('graph_cpu', data['lines'], data['layout']);
+});
+$.getJSON('graph/memory.json', function(data){
+  Plotly.newPlot('graph_memory', data['lines'], data['layout']);
+});
+$.getJSON('graph/disk_bandwidth.json', function(data){
+  Plotly.newPlot('graph_disk_bandwidth', data['lines'], data['layout']);
+});
+$.getJSON('graph/disk_iops.json', function(data){
+  Plotly.newPlot('graph_disk_iops', data['lines'], data['layout']);
+});
+$.getJSON('graph/network_bandwidth.json', function(data){
+  Plotly.newPlot('graph_network_bandwidth', data['lines'], data['layout']);
+});
+
+</script>
+
+{% endblock content %}

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'ccldap',
     'jobstats',
     'accountstats',
+    'cloudstats',
     'quotas',
     'top',
     'debug_toolbar',

@@ -85,30 +85,20 @@ def project_graph_memory(request, project):
             'x': x,
             'y': y,
             'type': 'scatter',
+            'stackgroup': 'one',
             'name': 'Used {}'.format(name)
         })
 
-    query_size = 'libvirtd_domain_balloon_current{{project_name="{}"}}/1024/1024'.format(project)
-    stats_size = prom.query_prometheus_multiple(query_size, datetime.now() - timedelta(days=7), datetime.now())
-
-    # Only show UUID if required
-    instance_names = []
-    for line in stats_size:
-        instance_names.append(line['metric']['instance_name'])
-    instance_counter = dict(Counter(instance_names))
-
-    for line in stats_size:
+    query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{}"}})/1024/1024'.format(project)
+    stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
+    for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if instance_counter[line['metric']['instance_name']] > 1:
-            name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
-        else:
-            name = line['metric']['instance_name']
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Size {}'.format(name)
+            'name': 'Running'
         })
 
     data['layout'] = {

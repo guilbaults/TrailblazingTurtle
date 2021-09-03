@@ -3,32 +3,11 @@
 {% load i18n %}
 
 {% block title %}
-{% translate "Your cloud use" %}
+{% translate "Your instance use" %}
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your cloud use" %}</h1>
-
-<h3>{% translate "Your instances" %}</h3>
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">{% translate "Name" %}</th>
-      <th scope="col">{% translate "Flavor" %}</th>
-      <th scope="col">{% translate "UUID" %}</th>
-    </tr>
-  </thead>
-  <tbody>
-{% for instance in instances %}
-    <tr>
-      <td><a href="{{ instance.uuid }}">{{ instance.instance_name }}</a></td>
-      <td>{{ instance.instance_type }}</td>
-      <td>{{ instance.uuid }}</td>
-    </tr>
-{% endfor %}
-  </tbody>
-</table>
-
+<h1>{% translate "Your instance use" %}</h1>
 
 <h3>{% translate "CPU cores" %}</h3>
 <div id="graph_cpu"></div>

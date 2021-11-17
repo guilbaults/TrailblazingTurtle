@@ -29,10 +29,6 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['portail.beluga.calculquebec.ca', 'localhost']
 
-# ignore ssl for now, everything is on the cluster
-import urllib3
-urllib3.disable_warnings()
-
 # Application definition
 
 INSTALLED_APPS = [

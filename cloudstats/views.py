@@ -12,7 +12,7 @@ from collections import Counter
 @openstackproject_or_staff
 def project(request, project):
     context = {}
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     query_instances = 'libvirtd_domain_domain_state{{project_name="{}"}}'.format(project)
     stats_instances = prom.query_prometheus_multiple(query_instances, datetime.now() - timedelta(days=7), datetime.now())
 
@@ -34,7 +34,7 @@ def instance(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_cpu(request, project):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     query_used = 'sum(rate(libvirtd_domain_vcpu_time{{project_name="{}"}}[1m])) by (uuid,instance_name) / 1000000000'.format(project)
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
@@ -79,7 +79,7 @@ def project_graph_cpu(request, project):
 @login_required
 @openstackproject_or_staff
 def instance_graph_cpu(request, project, uuid):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     query_used = 'rate(libvirtd_domain_vcpu_time{{project_name="{}", uuid="{}"}}[1m]) / 1000000000'.format(project, uuid)
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
@@ -114,7 +114,7 @@ def instance_graph_cpu(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_memory(request, project):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     query_used = '(libvirtd_domain_balloon_current{{project_name="{}"}} - libvirtd_domain_balloon_usable{{project_name="{}"}})/1024/1024'.format(project, project)
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
@@ -164,7 +164,7 @@ def project_graph_memory(request, project):
 @login_required
 @openstackproject_or_staff
 def instance_graph_memory(request, project, uuid):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     query_used = '(libvirtd_domain_balloon_current{{project_name="{}", uuid="{}"}} - libvirtd_domain_balloon_usable{{project_name="{}", uuid="{}"}})/1024/1024'.format(project, uuid, project, uuid)
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
@@ -203,7 +203,7 @@ def instance_graph_memory(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_disk_bandwidth(request, project):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['read', 'write']:
@@ -242,7 +242,7 @@ def project_graph_disk_bandwidth(request, project):
 @login_required
 @openstackproject_or_staff
 def instance_graph_disk_bandwidth(request, project, uuid):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['read', 'write']:
@@ -271,7 +271,7 @@ def instance_graph_disk_bandwidth(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_disk_iops(request, project):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['read', 'write']:
@@ -304,7 +304,7 @@ def project_graph_disk_iops(request, project):
 @login_required
 @openstackproject_or_staff
 def instance_graph_disk_iops(request, project, uuid):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['read', 'write']:
@@ -327,7 +327,7 @@ def instance_graph_disk_iops(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_network_bandwidth(request, project):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['rx', 'tx']:
@@ -366,7 +366,7 @@ def project_graph_network_bandwidth(request, project):
 @login_required
 @openstackproject_or_staff
 def instance_graph_network_bandwidth(request, project, uuid):
-    prom = Prometheus(settings.PROMETHEUS['url'])
+    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     for direction in ['rx', 'tx']:

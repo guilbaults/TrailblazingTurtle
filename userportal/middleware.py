@@ -8,7 +8,7 @@ class ControlledUserMiddleware:
         # the view (and later middleware) are called.
         if 'REMOTE_USER' in request.META:
             # Behind shib
-            if request.META['affiliation'] == 'staff@computecanada.ca':
+            if 'staff@computecanada.ca' in request.META['affiliation']:
                 request.META['is_staff'] = True
             else:
                 request.META['is_staff'] = False

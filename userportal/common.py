@@ -63,7 +63,6 @@ class Prometheus:
     def __init__(self, config):
         self.prom = PrometheusConnect(
             url=config['url'],
-            disable_ssl=True,
             headers=config['headers'])
 
     def query_prometheus(self, query, duration, step):

@@ -15,6 +15,9 @@ from jobstats.models import JobScript
 from jobstats.serializers import JobScriptSerializer
 import statistics
 
+GPU_MEMORY = {'v100': 16, 'NVIDIA A100-SXM4-40GB': 40}
+GPU_FULL_POWER = {'v100': 300, 'NVIDIA A100-SXM4-40GB': 400}
+GPU_IDLE_POWER = {'v100': 55, 'NVIDIA A100-SXM4-40GB': 55}
 
 @login_required
 def index(request):
@@ -111,9 +114,6 @@ def job(request, username, job_id):
         context['mem_used'] = 'N/A'
 
     if job.gpu_count() > 0:
-        gpu_memory = {'v100': 16}
-        gpu_full_power = {'v100': 300}
-        gpu_idle_power = {'v100': 55}
         try:
             query_gpu_util = 'sum(slurm_job_utilization_gpu{{slurmjobid="{}"}})'.format(job_id)
             stats_gpu_util = prom.query_prometheus(query_gpu_util, job.time_start_dt(), job.time_end_dt())
@@ -124,15 +124,15 @@ def job(request, username, job_id):
         try:
             query_gpu_mem = 'sum(slurm_job_memory_usage_gpu{{slurmjobid="{}"}})/(1024*1024*1024)'.format(job_id)
             stats_gpu_mem = prom.query_prometheus(query_gpu_mem, job.time_start_dt(), job.time_end_dt())
-            context['gpu_mem'] = max(stats_gpu_mem[1]) / gpu_memory[job.gpu_type()] * 100
+            context['gpu_mem'] = max(stats_gpu_mem[1]) / GPU_MEMORY[job.gpu_type()] * 100
         except ValueError:
             context['gpu_mem'] = 'N/A'
 
         try:
             query_gpu_power = 'sum(slurm_job_power_gpu{{slurmjobid="{}"}})/(1000)'.format(job_id)
             stats_gpu_power = prom.query_prometheus(query_gpu_power, job.time_start_dt(), job.time_end_dt())
-            used_power = statistics.mean(stats_gpu_power[1]) - gpu_idle_power[job.gpu_type()]
-            context['gpu_power'] = used_power / gpu_full_power[job.gpu_type()] * 100
+            used_power = statistics.mean(stats_gpu_power[1]) - GPU_IDLE_POWER[job.gpu_type()]
+            context['gpu_power'] = used_power / GPU_FULL_POWER[job.gpu_type()] * 100
         except ValueError:
             context['gpu_power'] = 'N/A'
 
@@ -547,6 +547,7 @@ def graph_gpu_memory(request, username, job_id):
     data = {'lines': []}
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
+        gpu_type = line['metric']['gpu_type']
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
@@ -559,7 +560,7 @@ def graph_gpu_memory(request, username, job_id):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' GiB',
-            'range': [0, 16],
+            'range': [0, GPU_MEMORY[gpu_type]],
         }
     }
     return JsonResponse(data)
@@ -581,6 +582,7 @@ def graph_gpu_power(request, username, job_id):
     data = {'lines': []}
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
+        gpu_type = line['metric']['gpu_type']
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
@@ -593,7 +595,7 @@ def graph_gpu_power(request, username, job_id):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' W',
-            'range': [0, 300],
+            'range': [0, GPU_FULL_POWER[gpu_type]],
         }
     }
     return JsonResponse(data)

@@ -22,18 +22,18 @@ def compute(request):
     context = {}
     prom = Prometheus(settings.PROMETHEUS)
 
-    query_cpu = 'topk(100, count(slurm_job_core_usage_total) by (user))'
+    query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account) by (user))'
     stats_cpu = prom.query_last(query_cpu)
     cpu_users = []
     for line in stats_cpu:
         user = line['metric']['user']
         stats_cpu_asked = line['value'][1]
-        query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(user)
+        query_cpu_used = 'slurm_job:used_core:sum_user_account{{user="{}"}}'.format(user)
         stats_cpu_used = prom.query_last(query_cpu_used)
 
-        query_mem_asked = 'sum(slurm_job_memory_limit{{user="{}"}})'.format(user)
+        query_mem_asked = 'slurm_job:allocated_memory:sum_user_account{{user="{}"}}'.format(user)
         stats_mem_asked = prom.query_last(query_mem_asked)
-        query_mem_max = 'sum(slurm_job_memory_max{{user="{}"}})'.format(user)
+        query_mem_max = 'slurm_job:rss_memory:sum_user_account{{user="{}"}}'.format(user)
         stats_mem_max = prom.query_last(query_mem_max)
 
         mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])

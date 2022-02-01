@@ -19,6 +19,7 @@ GPU_MEMORY = {'v100': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'v100': 300, 'NVIDIA A100-SXM4-40GB': 400}
 GPU_IDLE_POWER = {'v100': 55, 'NVIDIA A100-SXM4-40GB': 55}
 
+
 @login_required
 def index(request):
     return redirect('{}/'.format(request.user.username.split('@')[0]))

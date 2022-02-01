@@ -280,7 +280,7 @@ class JobTable(models.Model):
 
     def gpu_type(self):
         if '1001=' in self.tres_alloc:
-            return 'NVIDIA A100-SXM4-40GB' # Only for Narval, need to figure out how to map this on other clusters
+            return 'NVIDIA A100-SXM4-40GB'  # Only for Narval, need to figure out how to map this on other clusters
         else:
             return None
 

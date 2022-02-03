@@ -28,12 +28,12 @@ def compute(request):
     for line in stats_cpu:
         user = line['metric']['user']
         stats_cpu_asked = line['value'][1]
-        query_cpu_used = 'slurm_job:used_core:sum_user_account{{user="{}"}}'.format(user)
+        query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user="{}"}})'.format(user)
         stats_cpu_used = prom.query_last(query_cpu_used)
 
-        query_mem_asked = 'slurm_job:allocated_memory:sum_user_account{{user="{}"}}'.format(user)
+        query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user="{}"}})'.format(user)
         stats_mem_asked = prom.query_last(query_mem_asked)
-        query_mem_max = 'slurm_job:rss_memory:sum_user_account{{user="{}"}}'.format(user)
+        query_mem_max = 'sum(slurm_job:rss_memory:sum_user_account{{user="{}"}})'.format(user)
         stats_mem_max = prom.query_last(query_mem_max)
 
         mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])
@@ -47,8 +47,11 @@ def compute(request):
         else:
             mem_badge = None
 
-        if float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked) < 0.9:
+        cpu_ratio = float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked)
+        if cpu_ratio < 0.75:
             cpu_badge = 'danger'
+        elif cpu_ratio < 0.9:
+            cpu_badge = 'warning'
         else:
             cpu_badge = None
 
@@ -70,11 +73,11 @@ def compute(request):
     for line in stats_gpu:
         user = line['metric']['user']
         stats_gpu_asked = line['value'][1]
-        query_gpu_util = 'sum(slurm_job_utilization_gpu{{user="{}"}})/100'.format(user)
+        query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}"}})/100'.format(user)
         stats_gpu_util = prom.query_last(query_gpu_util)
         gpu_util = stats_gpu_util[0]['value'][1]
 
-        query_gpu_used = 'count(slurm_job_utilization_gpu{{user="{}"}} !=0)'.format(user)
+        query_gpu_used = 'count(slurm_job:used_gpu:sum_user_account{{user="{}"}} !=0)'.format(user)
         stats_gpu_used = prom.query_last(query_gpu_used)
         try:
             gpu_used = stats_gpu_used[0]['value'][1]

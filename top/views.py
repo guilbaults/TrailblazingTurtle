@@ -28,12 +28,12 @@ def compute(request):
     for line in stats_cpu:
         user = line['metric']['user']
         stats_cpu_asked = line['value'][1]
-        query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user="{}"}})'.format(user)
+        query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user="{}", {}}})'.format(user, prom.get_filter())
         stats_cpu_used = prom.query_last(query_cpu_used)
 
-        query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user="{}"}})'.format(user)
+        query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user="{}", {}}})'.format(user, prom.get_filter())
         stats_mem_asked = prom.query_last(query_mem_asked)
-        query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user="{}"}})'.format(user)
+        query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user="{}", {}}})'.format(user, prom.get_filter())
         stats_mem_max = prom.query_last(query_mem_max)
 
         mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])
@@ -67,17 +67,17 @@ def compute(request):
 
     context['cpu_users'] = cpu_users
 
-    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account) by (user))'
+    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {} }}) by (user))'.format(prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)
     gpu_users = []
     for line in stats_gpu:
         user = line['metric']['user']
         stats_gpu_asked = line['value'][1]
-        query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}"}})'.format(user)
+        query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}", {}}})'.format(user, prom.get_filter())
         stats_gpu_util = prom.query_last(query_gpu_util)
         gpu_util = stats_gpu_util[0]['value'][1]
 
-        query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user="{}"}})'.format(user)
+        query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user="{}", {}}})'.format(user, prom.get_filter())
         stats_gpu_used = prom.query_last(query_gpu_used)
         try:
             gpu_used = stats_gpu_used[0]['value'][1]
@@ -112,14 +112,14 @@ def largemem(request):
     jobs = []
     for job in jobs_running:
         try:
-            query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid="{}"}})'.format(job.id_job)
+            query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid="{}", {}}})'.format(job.id_job, prom.get_filter())
             stats_cpu_asked = prom.query_last(query_cpu_asked)
-            query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}"}}[2m]) / 1000000000)'.format(job.id_job)
+            query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}", {}}}[2m]) / 1000000000)'.format(job.id_job, prom.get_filter())
             stats_cpu_used = prom.query_last(query_cpu_used)
 
-            query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid="{}"}})'.format(job.id_job)
+            query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid="{}", {}}})'.format(job.id_job, prom.get_filter())
             stats_mem_asked = prom.query_last(query_mem_asked)
-            query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid="{}"}})'.format(job.id_job)
+            query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid="{}", {}}})'.format(job.id_job, prom.get_filter())
             stats_mem_max = prom.query_last(query_mem_max)
 
             if int(stats_mem_max[0]['value'][1]) < 4 * 1024 * 1024 * 1024:
@@ -171,7 +171,7 @@ def lustre(request):
 def graph_lustre_mdt(request, fs):
     prom = Prometheus(settings.PROMETHEUS)
 
-    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root"}}[5m])))'.format(fs)
+    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root", {}}}[5m])))'.format(fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
     for line in stats:
@@ -204,7 +204,7 @@ def graph_lustre_ost(request, fs, rw):
 
     prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
-    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*"}}[5m])))/1024/1024'.format(rw, fs)
+    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*", {}}}[5m])))/1024/1024'.format(rw, fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
     for line in stats:

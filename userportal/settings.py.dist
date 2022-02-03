@@ -131,7 +131,8 @@ DATABASE_ROUTERS = ['database_routers.dbrouters.DbRouter']
 
 PROMETHEUS = {
     'url': 'https://prometheus.int.ets1.calculquebec.ca:9090',
-    'headers': {'Authorization': 'Basic changeme_base64'}
+    'headers': {'Authorization': 'Basic changeme_base64'},
+    'filter': "cluster='narval'",
 }
 
 # Password validation
@@ -192,10 +193,12 @@ CLUSTER_NAME = 'beluga'
 STORAGE_NAME = 'beluga-storage'
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 
+CLUSTER_NAME_TITLE = 'Béluga'
+
 CLOUDSTATS_ENABLED = False
 QUOTAS_ENABLED = False
 
-SETTINGS_EXPORT = ['CLOUDSTATS_ENABLED', 'QUOTAS_ENABLED']
+SETTINGS_EXPORT = ['CLOUDSTATS_ENABLED', 'QUOTAS_ENABLED', 'CLUSTER_NAME_TITLE]
 
 INTERNAL_IPS = [
     '127.0.0.1',

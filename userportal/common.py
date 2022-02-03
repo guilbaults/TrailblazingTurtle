@@ -64,6 +64,10 @@ class Prometheus:
         self.prom = PrometheusConnect(
             url=config['url'],
             headers=config['headers'])
+        self.filter = config['filter']
+
+    def get_filter(self):
+        return self.filter
 
     def query_prometheus(self, query, duration, step):
         values = self.query_prometheus_multiple(query, duration, step)

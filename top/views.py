@@ -33,7 +33,7 @@ def compute(request):
 
         query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user="{}"}})'.format(user)
         stats_mem_asked = prom.query_last(query_mem_asked)
-        query_mem_max = 'sum(slurm_job:rss_memory:sum_user_account{{user="{}"}})'.format(user)
+        query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user="{}"}})'.format(user)
         stats_mem_max = prom.query_last(query_mem_max)
 
         mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])
@@ -67,17 +67,17 @@ def compute(request):
 
     context['cpu_users'] = cpu_users
 
-    query_gpu = 'topk(100, count(slurm_job_utilization_gpu) by (user))'
+    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account) by (user))'
     stats_gpu = prom.query_last(query_gpu)
     gpu_users = []
     for line in stats_gpu:
         user = line['metric']['user']
         stats_gpu_asked = line['value'][1]
-        query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}"}})/100'.format(user)
+        query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}"}})'.format(user)
         stats_gpu_util = prom.query_last(query_gpu_util)
         gpu_util = stats_gpu_util[0]['value'][1]
 
-        query_gpu_used = 'count(slurm_job:used_gpu:sum_user_account{{user="{}"}} !=0)'.format(user)
+        query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user="{}"}})'.format(user)
         stats_gpu_used = prom.query_last(query_gpu_used)
         try:
             gpu_used = stats_gpu_used[0]['value'][1]

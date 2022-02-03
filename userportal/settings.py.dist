@@ -44,8 +44,8 @@ INSTALLED_APPS = [
     'ccldap',
     'jobstats',
     'accountstats',
-    'cloudstats',
-    'quotas',
+#   'cloudstats',
+#   'quotas',
     'top',
     'debug_toolbar',
     'rest_framework',
@@ -191,6 +191,11 @@ LOGIN_REDIRECT_URL = '/'
 CLUSTER_NAME = 'beluga'
 STORAGE_NAME = 'beluga-storage'
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
+
+CLOUDSTATS_ENABLED = False
+QUOTAS_ENABLED = False
+
+SETTINGS_EXPORT = ['CLOUDSTATS_ENABLED', 'QUOTAS_ENABLED']
 
 INTERNAL_IPS = [
     '127.0.0.1',

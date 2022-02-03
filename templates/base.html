@@ -54,12 +54,22 @@
                   {% translate "Account stats" %}<span class="sr-only"></span>
                 </a>
               </li>
+              {% if settings.QUOTAS_ENABLED %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/quotas/">
                   <span data-feather="hard-drive"></span>
                   {% translate "Filesystem quotas" %}<span class="sr-only"></span>
                 </a>
               </li>
+              {% endif %}
+              {% if settings.CLOUDSTATS_ENABLED %}
+              <li class="nav-item">
+                <a class="nav-link" href="/secure/cloudstats/">
+                  <span data-feather="cloud"></span>
+                  {% translate "Cloud stats" %}<span class="sr-only"></span>
+                </a>
+              </li>
+              {% endif %}
               {% if request.META.is_staff %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/top/">

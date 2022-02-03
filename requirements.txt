@@ -6,6 +6,7 @@ Django==3.1.7
 django-auth-ldap==2.3.0
 django-debug-toolbar==3.2
 django-ldapdb==1.5.1
+django-settings-export==1.2.1
 djangorestframework==3.12.4
 djangorestframework-api-key==2.0.0
 flake8==3.9.0

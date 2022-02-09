@@ -9,7 +9,7 @@ def storage_allocations(username):
         resources = alloc.parse_active_resources()
         project = {
             'project_storage_tb': 1.0,
-            'inodes_quota': int(1.0 * 1000 * 1000), # specified in millions in ldap
+            'inodes_quota': int(1.0 * 1000 * 1000),  # specified in millions in ldap
         }
         nearline = {
             'nearline_storage_tb': 0.0,
@@ -21,7 +21,7 @@ def storage_allocations(username):
                     project['project_storage_tb'] = resource['project_storage_tb']
                     project['project_storage_bytes'] = int(project['project_storage_tb'] * 1024 * 1024 * 1024 * 1024)
                 if 'inode_quota' in resource:
-                    project['inodes_quota'] = int(resource['inode_quota'] * 1000 * 1000) # convert millions to integers
+                    project['inodes_quota'] = int(resource['inode_quota'] * 1000 * 1000)  # convert millions to integers
                 projects.append(project)
             if 'nearline_storage_tb' in resource:
                 nearline['name'] = alloc.name

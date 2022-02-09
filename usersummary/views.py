@@ -31,7 +31,7 @@ def get_quota_prometheus(quota_name, quota_type, inodes_bytes='inodes'):
         if inodes_bytes == 'inodes':
             return int(stats_quota[0]['value'][1])
         else:
-            return int(stats_quota[0]['value'][1]) * 1024 # return it in bytes
+            return int(stats_quota[0]['value'][1]) * 1024  # return it in bytes
     except IndexError:
         return None
 

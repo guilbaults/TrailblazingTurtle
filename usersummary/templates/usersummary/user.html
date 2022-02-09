@@ -7,17 +7,37 @@
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your filesystem quotas" %} <a href="/secure/jobstats/{{username}}">({% translate "More details" %})</a></h1>
-<h3>{% translate "Home" %}</h3>
-<h3>{% translate "Scratch" %}</h3>
-<h3>{% translate "Projects" %}</h3>
-{% for project in projects %}
-{% if project.name %}
-<h4>{{project.name}}</h4>
-{% endif %}
-{% endfor %}
+<h1>{% translate "Your filesystem quotas" %} {% if settings.QUOTAS_ENABLED %}<a href="/secure/quotas/{{username}}">({% translate "More details" %})</a>{% endif %}</h1>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">Filesystem</th>
+      <th scope="col">Inodes</th>
+      <th scope="col">Size</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row">Home</th>
+      <th scope="row">{{ home.inodes | intword | default_if_none:"less than 50" }} on {{ home.inodes_quota | intword }}</th>
+      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ home.bytes_quota | filesizeformat }}</th>
+    </tr>
+    <tr>
+      <th scope="row">Scratch</th>
+      <th scope="row">{{ scratch.inodes | intword | default_if_none:"less than 50" }} on {{ scratch.inodes_quota | intword }}</th>
+      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ scratch.bytes_quota | filesizeformat }}</th>
+    </tr>
+    {% for project in alloc_projects %}
+    <tr>
+      <th scope="row">{{ project.name }}</th>
+      <th scope="row">{{ project.inodes | intword | default_if_none:"less than 50" }} on {{ project.inodes_quota | intword }}</th>
+      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ project.project_storage_bytes | filesizeformat }}</th>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
 
-<h1>{% translate "Your latest 10 jobs" %} <a href="/secure/quotas/{{username}}">({% translate "More details" %})</a></h1>
+<h1>{% translate "Your latest 10 jobs" %} <a href="/secure/jobstats/{{username}}">({% translate "More details" %})</a></h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">

@@ -4,7 +4,6 @@ from slurm.models import JobTable
 from ccldap.models import LdapUser
 from userportal.common import user_or_staff
 from userportal.common import Prometheus
-import time
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required

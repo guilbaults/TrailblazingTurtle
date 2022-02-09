@@ -83,7 +83,7 @@
   </tbody>
 </table>
 
-{% bootstrap_paginate jobs range=10 %}
+{% bootstrap_paginate jobs range=10 extra_pagination_classes="justify-content-center" %}
 
 <script>
 $.getJSON('graph/cpu.json', function(data){

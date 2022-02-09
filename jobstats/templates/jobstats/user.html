@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load i18n %}
+{% load bootstrap_pagination %}
 
 {% block title %}
 {% translate "Your jobs" %}
@@ -81,6 +82,8 @@
 {% endfor %}
   </tbody>
 </table>
+
+{% bootstrap_paginate jobs range=10 %}
 
 <script>
 $.getJSON('graph/cpu.json', function(data){

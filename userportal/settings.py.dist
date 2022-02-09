@@ -51,6 +51,7 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',
+    'bootstrap_pagination',
 ]
 
 MIDDLEWARE = [
@@ -65,6 +66,7 @@ MIDDLEWARE = [
     'userportal.middleware.ControlledUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'bootstrap_pagination.middleware.PaginationMiddleware',
 ]
 
 ROOT_URLCONF = 'userportal.urls'
@@ -80,6 +82,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'django.template.context_processors.request',
             ],
         },
     },
@@ -193,6 +196,13 @@ LOGIN_REDIRECT_URL = '/'
 CLUSTER_NAME = 'beluga'
 STORAGE_NAME = 'beluga-storage'
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
+
+# Used to find the current quotas in prometheus
+QUOTA_TYPES = {
+    'home': ('/lustre05/home/', 'project'),
+    'scratch': ('/lustre07/scratch/', 'project'),
+    'project': ('/lustre06/project/', 'project')
+}
 
 CLUSTER_NAME_TITLE = 'Béluga'
 

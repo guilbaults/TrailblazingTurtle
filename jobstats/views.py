@@ -14,6 +14,7 @@ from rest_framework import permissions
 from jobstats.models import JobScript
 from jobstats.serializers import JobScriptSerializer
 import statistics
+from django.core.paginator import Paginator
 
 GPU_MEMORY = {'v100': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'v100': 300, 'NVIDIA A100-SXM4-40GB': 400}
@@ -30,16 +31,12 @@ def index(request):
 def user(request, username):
     uid = LdapUser.objects.filter(username=username).get().uid
     context = {'username': username}
-    pending_jobs = JobTable.objects.filter(
-        id_user=uid, state=0).order_by('-time_submit')
+    jobs = JobTable.objects.filter(id_user=uid).order_by('-time_submit')
+    paginator = Paginator(jobs, 100)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
 
-    week_ago = int(time.time()) - (3600 * 24 * 7)
-    job_start = JobTable.objects.filter(
-        id_user=uid, time_start__gt=week_ago).order_by('-time_submit')
-    job_end = JobTable.objects.filter(
-        id_user=uid, time_end__gt=week_ago).order_by('-time_submit')
-
-    context['jobs'] = (pending_jobs | job_start | job_end)[:10000]
+    context['jobs'] = page_obj
 
     running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
     context['total_cores'] = 0

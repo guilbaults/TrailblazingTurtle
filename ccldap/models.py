@@ -81,4 +81,10 @@ class LdapAllocation(ldapdb.models.Model):
                     key, value = quota.split('=')
                     quota_info[key] = float(value)
                 resources.append(quota_info)
+            if settings.COMPUTE_NAME in resource_name:
+                compute_info = {}
+                for compute in s[2:]:
+                    key, value = compute.split('=')
+                    compute_info[key] = float(value)
+                resources.append(compute_info)
         return resources

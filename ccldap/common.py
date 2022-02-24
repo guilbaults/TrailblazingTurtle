@@ -29,3 +29,26 @@ def storage_allocations(username):
             if nearline['nearline_storage_tb'] != float(0.0):
                 nearlines.append(nearline)
     return(projects, nearlines)
+
+
+def compute_allocations(username):
+    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
+    computes = []
+    for alloc in allocations:
+        resources = alloc.parse_active_resources()
+        for resource in resources:
+            if 'cpu' in resource:
+                compute = {
+                    'name': alloc.name,
+                    'cpu': resource['cpu'],
+                    'core_equivalent': resource['core_equivalent'],
+                }
+                computes.append(compute)
+            if 'gpu' in resource:
+                compute = {
+                    'name': alloc.name,
+                    'gpu': resource['gpu'],
+                    'gpu_equivalent': resource['gpu_equivalent'],
+                }
+                computes.append(compute)
+    return(computes)

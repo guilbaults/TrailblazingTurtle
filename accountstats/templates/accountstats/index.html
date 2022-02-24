@@ -8,5 +8,51 @@
 
 {% block content %}
 <h1>{% translate "Your accounts" %}</h1>
-TODO
+{% if compute_allocations %}
+<h2>RAC allocations</h2>
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Name</th>
+        </tr>
+    </thead>
+    <tbody>
+{% for allocation in compute_allocations %}
+        <tr>
+            {% if allocation.cpu %}
+            <td>CPU</td>
+            <td><a href="{{ allocation.name }}_cpu">{{ allocation.name }}_cpu</a></td>
+            {% endif %}
+            {% if allocation.gpu %}
+            <td>GPU</td>
+            <td><a href="{{ allocation.name }}_gpu">{{ allocation.name }}_gpu</a></td>
+            {% endif %}
+        </tr>
+{% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+<h2>Default allocations</h2>
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">Type</th>
+            <th scope="col">Name</th>
+        </tr>
+    </thead>
+    <tbody>
+{% for allocation in default_allocations %}
+    <tr>
+        <td>CPU</td>
+        <td><a href="{{ allocation }}_cpu">{{ allocation }}_cpu</a></td>
+    </tr>
+    <tr>
+        <td>GPU</td>
+        <td><a href="{{ allocation }}_gpu">{{ allocation }}_gpu</a></td>
+    </tr>
+{% endfor %}
+    </tbody>
+  </table>
 {% endblock content %}

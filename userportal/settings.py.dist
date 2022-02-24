@@ -194,6 +194,7 @@ LOGIN_REDIRECT_URL = '/'
 
 CLUSTER_NAME = 'beluga'
 STORAGE_NAME = 'beluga-storage'
+COMPUTE_NAME = 'beluga' # beluga-compute or beluga-gpu
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 
 # Used to find the current quotas in prometheus

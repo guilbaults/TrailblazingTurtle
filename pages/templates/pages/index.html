@@ -5,6 +5,44 @@
 {% endblock title %}
 
 {% block content %}
-TODO
-{% endblock content %}
+<h2>Cluster and services description</h2>
+<p>Narval is a general purpose cluster designed for a variety of workloads; it is located at the <a href="https://www.etsmtl.ca/en/home">École de technologie supérieure in Montreal</a> and is managed by <a href="https://www.calculquebec.ca/">Calcul Québec</a>. The cluster is named in honour of the <a href="https://en.wikipedia.org/wiki/Narwhal">narwhal</a>, a species of whale which has occasionally been observed in the Gulf of St. Lawrence.</p>
 
+<p>This cluster is composed of over 80720 cores and 636 GPUs, all nodes are connected at 100Gb/s.</p>
+
+<p>This portal is intended for our users, the menu on the left provides multiple tools to measure job performance and current cluster utilization</p>
+
+<p><a href="https://docs.computecanada.ca/wiki/Narval/">Documentation</a></p>
+
+<h2>Filesystems performance</h2>
+
+<h3>Bandwidth</h3>
+<div class="row">
+{% for filesystem in fs %}
+    <div class="col">
+        <h4>{{filesystem}}</h4>
+        <div id="graph_{{filesystem}}_ost"></div>
+    </div>
+{% endfor %}
+</div>
+
+<h3>Metadata</h3>
+<div class="row">
+{% for filesystem in fs %}
+    <div class="col">
+        <h4>{{filesystem}}</h4>
+        <div id="graph_{{filesystem}}_mdt"></div>
+    </div>
+{% endfor %}
+    </div>
+<script>
+    {% for filesystem in fs %}
+    $.getJSON('graph/lustre/{{filesystem}}/ost.json', function(data){
+      Plotly.newPlot('graph_{{filesystem}}_ost', data['lines'], data['layout']);
+    });
+    $.getJSON('graph/lustre/{{filesystem}}/mdt.json', function(data){
+      Plotly.newPlot('graph_{{filesystem}}_mdt', data['lines'], data['layout']);
+    });
+    {% endfor %}
+</script>
+{% endblock content %}

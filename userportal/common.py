@@ -75,14 +75,14 @@ class Prometheus:
             raise ValueError
         return (values[0]['x'], values[0]['y'])
 
-    def query_prometheus_multiple(self, query, start, end=None):
+    def query_prometheus_multiple(self, query, start, end=None, step='3m'):
         if end is None:
             end = datetime.now()
         q = self.prom.custom_query_range(
             query=query,
             start_time=start,
             end_time=end,
-            step='3m',
+            step=step,
         )
         return_list = []
         for line in q:

@@ -10,6 +10,7 @@ def index(request):
     context['fs'] = settings.LUSTRE_FS_NAMES
     return render(request, 'pages/index.html', context)
 
+
 def graph_lustre_mdt(request, fs):
     if fs not in settings.LUSTRE_FS_NAMES:
         return JsonResponse({'error': 'Unknown filesystem'})

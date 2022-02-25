@@ -17,24 +17,28 @@
 <h2>Filesystems performance</h2>
 
 <h3>Bandwidth</h3>
-<div class="row">
-{% for filesystem in fs %}
-    <div class="col">
-        <h4>{{filesystem}}</h4>
-        <div id="graph_{{filesystem}}_ost"></div>
+<div class="container">
+    <div class="row">
+    {% for filesystem in fs %}
+        <div class="col-sm">
+            <h4>{{filesystem}}</h4>
+            <div id="graph_{{filesystem}}_ost"></div>
+        </div>
+    {% endfor %}
     </div>
-{% endfor %}
 </div>
 
 <h3>Metadata</h3>
-<div class="row">
-{% for filesystem in fs %}
-    <div class="col">
-        <h4>{{filesystem}}</h4>
-        <div id="graph_{{filesystem}}_mdt"></div>
-    </div>
-{% endfor %}
-    </div>
+<div class="container">
+    <div class="row">
+        {% for filesystem in fs %}
+            <div class="col-sm">
+                <h4>{{filesystem}}</h4>
+                <div id="graph_{{filesystem}}_mdt"></div>
+            </div>
+        {% endfor %}
+            </div>
+</div>
 <script>
     {% for filesystem in fs %}
     $.getJSON('graph/lustre/{{filesystem}}/ost.json', function(data){

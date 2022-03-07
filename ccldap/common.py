@@ -31,10 +31,9 @@ def storage_allocations(username):
     return(projects, nearlines)
 
 
-def compute_allocations(username):
-    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
+def convert_ldap_to_allocation(ldap_object):
     computes = []
-    for alloc in allocations:
+    for alloc in ldap_object:
         resources = alloc.parse_active_resources()
         for resource in resources:
             if 'cpu' in resource:
@@ -52,3 +51,28 @@ def compute_allocations(username):
                 }
                 computes.append(compute)
     return(computes)
+
+
+def compute_allocations_by_user(username):
+    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
+    return convert_ldap_to_allocation(allocations)
+
+
+def compute_allocation_by_account(account):
+    allocations = LdapAllocation.objects.filter(name=account, status='active').all()
+    return convert_ldap_to_allocation(allocations)
+
+
+def compute_allocations_by_slurm_account(account):
+    # takes a slurm account name and return the number of cpu or gpu allocated to that account
+    account_name = account.rstrip('_gpu').rstrip('_cpu')
+    allocations = compute_allocation_by_account(account_name)
+    if account.endswith('_gpu'):
+        for alloc in allocations:
+            if 'gpu' in alloc:
+                return alloc['gpu']
+    else:
+        for alloc in allocations:
+            if 'cpu' in alloc:
+                return alloc['cpu']
+    return None

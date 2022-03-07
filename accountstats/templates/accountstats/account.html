@@ -8,6 +8,31 @@
 
 {% block content %}
 <h1>{% translate "Your account use" %}</h1>
+{% if gpu %}
+<p>{{gpu_count}} GPUs were allocated by the RAC process</p>
+{% else %}
+<p>{{cpu_count}} CPUs were allocated by the RAC process</p>
+{% endif %}
+
+<p>A priority under 1 means you were previously using more resources than allocated during the RAC. Your new jobs are now launched at a lower priority to let the other user catch up their fair share.</p>
+<p>A priority above 1 means you were not using the cluster as much as you were allocated during the RAC. Your new jobs are now launched at a higher priority to catch up your fair share.</p>
+
+{% if gpu %}
+<div id="graph_gpu_priority"></div>
+{% else %}
+<div id="graph_cpu_priority"></div>
+{% endif %}
+<h2>{% translate "Detailed utilization by user" %}</h2>
+
+{% if gpu %}
+<h2>{% translate "GPUs" %}</h2>
+<h3>{% translate "Allocated GPUs" %}</h3>
+<div id="graph_gpu_allocated"></div>
+<h3>{% translate "Used GPUs" %}</h3>
+<div id="graph_gpu_used"></div>
+<h3>{% translate "Wasted GPUs" %}</h3>
+<div id="graph_gpu_wasted"></div>
+{% endif %}
 
 <h3>{% translate "Allocated CPU cores" %}</h3>
 <div id="graph_cpu_allocated"></div>
@@ -28,24 +53,29 @@
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
+<script>
 {% if gpu %}
-<h2>{% translate "GPUs" %}</h2>
-<h3>{% translate "Allocated GPUs" %}</h3>
-<div id="graph_gpu_allocated"></div>
-<h3>{% translate "Used GPUs" %}</h3>
-<div id="graph_gpu_used"></div>
-<h3>{% translate "Wasted GPUs" %}</h3>
-<div id="graph_gpu_wasted"></div>
-
-<h3>{% translate "Allocated GPUs Power" %}</h3>
-<div id="graph_gpu_power_allocated"></div>
-<h3>{% translate "Used GPUs Power" %}</h3>
-<div id="graph_gpu_power_used"></div>
-<h3>{% translate "GPUs power headroom" %}</h3>
-<div id="graph_gpu_power_wasted"></div>
+$.getJSON('graph/gpu_priority.json', function(data){
+  Plotly.newPlot('graph_gpu_priority', data['lines'], data['layout']);
+});
+{% else %}
+$.getJSON('graph/cpu_priority.json', function(data){
+  Plotly.newPlot('graph_cpu_priority', data['lines'], data['layout']);
+});
 {% endif %}
 
-<script>
+{% if gpu %}
+$.getJSON('graph/gpu_allocated.json', function(data){
+  Plotly.newPlot('graph_gpu_allocated', data['lines']);
+});
+$.getJSON('graph/gpu_used.json', function(data){
+  Plotly.newPlot('graph_gpu_used', data['lines']);
+});
+$.getJSON('graph/gpu_wasted.json', function(data){
+  Plotly.newPlot('graph_gpu_wasted', data['lines']);
+});
+{% endif %}
+
 $.getJSON('graph/cpu_allocated.json', function(data){
   Plotly.newPlot('graph_cpu_allocated', data['lines'], data['layout']);
 });
@@ -72,28 +102,6 @@ $.getJSON('graph/lustre_mdt.json', function(data){
 $.getJSON('graph/lustre_ost.json', function(data){
   Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
 });
-
-{% if gpu %}
-$.getJSON('graph/gpu_allocated.json', function(data){
-  Plotly.newPlot('graph_gpu_allocated', data['lines']);
-});
-$.getJSON('graph/gpu_used.json', function(data){
-  Plotly.newPlot('graph_gpu_used', data['lines']);
-});
-$.getJSON('graph/gpu_wasted.json', function(data){
-  Plotly.newPlot('graph_gpu_wasted', data['lines']);
-});
-
-$.getJSON('graph/gpu_power_allocated.json', function(data){
-  Plotly.newPlot('graph_gpu_power_allocated', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_power_used.json', function(data){
-  Plotly.newPlot('graph_gpu_power_used', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_power_wasted.json', function(data){
-  Plotly.newPlot('graph_gpu_power_wasted', data['lines'], data['layout']);
-});
-{% endif %}
 
 </script>
 

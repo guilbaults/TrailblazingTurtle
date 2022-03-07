@@ -69,8 +69,8 @@ class Prometheus:
     def get_filter(self):
         return self.filter
 
-    def query_prometheus(self, query, duration, step):
-        values = self.query_prometheus_multiple(query, duration, step)
+    def query_prometheus(self, query, duration, end=None, step='3m'):
+        values = self.query_prometheus_multiple(query, duration, end, step)
         if len(values) == 0:
             raise ValueError
         return (values[0]['x'], values[0]['y'])

@@ -41,12 +41,8 @@
 </div>
 <script>
     {% for filesystem in fs %}
-    $.getJSON('graph/lustre/{{filesystem}}/ost.json', function(data){
-      Plotly.newPlot('graph_{{filesystem}}_ost', data['lines'], data['layout']);
-    });
-    $.getJSON('graph/lustre/{{filesystem}}/mdt.json', function(data){
-      Plotly.newPlot('graph_{{filesystem}}_mdt', data['lines'], data['layout']);
-    });
+    loadGraph('graph_{{filesystem}}_ost', 'graph/lustre/{{filesystem}}/ost.json');
+    loadGraph('graph_{{filesystem}}_mdt', 'graph/lustre/{{filesystem}}/mdt.json');
     {% endfor %}
 </script>
 {% endblock content %}

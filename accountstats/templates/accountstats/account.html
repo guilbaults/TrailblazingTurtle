@@ -55,53 +55,27 @@
 
 <script>
 {% if gpu %}
-$.getJSON('graph/gpu_priority.json', function(data){
-  Plotly.newPlot('graph_gpu_priority', data['lines'], data['layout']);
-});
+loadGraph('graph_gpu_priority', 'graph/gpu_priority.json');
 {% else %}
-$.getJSON('graph/cpu_priority.json', function(data){
-  Plotly.newPlot('graph_cpu_priority', data['lines'], data['layout']);
-});
+loadGraph('graph_cpu_priority', 'graph/cpu_priority.json');
 {% endif %}
 
 {% if gpu %}
-$.getJSON('graph/gpu_allocated.json', function(data){
-  Plotly.newPlot('graph_gpu_allocated', data['lines']);
-});
-$.getJSON('graph/gpu_used.json', function(data){
-  Plotly.newPlot('graph_gpu_used', data['lines']);
-});
-$.getJSON('graph/gpu_wasted.json', function(data){
-  Plotly.newPlot('graph_gpu_wasted', data['lines']);
-});
+loadGraph('graph_gpu_allocated', 'graph/gpu_allocated.json');
+loadGraph('graph_gpu_used', 'graph/gpu_used.json');
+loadGraph('graph_gpu_wasted', 'graph/gpu_wasted.json');
 {% endif %}
 
-$.getJSON('graph/cpu_allocated.json', function(data){
-  Plotly.newPlot('graph_cpu_allocated', data['lines'], data['layout']);
-});
-$.getJSON('graph/cpu_used.json', function(data){
-  Plotly.newPlot('graph_cpu_used', data['lines'], data['layout']);
-});
-$.getJSON('graph/cpu_wasted.json', function(data){
-  Plotly.newPlot('graph_cpu_wasted', data['lines'], data['layout']);
-});
+loadGraph('graph_cpu_allocated', 'graph/cpu_allocated.json');
+loadGraph('graph_cpu_used', 'graph/cpu_used.json');
+loadGraph('graph_cpu_wasted', 'graph/cpu_wasted.json');
 
-$.getJSON('graph/mem_allocated.json', function(data){
-  Plotly.newPlot('graph_mem_allocated', data['lines'], data['layout']);
-});
-$.getJSON('graph/mem_used.json', function(data){
-  Plotly.newPlot('graph_mem_used', data['lines'], data['layout']);
-});
-$.getJSON('graph/mem_wasted.json', function(data){
-  Plotly.newPlot('graph_mem_wasted', data['lines'], data['layout']);
-});
+loadGraph('graph_mem_allocated', 'graph/mem_allocated.json');
+loadGraph('graph_mem_used', 'graph/mem_used.json');
+loadGraph('graph_mem_wasted', 'graph/mem_wasted.json');
 
-$.getJSON('graph/lustre_mdt.json', function(data){
-  Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);
-});
-$.getJSON('graph/lustre_ost.json', function(data){
-  Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
-});
+loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
+loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
 
 </script>
 

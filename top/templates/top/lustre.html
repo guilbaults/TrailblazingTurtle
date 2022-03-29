@@ -21,16 +21,9 @@
 
 <script>
 {% for fs in lustre_fs_names %}
-$.getJSON('graph/lustre_mdt/{{fs}}.json', function(data){
-  Plotly.newPlot('graph_mdt_{{fs}}', data['lines'], data['layout']);
-});
-$.getJSON('graph/lustre_ost_read/{{fs}}.json', function(data){
-  Plotly.newPlot('graph_ost_read_{{fs}}', data['lines'], data['layout']);
-});
-$.getJSON('graph/lustre_ost_write/{{fs}}.json', function(data){
-  Plotly.newPlot('graph_ost_write_{{fs}}', data['lines'], data['layout']);
-});
-
+loadGraph('graph_mdt_{{fs}}', 'graph/lustre_mdt/{{fs}}.json');
+loadGraph('graph_ost_read_{{fs}}', 'graph/lustre_ost_read/{{fs}}.json');
+loadGraph('graph_ost_write_{{fs}}', 'graph/lustre_ost_write/{{fs}}.json');
 {% endfor %}
 </script>
 

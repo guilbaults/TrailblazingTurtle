@@ -113,54 +113,23 @@
 <div id="graph_disk_used"></div>
 
 <script>
-$.getJSON('graph/cpu.json', function(data){
-  Plotly.newPlot('graph_cpu', data['lines'], data['layout']);
-});
-
-$.getJSON('graph/mem.json', function(data){
-  Plotly.newPlot('graph_mem', data['lines'], data['layout']);
-});
-
-$.getJSON('graph/lustre_mdt.json', function(data){
-  Plotly.newPlot('graph_lustre_mdt', data['lines'], data['layout']);
-});
-
-$.getJSON('graph/lustre_ost.json', function(data){
-  Plotly.newPlot('graph_lustre_ost', data['lines'], data['layout']);
-});
+loadGraph('graph_cpu', 'graph/cpu.json');
+loadGraph('graph_mem', 'graph/mem.json');
+loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
+loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
 
 {% if job.gpu_count > 0 %}
-$.getJSON('graph/gpu_utilization.json', function(data){
-  Plotly.newPlot('graph_gpu_utilization', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_memory_utilization.json', function(data){
-  Plotly.newPlot('graph_gpu_memory_utilization', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_memory.json', function(data){
-  Plotly.newPlot('graph_gpu_memory', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_power.json', function(data){
-  Plotly.newPlot('graph_gpu_power', data['lines'], data['layout']);
-});
-$.getJSON('graph/gpu_pcie.json', function(data){
-  Plotly.newPlot('graph_gpu_pcie', data['lines'], data['layout']);
-});
+loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json');
+loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json');
+loadGraph('graph_gpu_memory', 'graph/gpu_memory.json');
+loadGraph('graph_gpu_power', 'graph/gpu_power.json');
+loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json');
 
 {% endif %}
-
-$.getJSON('graph/infiniband_bdw.json', function(data){
-  Plotly.newPlot('graph_infiniband_bdw', data['lines'], data['layout']);
-});
-
-$.getJSON('graph/disk_iops.json', function(data){
-  Plotly.newPlot('graph_disk_iops', data['lines'], data['layout']);
-});
-$.getJSON('graph/disk_bdw.json', function(data){
-  Plotly.newPlot('graph_disk_bdw', data['lines'], data['layout']);
-});
-$.getJSON('graph/disk_used.json', function(data){
-  Plotly.newPlot('graph_disk_used', data['lines'], data['layout']);
-});
+loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
+loadGraph('graph_disk_iops', 'graph/disk_iops.json');
+loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
+loadGraph('graph_disk_used', 'graph/disk_used.json');
 
 {% endif %}
 

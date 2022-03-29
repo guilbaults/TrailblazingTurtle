@@ -17,7 +17,7 @@ def graph_lustre_mdt(request, fs):
 
     prom = Prometheus(settings.PROMETHEUS)
 
-    query = 'sum(rate(lustre_stats_total{{target=~"{}-.*", {}}}[5m])) by (operation) !=0'.format(fs, prom.get_filter())
+    query = 'sum(lustre:metadata:rate3m{{fs="{}", {}}}) by (operation) !=0'.format(fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), step='5m')
 
     data = {'lines': []}
@@ -58,7 +58,7 @@ def graph_lustre_ost(request, fs):
 
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = 'sum(rate(lustre_{}_bytes_total{{target=~"{}-.*", {} }}[5m]))'.format(i, fs, prom.get_filter())
+        query = 'lustre:{}_bytes:rate3m{{fs="{}", {}}}'.format(i, fs, prom.get_filter())
         stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), step='5m')
         for line in stats:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))

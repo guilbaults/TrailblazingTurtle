@@ -860,6 +860,7 @@ def graph_disk_used(request, username, job_id):
 
     return JsonResponse(data)
 
+
 @login_required
 @user_or_staff
 def graph_power(request, username, job_id):
@@ -912,6 +913,7 @@ def graph_power(request, username, job_id):
     }
 
     return JsonResponse(data)
+
 
 class JobScriptViewSet(viewsets.ModelViewSet):
     queryset = JobScript.objects.all().order_by('-last_modified')

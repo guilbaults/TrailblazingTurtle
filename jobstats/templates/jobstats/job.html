@@ -112,6 +112,11 @@
 <h3>{% translate "Localscratch space used" %}</h3>
 <div id="graph_disk_used"></div>
 
+{% if job.gpu_count == 0 %}
+<h3>{% translate "Power used" %}</h3>
+<div id="graph_power"></div>
+{% endif %}
+
 <script>
 loadGraph('graph_cpu', 'graph/cpu.json');
 loadGraph('graph_mem', 'graph/mem.json');
@@ -130,6 +135,9 @@ loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
 loadGraph('graph_disk_iops', 'graph/disk_iops.json');
 loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
 loadGraph('graph_disk_used', 'graph/disk_used.json');
+{% if job.gpu_count == 0 %}
+loadGraph('graph_power', 'graph/power.json');
+{% endif %}
 
 {% endif %}
 

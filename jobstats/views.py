@@ -860,6 +860,58 @@ def graph_disk_used(request, username, job_id):
 
     return JsonResponse(data)
 
+@login_required
+@user_or_staff
+def graph_power(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    prom = Prometheus(settings.PROMETHEUS)
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+    nodes = job.nodes()
+
+    data = {'lines': []}
+
+    query_cpu_count = 'count(node_cpu_seconds_total{{instance=~"{}",mode="idle", {}}}) by (instance)'.format('|'.join([s + ':9100' for s in nodes]), prom.get_filter())
+    stats_cpu_count = prom.query_last(query_cpu_count)
+    computes_cores = {}
+    for line in stats_cpu_count:
+        compute_name = "{}".format(line['metric']['instance'].split(':')[0])
+        computes_cores[compute_name] = line['value'][1]
+
+    used_cores = {}
+    query_cpu_allocated = 'count(slurm_job_core_usage_total{{slurmjobid="{}", {}}}) by (instance)'.format(job.id_job, prom.get_filter())
+    stats_cpu_allocated = prom.query_prometheus_multiple(query_cpu_allocated, job.time_start_dt(), job.time_end_dt())
+    for line in stats_cpu_allocated:
+        compute_name = line['metric']['instance'].split(':')[0]
+        used_cores[compute_name] = line['y'][0]
+
+    ratios = {}
+    for compute_name in used_cores:
+        if compute_name in computes_cores:
+            ratios[compute_name] = float(used_cores[compute_name]) / float(computes_cores[compute_name])
+
+    query_node_power = 'redfish_chassis_power_average_consumed_watts{{instance=~"{}",{}}}'.format('|'.join([s + '-oob' for s in nodes]), prom.get_filter())
+    stats_node_power = prom.query_prometheus_multiple(query_node_power, job.time_start_dt(), job.time_end_dt())
+    for line in stats_node_power:
+        compute_name = "{}".format(line['metric']['instance'].rstrip('-oob'))
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        data['lines'].append({
+            'x': x,
+            'y': [y * ratios[compute_name] for y in line['y']],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': compute_name
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' W'
+        }
+    }
+
+    return JsonResponse(data)
 
 class JobScriptViewSet(viewsets.ModelViewSet):
     queryset = JobScript.objects.all().order_by('-last_modified')

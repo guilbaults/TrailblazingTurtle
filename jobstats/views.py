@@ -177,23 +177,26 @@ def graph_cpu(request, username, job_id):
 def graph_cpu_user(request, username):
     prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
-    query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[1m])) / 1000000000'.format(username, prom.get_filter())
-    stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
-        'y': stats_used[1],
-        'type': 'scatter',
-        'name': _('Used')
-    })
+    try:
+        query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[1m])) / 1000000000'.format(username, prom.get_filter())
+        stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
+            'y': stats_used[1],
+            'type': 'scatter',
+            'name': _('Used')
+        })
 
-    query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}", {}}}))'.format(username, prom.get_filter())
-    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
-        'y': stats_alloc[1],
-        'type': 'scatter',
-        'name': _('Allocated')
-    })
+        query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}", {}}}))'.format(username, prom.get_filter())
+        stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+            'y': stats_alloc[1],
+            'type': 'scatter',
+            'name': _('Allocated')
+        })
+    except ValueError:
+        return JsonResponse(data)
 
     data['layout'] = {
         'yaxis': {
@@ -218,10 +221,7 @@ def graph_mem_user(request, username):
             'type': 'scatter',
             'name': _('Allocated')
         })
-    except ValueError:
-        pass
 
-    try:
         query_max = 'sum(slurm_job_memory_max{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_max = prom.query_prometheus(query_max, datetime.now() - timedelta(hours=6), datetime.now())
         data['lines'].append({
@@ -230,10 +230,7 @@ def graph_mem_user(request, username):
             'type': 'scatter',
             'name': _('Max used')
         })
-    except ValueError:
-        pass
 
-    try:
         query_used = 'sum(slurm_job_memory_usage{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
         data['lines'].append({
@@ -243,7 +240,7 @@ def graph_mem_user(request, username):
             'name': _('Used')
         })
     except ValueError:
-        pass
+        return JsonResponse(data)
 
     data['layout'] = {
         'yaxis': {

@@ -74,6 +74,28 @@
       <td>{% translate "Cycles" %}: {{gpu_used | floatformat:-2 }}%, {% translate "Memory" %}: {{gpu_mem | floatformat:-2 }}%, {% translate "Power" %}: {{gpu_power | floatformat:-2 }}%</td>
     </tr>
 {% endif %}
+    <tr>
+      <td>{% translate "Energy" %}</td>
+      <td></td>
+      <td>
+        <div id="energy">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>{% translate "Cost" %}</td>
+      <td></td>
+      <td>
+        <div id="cost">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -135,6 +157,38 @@ loadGraph('graph_disk_used', 'graph/disk_used.json');
 loadGraph('graph_power', 'graph/power.json');
 
 {% endif %}
+
+const formatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+$.ajax({
+  url : 'value/cost.json',
+  type : 'GET',
+  tryCount : 0,
+  retryLimit : 3,
+  dataType    : 'json',
+  contentType : 'application/json',
+  success : function(data) {
+    $('#energy').html(formatter.format(data.kwh) + ' kWh');
+
+    var cost = data.electricity_cost_dollar + data.cooling_cost_dollar;
+    $('#cost').html('Electricity: ' + formatter.format(cost) + ' $');
+  },
+  error : function(xhr, textStatus, errorThrown ) {
+    if (textStatus == 'timeout' || textStatus == 'error') {
+      this.tryCount++;
+      if (this.tryCount <= this.retryLimit) {
+          //try again
+          $.ajax(this);
+          return;
+      }
+    }
+    $('#energy').html('No data');
+    $('#cost').html('No data');
+  }
+});
 
 </script>
 {% endblock content %}

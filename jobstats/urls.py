@@ -25,4 +25,5 @@ urlpatterns = [
     path('<str:username>/<int:job_id>/graph/disk_bdw.json', views.graph_disk_bdw),
     path('<str:username>/<int:job_id>/graph/disk_used.json', views.graph_disk_used),
     path('<str:username>/<int:job_id>/graph/power.json', views.graph_power),
+    path('<str:username>/<int:job_id>/value/cost.json', views.value_cost),
 ]

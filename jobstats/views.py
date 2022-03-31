@@ -861,26 +861,16 @@ def graph_disk_used(request, username, job_id):
     return JsonResponse(data)
 
 
-@login_required
-@user_or_staff
-def graph_power(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+def power(job):
     prom = Prometheus(settings.PROMETHEUS)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
     nodes = job.nodes()
-
-    data = {'lines': []}
-
     if job.gpu_count() > 0:
         # ( take the node power
         # - remove the power of all the GPUs in the compute)
         # * (multiply that by the ratio of GPUs used in that node)
         # + (add the power of the gpu allocated to the job)
         # results is not perfect when the node is shared between jobs
-        query_gpu_sum = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") \
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") \
 - label_replace((sum(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*"))\
 * ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )\
 + ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") )'.format(
@@ -888,38 +878,38 @@ def graph_power(request, username, job_id):
             filter=prom.get_filter(),
             jobid=job.id_job,
         )
-        stats_gpu_sum = prom.query_prometheus_multiple(query_gpu_sum, job.time_start_dt(), job.time_end_dt())
-        for line in stats_gpu_sum:
-            compute_name = "{}".format(line['metric']['instance'])
-            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            data['lines'].append({
-                'x': x,
-                'y': line['y'],
-                'type': 'scatter',
-                'stackgroup': 'one',
-                'name': compute_name
-            })
-
     else:
         # ( take the node power)
         # * (the ratio of cpu cores allocated in that node)
-        query_node_power = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") ) \
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") ) \
             * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{instance=~"({nodes}):9100", mode="idle", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )'.format(
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
         )
-        stats_node_power = prom.query_prometheus_multiple(query_node_power, job.time_start_dt(), job.time_end_dt())
-        for line in stats_node_power:
-            compute_name = "{}".format(line['metric']['instance'].rstrip('-oob'))
-            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            data['lines'].append({
-                'x': x,
-                'y': line['y'],
-                'type': 'scatter',
-                'stackgroup': 'one',
-                'name': compute_name
-            })
+    return prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+
+
+@login_required
+@user_or_staff
+def graph_power(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+
+    data = {'lines': []}
+    for line in power(job):
+        compute_name = "{}".format(line['metric']['instance'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        data['lines'].append({
+            'x': x,
+            'y': line['y'],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': compute_name
+        })
 
     data['layout'] = {
         'yaxis': {
@@ -928,6 +918,28 @@ def graph_power(request, username, job_id):
     }
 
     return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def value_cost(request, username, job_id):
+    uid = LdapUser.objects.filter(username=username).get().uid
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+
+    kwhs = []
+    for line in power(job):
+        # Instead of a proper integration, we just multiply the avg power by the time
+        kw = (sum(line['y']) / len(line['y'])) / 1000  # compute the average power consumption
+        hours = (line['x'][-1] - line['x'][0]).total_seconds() / 3600  # compute the duration of the job
+        kwhs.append(kw * hours)
+    return JsonResponse({
+        'kwh': sum(kwhs),
+        'electricity_cost_dollar': sum(kwhs) * settings.ELECTRICITY_COST_PER_KWH,
+        'cooling_cost_dollar': sum(kwhs) * settings.COOLING_COST_PER_KWH,
+    })
 
 
 class JobScriptViewSet(viewsets.ModelViewSet):

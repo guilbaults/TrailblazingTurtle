@@ -86,10 +86,43 @@
       </td>
     </tr>
     <tr>
-      <td>{% translate "Cost" %}</td>
+      <td>{% translate "Electric car range equivalent" %}</td>
+      <td></td>
+      <td>
+        <div id="car_range">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>{% translate "CO2 emissions" %}</td>
+      <td></td>
+      <td>
+        <div id="co2">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>{% translate "Internal cost" %}</td>
       <td></td>
       <td>
         <div id="cost">
+          <div class="spinner-border spinner-border-sm" role="status">
+            <span class="sr-only">Loading...</span>
+          </div>
+        </div>
+      </td>
+    </tr>
+    <tr>
+      <td>{% translate "Cloud cost equivalent" %}</td>
+      <td></td>
+      <td>
+        <div id="cloud">
           <div class="spinner-border spinner-border-sm" role="status">
             <span class="sr-only">Loading...</span>
           </div>
@@ -158,7 +191,7 @@ loadGraph('graph_power', 'graph/power.json');
 
 {% endif %}
 
-const formatter = new Intl.NumberFormat('en-US', {
+const formatter = new Intl.NumberFormat('en-CA', {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
@@ -173,8 +206,18 @@ $.ajax({
   success : function(data) {
     $('#energy').html(formatter.format(data.kwh) + ' kWh');
 
-    var cost = data.electricity_cost_dollar + data.cooling_cost_dollar;
-    $('#cost').html('Electricity: ' + formatter.format(cost) + ' $');
+    $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
+
+    $('#co2').html(formatter.format(data.co2_emissions_kg*1000) + ' g');
+
+    $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
+    + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
+    + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over 5 years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
+    + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
+
+    $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
+
+    $('[data-toggle="tooltip"]').tooltip();
   },
   error : function(xhr, textStatus, errorThrown ) {
     if (textStatus == 'timeout' || textStatus == 'error') {
@@ -186,7 +229,10 @@ $.ajax({
       }
     }
     $('#energy').html('No data');
+    $('#car_range').html('No data');
+    $('#co2').html('No data');
     $('#cost').html('No data');
+    $('#cloud').html('No data');
   }
 });
 

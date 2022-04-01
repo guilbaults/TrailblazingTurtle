@@ -198,9 +198,19 @@ COMPUTE_NAME = 'beluga' # beluga-compute or beluga-gpu
 LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
 # $/kWh, energy = 3.505 ¢/kWh
 # power = 13,432-0.9888 $/kW with the 25kV discount
-# cooling add about 25%, not the correct value
 ELECTRICITY_COST_PER_KWH = (4.158 / 100)
-COOLING_COST_PER_KWH = (4.158 / 100) * 0.25
+COOLING_COST_PER_KWH = ELECTRICITY_COST_PER_KWH * 0.25 # not the exact value, but close enough
+AMORTIZATION = 5 # servers are amortized over 5 years
+HARDWARE_OVERHEAD = 1.10 # cables, racks, etc.
+CPU_CORE_COST_PER_HOUR = 7500 / 64 / (365 * 24 * AMORTIZATION) * HARDWARE_OVERHEAD
+GPU_COST_PER_HOUR = 50000 / 4 / (365 * 24 * AMORTIZATION) * HARDWARE_OVERHEAD
+
+CO2_KG_PER_MWH = 0.5 # https://www.hydroquebec.com/data/developpement-durable/pdf/taux-emission-co2-approvisionnement-electricite-2020.pdf
+ELECTRIC_CAR_RANGE_KM_PER_KWH = 1/0.151 # 151Wh/km https://ev-database.org/car/1555/Tesla-Model-3
+
+USD_TO_CAD = 1.25
+CLOUD_CPU_CORE_COST_PER_HOUR =  2.448 / 64 * USD_TO_CAD # c6a.16xlarge = 64 cores, 128GB, half the memory of Narval
+CLOUD_GPU_COST_PER_HOUR = 5.672 / 4 * USD_TO_CAD # g5.12xlarge = 48 cores, 4 GPUs, 192GB of ram, less than half the memory of Narval
 
 # Used to find the current quotas in prometheus
 QUOTA_TYPES = {

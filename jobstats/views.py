@@ -935,10 +935,21 @@ def value_cost(request, username, job_id):
         kw = (sum(line['y']) / len(line['y'])) / 1000  # compute the average power consumption
         hours = (line['x'][-1] - line['x'][0]).total_seconds() / 3600  # compute the duration of the job
         kwhs.append(kw * hours)
+    kwh = sum(kwhs)
+    if job.gpu_count() > 0:
+        hardware_cost = job.gpu_count() * settings.GPU_COST_PER_HOUR * hours
+        cloud_cost = job.gpu_count() * settings.CLOUD_GPU_COST_PER_HOUR * hours
+    else:
+        hardware_cost = job.parse_tres_req()['total_cores'] * settings.CPU_CORE_COST_PER_HOUR * hours
+        cloud_cost = job.parse_tres_req()['total_cores'] * settings.CLOUD_CPU_CORE_COST_PER_HOUR * hours
     return JsonResponse({
-        'kwh': sum(kwhs),
-        'electricity_cost_dollar': sum(kwhs) * settings.ELECTRICITY_COST_PER_KWH,
-        'cooling_cost_dollar': sum(kwhs) * settings.COOLING_COST_PER_KWH,
+        'kwh': kwh,
+        'electric_car_range_km': kwh * settings.ELECTRIC_CAR_RANGE_KM_PER_KWH,
+        'electricity_cost_dollar': kwh * settings.ELECTRICITY_COST_PER_KWH,
+        'cooling_cost_dollar': kwh * settings.COOLING_COST_PER_KWH,
+        'hardware_cost_dollar': hardware_cost,
+        'cloud_cost_dollar': cloud_cost,
+        'co2_emissions_kg': kwh / 1000 * settings.CO2_KG_PER_MWH,
     })
 
 

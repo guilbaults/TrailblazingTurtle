@@ -19,6 +19,8 @@ GPU_MEMORY = {'v100': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'v100': 300, 'NVIDIA A100-SXM4-40GB': 400}
 GPU_IDLE_POWER = {'v100': 55, 'NVIDIA A100-SXM4-40GB': 55}
 
+prom = Prometheus(settings.PROMETHEUS)
+
 
 @login_required
 def index(request):
@@ -47,7 +49,6 @@ def user(request, username):
         context['total_mem'] += (info['total_mem'] * 1024 * 1024)
         context['total_gpus'] += job.gpu_count()
 
-    prom = Prometheus(settings.PROMETHEUS)
     now = datetime.now()
     delta = timedelta(hours=1)
     try:
@@ -92,7 +93,6 @@ def job(request, username, job_id):
     except JobScript.DoesNotExist:
         context['job_script'] = None
 
-    prom = Prometheus(settings.PROMETHEUS)
     if job.time_start_dt() is None:
         return render(request, 'jobstats/job.html', context)
 
@@ -140,7 +140,6 @@ def job(request, username, job_id):
 @user_or_staff
 def graph_cpu(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -175,7 +174,6 @@ def graph_cpu(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_cpu_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     try:
         query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[1m])) / 1000000000'.format(username, prom.get_filter())
@@ -209,7 +207,6 @@ def graph_cpu_user(request, username):
 @login_required
 @user_or_staff
 def graph_mem_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
 
     try:
@@ -256,7 +253,6 @@ def graph_mem_user(request, username):
 @user_or_staff
 def graph_mem(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -307,7 +303,6 @@ def graph_mem(request, username, job_id):
 @user_or_staff
 def graph_lustre_mdt(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -341,8 +336,6 @@ def graph_lustre_mdt(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_mdt_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
-
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[5m])) by (operation, fs) !=0'.format(username, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
@@ -371,7 +364,6 @@ def graph_lustre_mdt_user(request, username):
 @user_or_staff
 def graph_lustre_ost(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -404,7 +396,6 @@ def graph_lustre_ost(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_ost_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*", {}}}[5m])) by (fs)) / (1024*1024)'.format(i, username, prom.get_filter())
@@ -433,7 +424,6 @@ def graph_lustre_ost_user(request, username):
 @user_or_staff
 def graph_gpu_utilization(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -466,8 +456,6 @@ def graph_gpu_utilization(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_utilization_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
-
     data = {'lines': []}
 
     query_alloc = 'count(slurm_job_utilization_gpu{{user="{}", {}}})'.format(username, prom.get_filter())
@@ -495,7 +483,6 @@ def graph_gpu_utilization_user(request, username):
 @user_or_staff
 def graph_gpu_memory_utilization(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -529,7 +516,6 @@ def graph_gpu_memory_utilization(request, username, job_id):
 @user_or_staff
 def graph_gpu_memory(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -564,7 +550,6 @@ def graph_gpu_memory(request, username, job_id):
 @user_or_staff
 def graph_gpu_power(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -598,8 +583,6 @@ def graph_gpu_power(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_power_user(request, username):
-    prom = Prometheus(settings.PROMETHEUS)
-
     data = {'lines': []}
 
     # Fixme only support v100 at the moment
@@ -634,7 +617,6 @@ def graph_gpu_power_user(request, username):
 @user_or_staff
 def graph_gpu_pcie(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -671,7 +653,6 @@ def graph_gpu_pcie(request, username, job_id):
 @user_or_staff
 def graph_infiniband_bdw(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -720,7 +701,6 @@ def graph_infiniband_bdw(request, username, job_id):
 @user_or_staff
 def graph_disk_iops(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -773,7 +753,6 @@ def graph_disk_iops(request, username, job_id):
 @user_or_staff
 def graph_disk_bdw(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -826,7 +805,6 @@ def graph_disk_bdw(request, username, job_id):
 @user_or_staff
 def graph_disk_used(request, username, job_id):
     uid = LdapUser.objects.filter(username=username).get().uid
-    prom = Prometheus(settings.PROMETHEUS)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -862,7 +840,6 @@ def graph_disk_used(request, username, job_id):
 
 
 def power(job):
-    prom = Prometheus(settings.PROMETHEUS)
     nodes = job.nodes()
     if job.gpu_count() > 0:
         # ( take the node power

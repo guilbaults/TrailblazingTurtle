@@ -4,6 +4,8 @@ from django.conf import settings
 from userportal.common import Prometheus
 from datetime import datetime, timedelta
 
+prom = Prometheus(settings.PROMETHEUS)
+
 
 def index(request):
     context = {}
@@ -14,8 +16,6 @@ def index(request):
 def graph_lustre_mdt(request, fs):
     if fs not in settings.LUSTRE_FS_NAMES:
         return JsonResponse({'error': 'Unknown filesystem'})
-
-    prom = Prometheus(settings.PROMETHEUS)
 
     query = 'sum(lustre:metadata:rate3m{{fs="{}", {}}}) by (operation) !=0'.format(fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), step='5m')
@@ -53,8 +53,6 @@ def graph_lustre_mdt(request, fs):
 def graph_lustre_ost(request, fs):
     if fs not in settings.LUSTRE_FS_NAMES:
         return JsonResponse({'error': 'Unknown filesystem'})
-
-    prom = Prometheus(settings.PROMETHEUS)
 
     data = {'lines': []}
     for i in ['read', 'write']:

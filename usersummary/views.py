@@ -7,6 +7,8 @@ from ccldap.common import storage_allocations
 from userportal.common import Prometheus
 from django.conf import settings
 
+prom = Prometheus(settings.PROMETHEUS)
+
 
 @login_required
 def index(request):
@@ -14,7 +16,6 @@ def index(request):
 
 
 def get_quota_prometheus(quota_name, quota_type, inodes_bytes='inodes'):
-    prom = Prometheus(settings.PROMETHEUS)
     if inodes_bytes == 'inodes':
         metric_name = 'lfs_quota_inodes'
     else:

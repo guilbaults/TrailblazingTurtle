@@ -9,6 +9,8 @@ from django.contrib.auth.decorators import login_required
 import time
 from datetime import datetime, timedelta
 
+prom = Prometheus(settings.PROMETHEUS)
+
 
 @login_required
 @staff
@@ -34,7 +36,6 @@ def metrics_to_job(metrics):
 @staff
 def compute(request):
     context = {}
-    prom = Prometheus(settings.PROMETHEUS)
 
     query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account) by (user))'
     stats_cpu = prom.query_last(query_cpu)
@@ -117,7 +118,6 @@ def compute(request):
 @staff
 def largemem(request):
     context = {}
-    prom = Prometheus(settings.PROMETHEUS)
 
     hour_ago = int(time.time()) - (3600)
     week_ago = int(time.time()) - (3600 * 24 * 7)
@@ -192,8 +192,6 @@ def lustre(request):
 @login_required
 @staff
 def graph_lustre_mdt(request, fs):
-    prom = Prometheus(settings.PROMETHEUS)
-
     query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root", {}}}[5m])))'.format(fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
@@ -225,7 +223,6 @@ def graph_lustre_ost(request, fs, rw):
     if rw not in ['read', 'write']:
         return HttpResponseNotFound
 
-    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
     query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*", {}}}[5m])))/1024/1024'.format(rw, fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())

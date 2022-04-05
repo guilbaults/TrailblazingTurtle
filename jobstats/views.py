@@ -1,9 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable
-from ccldap.models import LdapUser
-from userportal.common import user_or_staff
-from userportal.common import Prometheus
+from userportal.common import user_or_staff, username_to_uid, Prometheus
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -30,7 +28,7 @@ def index(request):
 @login_required
 @user_or_staff
 def user(request, username):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     context = {'username': username}
     jobs = JobTable.objects.filter(id_user=uid).order_by('-time_submit')
     paginator = Paginator(jobs, 100)
@@ -78,7 +76,7 @@ def user(request, username):
 @login_required
 @user_or_staff
 def job(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     context = {'job_id': job_id}
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
@@ -139,7 +137,7 @@ def job(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_cpu(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -252,7 +250,7 @@ def graph_mem_user(request, username):
 @login_required
 @user_or_staff
 def graph_mem(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -302,7 +300,7 @@ def graph_mem(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_mdt(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -363,7 +361,7 @@ def graph_lustre_mdt_user(request, username):
 @login_required
 @user_or_staff
 def graph_lustre_ost(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -423,7 +421,7 @@ def graph_lustre_ost_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_utilization(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -482,7 +480,7 @@ def graph_gpu_utilization_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_memory_utilization(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -515,7 +513,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_memory(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -549,7 +547,7 @@ def graph_gpu_memory(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_power(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -616,7 +614,7 @@ def graph_gpu_power_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_pcie(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -652,7 +650,7 @@ def graph_gpu_pcie(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_infiniband_bdw(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -700,7 +698,7 @@ def graph_infiniband_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_iops(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -752,7 +750,7 @@ def graph_disk_iops(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_bdw(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -804,7 +802,7 @@ def graph_disk_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_used(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -870,7 +868,7 @@ def power(job):
 @login_required
 @user_or_staff
 def graph_power(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -900,7 +898,7 @@ def graph_power(request, username, job_id):
 @login_required
 @user_or_staff
 def value_cost(request, username, job_id):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:

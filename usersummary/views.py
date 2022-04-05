@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect
-from ccldap.models import LdapUser
-from userportal.common import user_or_staff
+from userportal.common import user_or_staff, Prometheus, username_to_uid
+from userportal.common import storage_allocations_project, storage_allocations_nearline
 from django.contrib.auth.decorators import login_required
 from slurm.models import JobTable
-from ccldap.common import storage_allocations
-from userportal.common import Prometheus
 from django.conf import settings
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -40,7 +38,7 @@ def get_quota_prometheus(quota_name, quota_type, inodes_bytes='inodes'):
 @login_required
 @user_or_staff
 def user(request, username):
-    uid = LdapUser.objects.filter(username=username).get().uid
+    uid = username_to_uid(username)
     context = {'username': username}
 
     context['scratch'] = {
@@ -56,7 +54,8 @@ def user(request, username):
         'bytes': get_quota_prometheus(username, 'home', 'bytes'),
     }
 
-    alloc_projects, alloc_nearlines = storage_allocations(username)
+    alloc_projects = storage_allocations_project(username)
+    alloc_nearlines = storage_allocations_nearline(username)
     for project in alloc_projects:
         project['inodes'] = get_quota_prometheus(project['name'], 'project', 'inodes')
         project['bytes'] = get_quota_prometheus(project['name'], 'project', 'bytes')

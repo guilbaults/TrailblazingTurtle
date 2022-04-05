@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from userportal.common import user_or_staff
 from django.contrib.auth.decorators import login_required
-from ccldap.common import storage_allocations
+from userportal.common import storage_allocations_project, storage_allocations_nearline
 from .common import project_user_quota, project_used
 from .common import nearline_user_quota, nearline_used
 
@@ -17,7 +17,8 @@ def user(request, username):
     context = {}
     context['projects'] = []
     context['nearlines'] = []
-    alloc_projects, alloc_nearlines = storage_allocations(username)
+    alloc_projects = storage_allocations_project(username)
+    alloc_nearlines = storage_allocations_nearline(username)
 
     for alloc in alloc_projects:
         project = {}

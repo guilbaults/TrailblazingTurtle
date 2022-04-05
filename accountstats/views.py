@@ -1,12 +1,10 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from userportal.common import account_or_staff
-from userportal.common import Prometheus
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
-from ccldap.models import LdapAllocation
-from ccldap.common import compute_allocations_by_user, compute_allocations_by_slurm_account
+from userportal.common import account_or_staff, Prometheus
+from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account, compute_default_allocation_by_user
 
 LONG_PERIOD = timedelta(days=60)
 SHORT_PERIOD = timedelta(days=14)
@@ -19,10 +17,7 @@ def index(request):
     context = {}
     username = request.META['username']
     context['compute_allocations'] = compute_allocations_by_user(username)
-    context['default_allocations'] = []
-    for alloc in LdapAllocation.objects.filter(members=username, status='active').all():
-        if alloc.name.startswith('def-'):
-            context['default_allocations'].append(alloc.name)
+    context['default_allocations'] = compute_default_allocation_by_user(username)
     return render(request, 'accountstats/index.html', context)
 
 

@@ -1,9 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponseNotFound, JsonResponse
-from userportal.common import staff
-from userportal.common import Prometheus
+from userportal.common import staff, Prometheus, uid_to_username
 from slurm.models import JobTable
-from ccldap.models import LdapUser
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import time
@@ -159,7 +157,7 @@ def largemem(request):
                 cpu_badge = None
 
             context['jobs'].append({
-                'user': LdapUser.objects.filter(uid=job.id_user).get().username,
+                'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
                 'time_start_dt': job.time_start_dt,
                 'cpu_asked': stats_cpu_asked[job_id],
@@ -171,7 +169,7 @@ def largemem(request):
             })
         except IndexError:
             context['jobs'].append({
-                'user': LdapUser.objects.filter(uid=job.id_user).get().username,
+                'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
                 'mem_asked': 'error',
                 'mem_max': 'error',

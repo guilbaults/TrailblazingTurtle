@@ -45,25 +45,31 @@
                   {% translate "Home" %}<span class="sr-only"></span>
                 </a>
               </li>
+              {% if 'usersummary' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/usersummary/">
                   <span data-feather="user"></span>
                   {% translate "User summary" %}<span class="sr-only"></span>
                 </a>
               </li>
+              {% endif %}
+              {% if 'jobstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/jobstats/">
                   <span data-feather="activity"></span>
                   {% translate "Job stats" %}<span class="sr-only"></span>
                 </a>
               </li>
+              {% endif %}
+              {% if 'accountstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/accountstats/">
                   <span data-feather="users"></span>
                   {% translate "Account stats" %}<span class="sr-only"></span>
                 </a>
               </li>
-              {% if settings.QUOTAS_ENABLED %}
+              {% endif %}
+              {% if 'quotas' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/quotas/">
                   <span data-feather="hard-drive"></span>
@@ -71,7 +77,7 @@
                 </a>
               </li>
               {% endif %}
-              {% if settings.CLOUDSTATS_ENABLED %}
+              {% if 'cloudstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/cloudstats/">
                   <span data-feather="cloud"></span>
@@ -79,7 +85,7 @@
                 </a>
               </li>
               {% endif %}
-              {% if request.META.is_staff %}
+              {% if request.META.is_staff and 'top' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/top/">
                   <span data-feather="award"></span>

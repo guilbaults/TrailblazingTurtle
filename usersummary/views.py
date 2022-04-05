@@ -41,45 +41,47 @@ def user(request, username):
     uid = username_to_uid(username)
     context = {'username': username}
 
-    context['scratch'] = {
-        'inodes_quota': 10000000,
-        'bytes_quota': 20 * 1024 * 1024 * 1024 * 1024,
-        'inodes': get_quota_prometheus(username, 'scratch', 'inodes'),
-        'bytes': get_quota_prometheus(username, 'scratch', 'bytes'),
-    }
-    context['home'] = {
-        'inodes_quota': 500000,
-        'bytes_quota': 50 * 1024 * 1024 * 1024,
-        'inodes': get_quota_prometheus(username, 'home', 'inodes'),
-        'bytes': get_quota_prometheus(username, 'home', 'bytes'),
-    }
+    if 'lfs_quota' in settings.EXPORTER_INSTALLED:
+        context['scratch'] = {
+            'inodes_quota': 10000000,
+            'bytes_quota': 20 * 1024 * 1024 * 1024 * 1024,
+            'inodes': get_quota_prometheus(username, 'scratch', 'inodes'),
+            'bytes': get_quota_prometheus(username, 'scratch', 'bytes'),
+        }
+        context['home'] = {
+            'inodes_quota': 500000,
+            'bytes_quota': 50 * 1024 * 1024 * 1024,
+            'inodes': get_quota_prometheus(username, 'home', 'inodes'),
+            'bytes': get_quota_prometheus(username, 'home', 'bytes'),
+        }
 
-    alloc_projects = storage_allocations_project(username)
-    alloc_nearlines = storage_allocations_nearline(username)
-    for project in alloc_projects:
-        project['inodes'] = get_quota_prometheus(project['name'], 'project', 'inodes')
-        project['bytes'] = get_quota_prometheus(project['name'], 'project', 'bytes')
-    context['alloc_projects'] = alloc_projects
-    context['alloc_nearlines'] = alloc_nearlines
+        alloc_projects = storage_allocations_project(username)
+        alloc_nearlines = storage_allocations_nearline(username)
+        for project in alloc_projects:
+            project['inodes'] = get_quota_prometheus(project['name'], 'project', 'inodes')
+            project['bytes'] = get_quota_prometheus(project['name'], 'project', 'bytes')
+        context['alloc_projects'] = alloc_projects
+        context['alloc_nearlines'] = alloc_nearlines
 
-    pending_jobs = JobTable.objects.filter(
-        id_user=uid, state=0).order_by('-time_submit')
+    if 'jobstats' in settings.INSTALLED_APPS:
+        pending_jobs = JobTable.objects.filter(
+            id_user=uid, state=0).order_by('-time_submit')
 
-    job_start = JobTable.objects.filter(
-        id_user=uid).order_by('-time_submit')
-    job_end = JobTable.objects.filter(
-        id_user=uid).order_by('-time_submit')
+        job_start = JobTable.objects.filter(
+            id_user=uid).order_by('-time_submit')
+        job_end = JobTable.objects.filter(
+            id_user=uid).order_by('-time_submit')
 
-    context['jobs'] = (pending_jobs | job_start | job_end)[:10]
+        context['jobs'] = (pending_jobs | job_start | job_end)[:10]
 
-    running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
-    context['total_cores'] = 0
-    context['total_mem'] = 0
-    context['total_gpus'] = 0
-    for job in running_jobs:
-        info = job.parse_tres_req()
-        context['total_cores'] += info['total_cores']
-        context['total_mem'] += (info['total_mem'] * 1024 * 1024)
-        context['total_gpus'] += job.gpu_count()
+        running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
+        context['total_cores'] = 0
+        context['total_mem'] = 0
+        context['total_gpus'] = 0
+        for job in running_jobs:
+            info = job.parse_tres_req()
+            context['total_cores'] += info['total_cores']
+            context['total_mem'] += (info['total_mem'] * 1024 * 1024)
+            context['total_gpus'] += job.gpu_count()
 
     return render(request, 'usersummary/user.html', context)

@@ -18,21 +18,34 @@ from django.urls import include, path
 from django.contrib import admin
 import debug_toolbar
 from rest_framework import routers
-from jobstats.views import JobScriptViewSet
+from django.conf import settings
 
 router = routers.DefaultRouter()
-router.register(r'jobscripts', JobScriptViewSet)
 
 urlpatterns = [
     path('', include('pages.urls')),
-    path('secure/jobstats/', include('jobstats.urls')),
-    path('secure/accountstats/', include('accountstats.urls')),
-    path('secure/cloudstats/', include('cloudstats.urls')),
-    path('secure/quotas/', include('quotas.urls')),
-    path('secure/top/', include('top.urls')),
-    path('secure/usersummary/', include('usersummary.urls')),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
     path('api/', include((router.urls, 'app_name'))),
     path('api-auth/', include('rest_framework.urls')),
 ]
+
+if 'jobstats' in settings.INSTALLED_APPS:
+    from jobstats.views import JobScriptViewSet
+    router.register(r'jobscripts', JobScriptViewSet)
+    urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))
+
+if 'accountstats' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/accountstats/', include('accountstats.urls')))
+
+if 'cloudstats' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/cloudstats/', include('cloudstats.urls')))
+
+if 'quotas' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/quotas/', include('quotas.urls')))
+
+if 'top' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/top/', include('top.urls')))
+
+if 'usersummary' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/usersummary/', include('usersummary.urls')))

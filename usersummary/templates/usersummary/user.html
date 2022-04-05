@@ -7,7 +7,8 @@
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your filesystem quotas" %} {% if settings.QUOTAS_ENABLED %}<a href="/secure/quotas/{{username}}">({% translate "More details" %})</a>{% endif %}</h1>
+{% if 'lfs_quota' in settings.EXPORTER_INSTALLED %}
+<h1>{% translate "Your filesystem quotas" %} {% if 'quotas' in settings.INSTALLED_APPS %}<a href="/secure/quotas/{{username}}">({% translate "More details" %})</a>{% endif %}</h1>
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
@@ -36,7 +37,9 @@
     {% endfor %}
   </tbody>
 </table>
+{% endif %}
 
+{% if 'jobstats' in settings.INSTALLED_APPS %}
 <h1>{% translate "Your latest 10 jobs" %} <a href="/secure/jobstats/{{username}}">({% translate "More details" %})</a></h1>
 
 <table class="table table-striped">
@@ -67,7 +70,7 @@
 {% endfor %}
   </tbody>
 </table>
-
+{% endif %}
 <script>
 </script>
 

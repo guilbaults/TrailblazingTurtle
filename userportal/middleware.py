@@ -4,11 +4,15 @@ from django.core.exceptions import PermissionDenied
 class ControlledUserMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        # One-time configuration and initialization.
+        """One-time configuration and initialization."""
 
     def __call__(self, request):
-        # Code to be executed for each request before
-        # the view (and later middleware) are called.
+        """Code to be executed for each request before the view (and later middleware) are called.
+
+        This is where we set is_staff to True if the user is a staff member.
+
+        We also set the username in the request.META dictionary.
+        """
         if 'REMOTE_USER' in request.META:
             # Behind shib
             if 'staff@computecanada.ca' in request.META['affiliation'] \

@@ -9,6 +9,7 @@ from django.db import models
 import datetime
 from django.conf import settings
 import re
+import time
 
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
@@ -244,9 +245,20 @@ class JobTable(models.Model):
             return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
 
-    def used_time_display(self):
+    def used_time(self):
         if self.time_start != 0 and self.time_end != 0:
-            t = (self.time_end - self.time_start) / 60
+            # job started and finished
+            return self.time_end - self.time_start
+        elif self.time_start != 0 and self.time_end == 0:
+            # job started but not finished
+            return time.time() - self.time_start
+        else:
+            return None
+
+    def used_time_display(self):
+        used = self.used_time()
+        if used is not None:
+            t = used / 60
             if t > 60 * 4:
                 return '{:.1f}h'.format(t / 60)
             else:

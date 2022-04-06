@@ -74,6 +74,8 @@
       <td>{% translate "Cycles" %}: {{gpu_used | floatformat:-2 }}%, {% translate "Memory" %}: {{gpu_mem | floatformat:-2 }}%, {% translate "Power" %}: {{gpu_power | floatformat:-2 }}%</td>
     </tr>
 {% endif %}
+
+{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
     <tr>
       <td>{% translate "Energy" %}</td>
       <td></td>
@@ -118,6 +120,8 @@
         </div>
       </td>
     </tr>
+    {% endif %}
+    {% if settings.CLOUD_CPU_CORE_COST_PER_HOUR and settings.CLOUD_GPU_COST_PER_HOUR %}
     <tr>
       <td>{% translate "Cloud cost equivalent" %}</td>
       <td></td>
@@ -129,6 +133,7 @@
         </div>
       </td>
     </tr>
+    {% endif %}
   </tbody>
 </table>
 
@@ -156,6 +161,7 @@
 <div id="graph_gpu_pcie"></div>
 {% endif %}
 
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
 <h2>{% translate "Whole node resources" %}</h2>
 <p>Those stats are not accurate when the node is shared with multiple users</p>
 <h3>{% translate "Infiniband" %}</h3>
@@ -166,8 +172,11 @@
 <div id="graph_disk_bdw"></div>
 <h3>{% translate "Localscratch space used" %}</h3>
 <div id="graph_disk_used"></div>
+{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
 <h3>{% translate "Power used" %}</h3>
 <div id="graph_power"></div>
+{% endif %}
+{% endif %}
 
 <script>
 loadGraph('graph_cpu', 'graph/cpu.json');
@@ -181,13 +190,17 @@ loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json');
 loadGraph('graph_gpu_memory', 'graph/gpu_memory.json');
 loadGraph('graph_gpu_power', 'graph/gpu_power.json');
 loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json');
-
 {% endif %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
 loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
 loadGraph('graph_disk_iops', 'graph/disk_iops.json');
 loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
 loadGraph('graph_disk_used', 'graph/disk_used.json');
+{% endif %}
+
+{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
 loadGraph('graph_power', 'graph/power.json');
+{% endif %}
 
 {% endif %}
 
@@ -204,19 +217,28 @@ $.ajax({
   dataType    : 'json',
   contentType : 'application/json',
   success : function(data) {
-    $('#energy').html(formatter.format(data.kwh) + ' kWh');
+    if(data.kwh) {
+      $('#energy').html(formatter.format(data.kwh) + ' kWh');
+    }
 
-    $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
+    if(data.electric_car_range_km){
+      $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
+    }
 
-    $('#co2').html(formatter.format(data.co2_emissions_kg*1000) + ' g');
+    if(data.co2_emissions_kg) {
+      $('#co2').html(formatter.format(data.co2_emissions_kg * 1000) + ' g');
+    }
 
-    $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
-    + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
-    + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over 5 years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
-    + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
+    if(data.electricity_cost_dollar && data.cooling_cost_dollar && data.hardware_cost_dollar){
+      $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
+      + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
+      + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over 5 years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
+      + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
+    }
 
-    $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
-
+    if(data.cloud_cost_dollar){
+      $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
+    }
     $('[data-toggle="tooltip"]').tooltip();
   },
   error : function(xhr, textStatus, errorThrown ) {

@@ -903,29 +903,45 @@ def value_cost(request, username, job_id):
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
+    if job.used_time() is None:
+        # Job has not been run yet
+        return JsonResponse({})
 
-    kwhs = []
-    for line in power(job):
-        # Instead of a proper integration, we just multiply the avg power by the time
-        kw = (sum(line['y']) / len(line['y'])) / 1000  # compute the average power consumption
-        hours = (line['x'][-1] - line['x'][0]).total_seconds() / 3600  # compute the duration of the job
-        kwhs.append(kw * hours)
-    kwh = sum(kwhs)
+    hours = job.used_time() / 3600  # compute the duration of the job
+
+    response = {}
+    if 'redfish_exporter' in settings.EXPORTER_INSTALLED:
+        kwhs = []
+        for line in power(job):
+            # Instead of a proper integration, we just multiply the avg power by the time
+            kw = (sum(line['y']) / len(line['y'])) / 1000  # compute the average power consumption
+            kwhs.append(kw * hours)
+        kwh = sum(kwhs)
+        response['kwh'] = kwh
+        if settings.ELECTRIC_CAR_RANGE_KM_PER_KWH:
+            response['electric_car_range_km'] = kwh * settings.ELECTRIC_CAR_RANGE_KM_PER_KWH
+        if settings.ELECTRICITY_COST_PER_KWH:
+            response['electricity_cost_dollar'] = kwh * settings.ELECTRICITY_COST_PER_KWH
+        if settings.COOLING_COST_PER_KWH:
+            response['cooling_cost_dollar'] = kwh * settings.COOLING_COST_PER_KWH
+        if settings.CO2_KG_PER_MWH:
+            response['co2_emissions_kg'] =  kwh / 1000 * settings.CO2_KG_PER_MWH
+
     if job.gpu_count() > 0:
-        hardware_cost = job.gpu_count() * settings.GPU_COST_PER_HOUR * hours
-        cloud_cost = job.gpu_count() * settings.CLOUD_GPU_COST_PER_HOUR * hours
+        # Cost for a GPU job
+        if settings.GPU_COST_PER_HOUR:
+            response['hardware_cost_dollar'] = job.gpu_count() * settings.GPU_COST_PER_HOUR * hours
+
+        if settings.CLOUD_GPU_COST_PER_HOUR:
+            response['cloud_cost_dollar'] = job.gpu_count() * settings.CLOUD_GPU_COST_PER_HOUR * hours
     else:
-        hardware_cost = job.parse_tres_req()['total_cores'] * settings.CPU_CORE_COST_PER_HOUR * hours
-        cloud_cost = job.parse_tres_req()['total_cores'] * settings.CLOUD_CPU_CORE_COST_PER_HOUR * hours
-    return JsonResponse({
-        'kwh': kwh,
-        'electric_car_range_km': kwh * settings.ELECTRIC_CAR_RANGE_KM_PER_KWH,
-        'electricity_cost_dollar': kwh * settings.ELECTRICITY_COST_PER_KWH,
-        'cooling_cost_dollar': kwh * settings.COOLING_COST_PER_KWH,
-        'hardware_cost_dollar': hardware_cost,
-        'cloud_cost_dollar': cloud_cost,
-        'co2_emissions_kg': kwh / 1000 * settings.CO2_KG_PER_MWH,
-    })
+        # Cost for a CPU job
+        if settings.CPU_CORE_COST_PER_HOUR:
+            response['hardware_cost_dollar'] = job.parse_tres_req()['total_cores'] * settings.CPU_CORE_COST_PER_HOUR * hours
+        if settings.CLOUD_CPU_CORE_COST_PER_HOUR:
+            response['cloud_cost_dollar'] = job.parse_tres_req()['total_cores'] * settings.CLOUD_CPU_CORE_COST_PER_HOUR * hours
+
+    return JsonResponse(response)
 
 
 class JobScriptViewSet(viewsets.ModelViewSet):

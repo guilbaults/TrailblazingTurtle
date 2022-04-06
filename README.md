@@ -1,8 +1,9 @@
-
 # Userportal
 This portal is intended to give users a view of their cluster use, including job level performance.
 
 ## UI modules
+
+This portal is made to be modular, some modules can be disabled by the user if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
 
 ### Jobstats
 Each user can see their current uses on the cluster and a few hours in the past.
@@ -16,10 +17,10 @@ Each user can see their current uses on the cluster and a few hours in the past.
 
 Optional:
 
-* node\_exporter
-* redfish\_exporter
-* lustre\_exporter and lustre\_exporter\_slurm
-* jobscript collector
+* node\_exporter (show node information)
+* redfish\_exporter (show power information)
+* lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
+* jobscript collector (show the submitted jobscript)
 
 ### Accountstats
 The users can also see the aggregated use of the users in the same group.
@@ -33,8 +34,8 @@ The users can also see the aggregated use of the users in the same group.
 
 Optional:
 
-* lustre\_exporter and lustre\_exporter\_slurm
-* slurm-exporter
+* lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
+* slurm-exporter (show priority information)
 
 ### Cloudstats
 The stats of VM running on Openstack can be viewed. This is using the stats of libvirtd, no agent need to be installed in the VM.
@@ -73,7 +74,7 @@ These pages are only available to staff and are meant to visualize poor cluster 
 
 Optional:
 
-* lustre\_exporter and lustre\_exporter\_slurm
+* lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
 
 ### usersummary
 todo
@@ -84,11 +85,56 @@ todo
 ## Design
 Jobs and filesystems metrics are stored in Prometheus, multiple exporters are essentials to get this data.
 
+The Django portal will also access various MySQL databases to gather some informations. Timeseries are stored with Prometheus for better performance. Compatible alternative to Prometheus like Thanos, VictoriaMetrics and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate stats for the portal.
+
+![Architecture diagram](docs/userportal.png)
+
 ## Data sources
 Some features will not be available if the exporter required to gather the stats is not configured.
 
 ### slurm-job-exporter
 [slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture informations from cgroup managed by slurm on each compute nodes. This gather CPU, memory and GPU utilization.
+
+The following recorder rules are used to pre-aggregate stats shown in the user portal.
+
+```
+---
+groups:
+- name: recorder.rules
+  rules:
+  - record: slurm_job:allocated_core:count
+    expr: count(slurm_job_core_usage_total) by (cluster)
+  - record: slurm_job:allocated_core:count_user_account
+    expr: count(slurm_job_core_usage_total) by (user,account,cluster)
+  - record: slurm_job:used_core:sum
+    expr: sum(rate(slurm_job_core_usage_total{}[2m]) / 1000000000) by (cluster)
+  - record: slurm_job:used_core:sum_user_account
+    expr: sum(rate(slurm_job_core_usage_total{}[2m]) / 1000000000) by (user,account, cluster)
+  - record: slurm_job:allocated_memory:sum
+    expr: sum(slurm_job_memory_limit{}) by (cluster)
+  - record: slurm_job:allocated_memory:sum_user_account
+    expr: sum(slurm_job_memory_limit{}) by (user,account,cluster)
+  - record: slurm_job:rss_memory:sum
+    expr: sum(slurm_job_memory_rss) by (cluster)
+  - record: slurm_job:rss_memory:sum_user_account
+    expr: sum(slurm_job_memory_rss) by (user, account, cluster)
+  - record: slurm_job:max_memory:sum_user_account
+    expr: sum(slurm_job_memory_max) by (user, account, cluster)
+  - record: slurm_job:allocated_gpu:count
+    expr: count(slurm_job_utilization_gpu) by (cluster)
+  - record: slurm_job:allocated_gpu:count_user_account
+    expr: count(slurm_job_utilization_gpu) by (user, account, cluster)
+  - record: slurm_job:used_gpu:sum
+    expr: sum(slurm_job_utilization_gpu) by (cluster)/ 100
+  - record: slurm_job:used_gpu:sum_user_account
+    expr: sum(slurm_job_utilization_gpu) by (user,account,cluster) / 100
+  - record: slurm_job:non_idle_gpu:sum_user_account
+    expr: count(slurm_job_utilization_gpu > 0) by (user,account,cluster)
+  - record: slurm_job:power_gpu:sum
+    expr: sum(slurm_job_power_gpu) by (cluster)
+  - record: slurm_job:power_gpu:sum_user_account
+    expr: sum(slurm_job_power_gpu) by (user,account,cluster)
+```
 
 ### slurm-exporter
 slurm-exporter is used to capture informations from slurm like the priority of each users.
@@ -101,6 +147,27 @@ Those 2 exporters are used to gather information about Lustre usage.
 
 * [lustre\_exporter](https://github.com/HewlettPackard/lustre_exporter) capture information on Lustre MDS and OSS but will only use \$SLURM\_JOBID as a tag on the metrics.
 * [lustre\_exporter\_slurm](https://github.com/guilbaults/lustre_exporter_slurm) is used as a proxy between Prometheus and lustre_exporter to improve the content of the tags. This will match the \$SLURM\_JOBID to a job in slurm and will add the username and slurm account in the tags.
+
+The following recorder rules are used to pre-aggregate stats shown in the user portal.
+
+```
+---
+groups:
+- name: recorder.rules
+  rules:
+  - record: lustre:read_bytes:rate3m
+    expr: sum(label_replace(rate(lustre_read_bytes_total{component="ost"}[3m]), "fs", "$1", "target", "(.*)-OST.*")) by (fs, cluster)
+  - record: lustre:write_bytes:rate3m
+    expr: sum(label_replace(rate(lustre_write_bytes_total{component="ost"}[3m]), "fs", "$1", "target", "(.*)-OST.*")) by (fs, cluster)
+  - record: lustre:read_bytes:rate3m_user
+    expr: sum by (user,fs,cluster,account) (rate(lustre_job_read_bytes_total{}[3m]))
+  - record: lustre:write_bytes:rate3m_user
+    expr: sum by (user,fs,cluster,account) (rate(lustre_job_write_bytes_total{}[3m]))
+  - record: lustre:metadata:rate3m
+    expr: sum(label_replace(rate(lustre_stats_total{component="mdt"}[3m]), "fs", "$1", "target", "(.*)-MDT.*")) by (fs,operation,cluster)
+  - record: lustre:metadata:rate3m_user
+    expr: sum by (user,fs,cluster,account) (rate(lustre_job_stats_total{}[3m]))
+```
 
 ### redfish\_exporter
 [redfish\_exporter](https://github.com/jenningsloy318/redfish_exporter) is used to gather the power usage of the nodes. This information is used to compute the energy used by a job and related metrics like CO2 emmissions.
@@ -116,11 +183,6 @@ The information in this database is used to show the current utilization per use
 
 ### jobscript collector
 The REST API provided by Django is used by a small deamon running on every compute node. This deamon will upload the job script when a job is starting on the node. The content of this script is made available in the jobstats module.
-
-### Integration
-The Django portal will also access various MySQL databases to gather some informations. Timeseries are stored in Prometheus for better performance.
-
-![Architecture diagram](docs/userportal.png)
 
 ## Test environment
 To test localy without having to use the SSO:
@@ -147,7 +209,7 @@ python manage.py collectstatic
 ```
 
 ## API
-An API is available to modify resources in the database. A local superuser need to be created:
+An API is available to modify resources in the database. This is used by the jobscript collector. A local superuser need to be created:
 
 ```
 python manage.py createsuperuser

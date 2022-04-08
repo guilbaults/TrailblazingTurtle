@@ -87,6 +87,7 @@
         </div>
       </td>
     </tr>
+  {% if settings.ELECTRICITY_COST_PER_KWH %}
     <tr>
       <td>{% translate "Electric car range equivalent" %}</td>
       <td></td>
@@ -98,6 +99,8 @@
         </div>
       </td>
     </tr>
+    {% endif %}
+    {% if settings.CO2_KG_PER_MWH %}
     <tr>
       <td>{% translate "CO2 emissions" %}</td>
       <td></td>
@@ -109,6 +112,8 @@
         </div>
       </td>
     </tr>
+    {% endif %}
+    {% if settings.CPU_CORE_COST_PER_HOUR or settings.GPU_COST_PER_HOUR%}
     <tr>
       <td>{% translate "Internal cost" %}</td>
       <td></td>
@@ -121,6 +126,7 @@
       </td>
     </tr>
     {% endif %}
+  {% endif %}
     {% if settings.CLOUD_CPU_CORE_COST_PER_HOUR and settings.CLOUD_GPU_COST_PER_HOUR %}
     <tr>
       <td>{% translate "Cloud cost equivalent" %}</td>
@@ -232,7 +238,7 @@ $.ajax({
     if(data.electricity_cost_dollar && data.cooling_cost_dollar && data.hardware_cost_dollar){
       $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
       + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
-      + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over 5 years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
+      + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over {{settings.AMORTIZATION_YEARS}} years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
       + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
     }
 

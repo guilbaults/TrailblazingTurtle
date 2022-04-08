@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path('', views.index),
     path('project/<str:project>/', views.project),
     path('project/<str:project>/graph/cpu.json', views.project_graph_cpu),
     path('project/<str:project>/graph/memory.json', views.project_graph_memory),

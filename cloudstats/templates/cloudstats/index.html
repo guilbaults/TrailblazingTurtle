@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}
+{% translate "Your cloud use" %}
+{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Your cloud use" %}</h1>
+
+<h3>{% translate "Your projects" %}</h3>
+<ul>
+{% for project in projects %}
+    <li><a href="project/{{ project }}">{{project}}</a></li>
+{% endfor %}
+</ul>
+{% endblock content %}

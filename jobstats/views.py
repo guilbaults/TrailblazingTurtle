@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable
-from userportal.common import user_or_staff, username_to_uid, Prometheus
+from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -22,7 +22,7 @@ prom = Prometheus(settings.PROMETHEUS)
 
 @login_required
 def index(request):
-    return redirect('{}/'.format(request.user.username.split('@')[0]))
+    return redirect('{}/'.format(request_to_username(request)))
 
 
 @login_required

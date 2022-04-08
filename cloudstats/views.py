@@ -1,13 +1,19 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from userportal.common import openstackproject_or_staff
-from userportal.common import Prometheus
+from userportal.common import openstackproject_or_staff, cloud_projects_by_user, request_to_username, Prometheus
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from collections import Counter
 
 prom = Prometheus(settings.PROMETHEUS)
+
+
+@login_required
+def index(request):
+    context = {}
+    context['projects'] = cloud_projects_by_user(request_to_username(request))
+    return render(request, 'cloudstats/index.html', context)
 
 
 @login_required

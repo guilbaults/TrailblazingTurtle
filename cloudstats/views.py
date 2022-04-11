@@ -20,7 +20,9 @@ def index(request):
 @openstackproject_or_staff
 def project(request, project):
     context = {}
-    query_instances = 'libvirtd_domain_domain_state{{project_name="{}"}}'.format(project)
+    query_instances = 'libvirtd_domain_domain_state{{project_name="{project}", {filter}}}'.format(
+        project=project,
+        filter=prom.get_filter())
     stats_instances = prom.query_prometheus_multiple(query_instances, datetime.now() - timedelta(days=7), datetime.now())
 
     context['instances'] = []
@@ -42,7 +44,9 @@ def instance(request, project, uuid):
 @openstackproject_or_staff
 def project_graph_cpu(request, project):
     data = {'lines': []}
-    query_used = 'sum(rate(libvirtd_domain_vcpu_time{{project_name="{}"}}[1m])) by (uuid,instance_name) / 1000000000'.format(project)
+    query_used = 'sum(rate(libvirtd_domain_vcpu_time{{project_name="{project}", {filter}}}[1m])) by (uuid,instance_name) / 1000000000'.format(
+        project=project,
+        filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
 
     # Only show UUID if required
@@ -67,7 +71,9 @@ def project_graph_cpu(request, project):
         })
 
     # Get the number of running cores
-    query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{}"}}))'.format(project)
+    query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{project}", {filter}}}))'.format(
+        project=project,
+        filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -86,7 +92,10 @@ def project_graph_cpu(request, project):
 @openstackproject_or_staff
 def instance_graph_cpu(request, project, uuid):
     data = {'lines': []}
-    query_used = 'rate(libvirtd_domain_vcpu_time{{project_name="{}", uuid="{}"}}[1m]) / 1000000000'.format(project, uuid)
+    query_used = 'rate(libvirtd_domain_vcpu_time{{project_name="{project}", uuid="{uuid}", {filter}}}[1m]) / 1000000000'.format(
+        project=project,
+        uuid=uuid,
+        filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
 
     for line in stats_used:
@@ -101,7 +110,10 @@ def instance_graph_cpu(request, project, uuid):
         })
 
     # Get the number of running cores
-    query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{}", uuid="{}"}}))'.format(project, uuid)
+    query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{project}", uuid="{uuid}", {filter}}}))'.format(
+        project=project,
+        uuid=uuid,
+        filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -120,7 +132,9 @@ def instance_graph_cpu(request, project, uuid):
 @openstackproject_or_staff
 def project_graph_memory(request, project):
     data = {'lines': []}
-    query_used = '(libvirtd_domain_balloon_current{{project_name="{}"}} - libvirtd_domain_balloon_usable{{project_name="{}"}})/1024/1024'.format(project, project)
+    query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", {filter}}})/1024/1024'.format(
+        project=project,
+        filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
 
     # Only show UUID if required
@@ -144,7 +158,9 @@ def project_graph_memory(request, project):
             'name': 'Used {}'.format(name)
         })
 
-    query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{}"}})/1024/1024'.format(project)
+    query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}})/1024/1024'.format(
+        project=project,
+        filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -169,7 +185,10 @@ def project_graph_memory(request, project):
 @openstackproject_or_staff
 def instance_graph_memory(request, project, uuid):
     data = {'lines': []}
-    query_used = '(libvirtd_domain_balloon_current{{project_name="{}", uuid="{}"}} - libvirtd_domain_balloon_usable{{project_name="{}", uuid="{}"}})/1024/1024'.format(project, uuid, project, uuid)
+    query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
+        project=project,
+        uuid=uuid,
+        filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
 
     for line in stats_used:
@@ -182,7 +201,10 @@ def instance_graph_memory(request, project, uuid):
             'name': 'Used'
         })
 
-    query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{}", uuid="{}"}})/1024/1024'.format(project, uuid)
+    query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
+        project=project,
+        uuid=uuid,
+        filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -209,7 +231,10 @@ def project_graph_disk_bandwidth(request, project):
     data = {'lines': []}
 
     for direction in ['read', 'write']:
-        query_bandwidth = 'rate(libvirtd_domain_block_{}_bytes{{project_name="{}"}}[1m])/1024/1024'.format(direction, project)
+        query_bandwidth = 'rate(libvirtd_domain_block_{direction}_bytes{{project_name="{project}", {filter}}}[1m])/1024/1024'.format(
+            direction=direction,
+            project=project,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         # Only show UUID if required
@@ -247,7 +272,11 @@ def instance_graph_disk_bandwidth(request, project, uuid):
     data = {'lines': []}
 
     for direction in ['read', 'write']:
-        query_bandwidth = 'rate(libvirtd_domain_block_{}_bytes{{project_name="{}", uuid="{}"}}[1m])/1024/1024'.format(direction, project, uuid)
+        query_bandwidth = 'rate(libvirtd_domain_block_{direction}_bytes{{project_name="{project}", uuid="{uuid}", {filter}}}[1m])/1024/1024'.format(
+            direction=direction,
+            project=project,
+            uuid=uuid,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         for line in stats_bandwidth:
@@ -275,7 +304,10 @@ def project_graph_disk_iops(request, project):
     data = {'lines': []}
 
     for direction in ['read', 'write']:
-        query_bandwidth = 'rate(libvirtd_domain_block_{}_requests{{project_name="{}"}}[1m])'.format(direction, project)
+        query_bandwidth = 'rate(libvirtd_domain_block_{direction}_requests{{project_name="{project}", {filter}}}[1m])'.format(
+            direction=direction,
+            project=project,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         # Only show UUID if required
@@ -307,7 +339,11 @@ def instance_graph_disk_iops(request, project, uuid):
     data = {'lines': []}
 
     for direction in ['read', 'write']:
-        query_bandwidth = 'rate(libvirtd_domain_block_{}_requests{{project_name="{}", uuid="{}"}}[1m])'.format(direction, project, uuid)
+        query_bandwidth = 'rate(libvirtd_domain_block_{direction}_requests{{project_name="{project}", uuid="{uuid}", {filter}}}[1m])'.format(
+            direction=direction,
+            project=project,
+            uuid=uuid,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         for line in stats_bandwidth:
@@ -329,7 +365,10 @@ def project_graph_network_bandwidth(request, project):
     data = {'lines': []}
 
     for direction in ['rx', 'tx']:
-        query_bandwidth = 'rate(libvirtd_domain_net_{}_bytes{{project_name="{}"}}[1m])/1024/1024'.format(direction, project)
+        query_bandwidth = 'rate(libvirtd_domain_net_{direction}_bytes{{project_name="{project}", {filter}}}[1m])/1024/1024'.format(
+            direction=direction,
+            project=project,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         # Only show UUID if required
@@ -367,7 +406,11 @@ def instance_graph_network_bandwidth(request, project, uuid):
     data = {'lines': []}
 
     for direction in ['rx', 'tx']:
-        query_bandwidth = 'rate(libvirtd_domain_net_{}_bytes{{project_name="{}", uuid="{}"}}[1m])/1024/1024'.format(direction, project, uuid)
+        query_bandwidth = 'rate(libvirtd_domain_net_{direction}_bytes{{project_name="{project}", uuid="{uuid}", {filter}}}[1m])/1024/1024'.format(
+            direction=direction,
+            project=project,
+            uuid=uuid,
+            filter=prom.get_filter())
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, datetime.now() - timedelta(days=7), datetime.now())
 
         for line in stats_bandwidth:

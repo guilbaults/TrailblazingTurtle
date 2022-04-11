@@ -10,9 +10,13 @@
 <h1>{% translate "Your cloud use" %}</h1>
 
 <h3>{% translate "Your projects" %}</h3>
-<ul>
-{% for project in projects %}
-    <li><a href="project/{{ project }}">{{project}}</a></li>
-{% endfor %}
-</ul>
+    {% if projects %}
+    <ul>
+    {% for project in projects %}
+      <li><a href="{{ project }}">{{project}}</a></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>{% translate "You have no projects" %}</p>
+    {% endif %}
 {% endblock content %}

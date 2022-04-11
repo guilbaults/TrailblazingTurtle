@@ -59,8 +59,3 @@ def convert_ldap_to_allocation(ldap_object):
                 }
                 computes.append(compute)
     return(computes)
-
-
-def cloud_projects(username):
-    # TODO: currently broken, the allocations in CCDB/LDAP does not match Keystone
-    return ['test-project']

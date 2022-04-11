@@ -3,7 +3,9 @@ from django.http import HttpResponseNotFound
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime
 from ccldap.models import LdapAllocation, LdapUser
-from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline, cloud_projects
+from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline
+import yaml
+from django.conf import settings
 
 
 def user_or_staff(func):
@@ -110,7 +112,17 @@ def storage_nearline_allocations_by_user(username):
 
 def cloud_projects_by_user(username):
     """return the cloud allocation for a user"""
-    return cloud_projects(username)
+    # open the yaml file with the allocations
+    with open(settings.CLOUD_ALLOCATIONS_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    # get the list of projects
+    returned_projects = []
+    projects = data['projects']
+    for key in projects.keys():
+        if username in projects[key]['members']:
+            returned_projects.append(key)
+
+    return returned_projects
 
 
 def username_to_uid(username):

@@ -261,3 +261,5 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
 }
+
+CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'

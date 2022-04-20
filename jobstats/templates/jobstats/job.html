@@ -75,194 +75,195 @@
     </tr>
 {% endif %}
 
-{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-    <tr>
-      <td>{% translate "Energy" %}</td>
-      <td></td>
-      <td>
-        <div id="energy">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="sr-only">Loading...</span>
+  {% if job.time_start_dt %}
+    {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
+      <tr>
+        <td>{% translate "Energy" %}</td>
+        <td></td>
+        <td>
+          <div id="energy">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
           </div>
-        </div>
-      </td>
-    </tr>
-  {% if settings.ELECTRICITY_COST_PER_KWH %}
-    <tr>
-      <td>{% translate "Electric car range equivalent" %}</td>
-      <td></td>
-      <td>
-        <div id="car_range">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      </td>
-    </tr>
+        </td>
+      </tr>
+      {% if settings.ELECTRICITY_COST_PER_KWH %}
+        <tr>
+          <td>{% translate "Electric car range equivalent" %}</td>
+          <td></td>
+          <td>
+            <div id="car_range">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+      {% if settings.CO2_KG_PER_MWH %}
+        <tr>
+          <td>{% translate "CO2 emissions" %}</td>
+          <td></td>
+          <td>
+            <div id="co2">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
+      {% if settings.CPU_CORE_COST_PER_HOUR or settings.GPU_COST_PER_HOUR%}
+        <tr>
+          <td>{% translate "Internal cost" %}</td>
+          <td></td>
+          <td>
+            <div id="cost">
+              <div class="spinner-border spinner-border-sm" role="status">
+                <span class="sr-only">Loading...</span>
+              </div>
+            </div>
+          </td>
+        </tr>
+      {% endif %}
     {% endif %}
-    {% if settings.CO2_KG_PER_MWH %}
-    <tr>
-      <td>{% translate "CO2 emissions" %}</td>
-      <td></td>
-      <td>
-        <div id="co2">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="sr-only">Loading...</span>
+    {% if settings.CLOUD_CPU_CORE_COST_PER_HOUR and settings.CLOUD_GPU_COST_PER_HOUR %}
+      <tr>
+        <td>{% translate "Cloud cost equivalent" %}</td>
+        <td></td>
+        <td>
+          <div id="cloud">
+            <div class="spinner-border spinner-border-sm" role="status">
+              <span class="sr-only">Loading...</span>
+            </div>
           </div>
-        </div>
-      </td>
-    </tr>
-    {% endif %}
-    {% if settings.CPU_CORE_COST_PER_HOUR or settings.GPU_COST_PER_HOUR%}
-    <tr>
-      <td>{% translate "Internal cost" %}</td>
-      <td></td>
-      <td>
-        <div id="cost">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      </td>
-    </tr>
+        </td>
+      </tr>
     {% endif %}
   {% endif %}
-    {% if settings.CLOUD_CPU_CORE_COST_PER_HOUR and settings.CLOUD_GPU_COST_PER_HOUR %}
-    <tr>
-      <td>{% translate "Cloud cost equivalent" %}</td>
-      <td></td>
-      <td>
-        <div id="cloud">
-          <div class="spinner-border spinner-border-sm" role="status">
-            <span class="sr-only">Loading...</span>
-          </div>
-        </div>
-      </td>
-    </tr>
-    {% endif %}
   </tbody>
 </table>
 
 {% if job.time_start_dt %}
-<h2>{% translate "Resources used (details)" %}</h2>
-<h3>{% translate "CPU" %}</h3>
-<div id="graph_cpu"></div>
-<h3>{% translate "Memory" %}</h3>
-<div id="graph_mem"></div>
-<h3>{% translate "Filesystem" %}</h3>
-<div id="graph_lustre_mdt"></div>
-<div id="graph_lustre_ost"></div>
+  <h2>{% translate "Resources used (details)" %}</h2>
+  <h3>{% translate "CPU" %}</h3>
+  <div id="graph_cpu"></div>
+  <h3>{% translate "Memory" %}</h3>
+  <div id="graph_mem"></div>
+  <h3>{% translate "Filesystem" %}</h3>
+  <div id="graph_lustre_mdt"></div>
+  <div id="graph_lustre_ost"></div>
 
-{% if job.gpu_count > 0 %}
-<h3>{% translate "GPU" %}</h3>
-<h4>{% translate "GPU Compute cycle used" %}</h4>
-<div id="graph_gpu_utilization"></div>
-<h4>{% translate "GPU Memory access cycle used" %}</h4>
-<div id="graph_gpu_memory_utilization"></div>
-<h4>{% translate "GPU Memory used" %}</h4>
-<div id="graph_gpu_memory"></div>
-<h4>{% translate "GPU Power" %}</h4>
-<div id="graph_gpu_power"></div>
-<h4>{% translate "GPU PCIe bandwidth" %}</h4>
-<div id="graph_gpu_pcie"></div>
-{% endif %}
+  {% if job.gpu_count > 0 %}
+    <h3>{% translate "GPU" %}</h3>
+    <h4>{% translate "GPU Compute cycle used" %}</h4>
+    <div id="graph_gpu_utilization"></div>
+    <h4>{% translate "GPU Memory access cycle used" %}</h4>
+    <div id="graph_gpu_memory_utilization"></div>
+    <h4>{% translate "GPU Memory used" %}</h4>
+    <div id="graph_gpu_memory"></div>
+    <h4>{% translate "GPU Power" %}</h4>
+    <div id="graph_gpu_power"></div>
+    <h4>{% translate "GPU PCIe bandwidth" %}</h4>
+    <div id="graph_gpu_pcie"></div>
+  {% endif %}
 
-{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
-<h2>{% translate "Whole node resources" %}</h2>
-<p>Those stats are not accurate when the node is shared with multiple users</p>
-<h3>{% translate "Infiniband" %}</h3>
-<div id="graph_infiniband_bdw"></div>
-<h3>{% translate "Localscratch IOPS" %}</h3>
-<div id="graph_disk_iops"></div>
-<h3>{% translate "Localscratch bandwidth" %}</h3>
-<div id="graph_disk_bdw"></div>
-<h3>{% translate "Localscratch space used" %}</h3>
-<div id="graph_disk_used"></div>
-{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-<h3>{% translate "Power used" %}</h3>
-<div id="graph_power"></div>
-{% endif %}
-{% endif %}
+  {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <h2>{% translate "Whole node resources" %}</h2>
+    <p>Those stats are not accurate when the node is shared with multiple users</p>
+    <h3>{% translate "Infiniband" %}</h3>
+    <div id="graph_infiniband_bdw"></div>
+    <h3>{% translate "Localscratch IOPS" %}</h3>
+    <div id="graph_disk_iops"></div>
+    <h3>{% translate "Localscratch bandwidth" %}</h3>
+    <div id="graph_disk_bdw"></div>
+    <h3>{% translate "Localscratch space used" %}</h3>
+    <div id="graph_disk_used"></div>
+    {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
+      <h3>{% translate "Power used" %}</h3>
+      <div id="graph_power"></div>
+    {% endif %}
+  {% endif %}
 
-<script>
-loadGraph('graph_cpu', 'graph/cpu.json');
-loadGraph('graph_mem', 'graph/mem.json');
-loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
-loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
+  <script>
+  loadGraph('graph_cpu', 'graph/cpu.json');
+  loadGraph('graph_mem', 'graph/mem.json');
+  loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
+  loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
 
-{% if job.gpu_count > 0 %}
-loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json');
-loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json');
-loadGraph('graph_gpu_memory', 'graph/gpu_memory.json');
-loadGraph('graph_gpu_power', 'graph/gpu_power.json');
-loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json');
-{% endif %}
-{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
-loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
-loadGraph('graph_disk_iops', 'graph/disk_iops.json');
-loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
-loadGraph('graph_disk_used', 'graph/disk_used.json');
-{% endif %}
+  {% if job.gpu_count > 0 %}
+    loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json');
+    loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json');
+    loadGraph('graph_gpu_memory', 'graph/gpu_memory.json');
+    loadGraph('graph_gpu_power', 'graph/gpu_power.json');
+    loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json');
+  {% endif %}
+  {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
+    loadGraph('graph_disk_iops', 'graph/disk_iops.json');
+    loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
+    loadGraph('graph_disk_used', 'graph/disk_used.json');
+  {% endif %}
 
-{% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-loadGraph('graph_power', 'graph/power.json');
-{% endif %}
+  {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
+    loadGraph('graph_power', 'graph/power.json');
+  {% endif %}
 
-{% endif %}
+  const formatter = new Intl.NumberFormat('en-CA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
-const formatter = new Intl.NumberFormat('en-CA', {
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 2,
-});
-
-$.ajax({
-  url : 'value/cost.json',
-  type : 'GET',
-  tryCount : 0,
-  retryLimit : 3,
-  dataType    : 'json',
-  contentType : 'application/json',
-  success : function(data) {
-    if(data.kwh) {
-      $('#energy').html(formatter.format(data.kwh) + ' kWh');
-    }
-
-    if(data.electric_car_range_km){
-      $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
-    }
-
-    if(data.co2_emissions_kg) {
-      $('#co2').html(formatter.format(data.co2_emissions_kg * 1000) + ' g');
-    }
-
-    if(data.electricity_cost_dollar && data.cooling_cost_dollar && data.hardware_cost_dollar){
-      $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
-      + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
-      + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over {{settings.AMORTIZATION_YEARS}} years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
-      + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
-    }
-
-    if(data.cloud_cost_dollar){
-      $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
-    }
-    $('[data-toggle="tooltip"]').tooltip();
-  },
-  error : function(xhr, textStatus, errorThrown ) {
-    if (textStatus == 'timeout' || textStatus == 'error') {
-      this.tryCount++;
-      if (this.tryCount <= this.retryLimit) {
-          //try again
-          $.ajax(this);
-          return;
+  $.ajax({
+    url : 'value/cost.json',
+    type : 'GET',
+    tryCount : 0,
+    retryLimit : 3,
+    dataType    : 'json',
+    contentType : 'application/json',
+    success : function(data) {
+      if(data.kwh) {
+        $('#energy').html(formatter.format(data.kwh) + ' kWh');
       }
-    }
-    $('#energy').html('No data');
-    $('#car_range').html('No data');
-    $('#co2').html('No data');
-    $('#cost').html('No data');
-    $('#cloud').html('No data');
-  }
-});
 
-</script>
+      if(data.electric_car_range_km){
+        $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
+      }
+
+      if(data.co2_emissions_kg) {
+        $('#co2').html(formatter.format(data.co2_emissions_kg * 1000) + ' g');
+      }
+
+      if(data.electricity_cost_dollar && data.cooling_cost_dollar && data.hardware_cost_dollar){
+        $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
+        + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
+        + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over {{settings.AMORTIZATION_YEARS}} years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
+        + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
+      }
+
+      if(data.cloud_cost_dollar){
+        $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
+      }
+      $('[data-toggle="tooltip"]').tooltip();
+    },
+    error : function(xhr, textStatus, errorThrown ) {
+      if (textStatus == 'timeout' || textStatus == 'error') {
+        this.tryCount++;
+        if (this.tryCount <= this.retryLimit) {
+            //try again
+            $.ajax(this);
+            return;
+        }
+      }
+      $('#energy').html('No data');
+      $('#car_range').html('No data');
+      $('#co2').html('No data');
+      $('#cost').html('No data');
+      $('#cloud').html('No data');
+    }
+  });
+
+  </script>
+{% endif %}
 {% endblock content %}

@@ -107,16 +107,26 @@ DATABASES = {
         'NAME': 'userportaldev',
         'USER': 'userportaldev',
         'PASSWORD': 'changeme',
-        'HOST': 'dbhost1',
-        'PORT': '3306',
+        'HOST': 'proxysql101',
+        'PORT': '6033',
+        'OPTIONS': {
+            'ssl': {
+                'ca': '/home/sigui4/proxysql-ca.pem',
+            },
+        }
     },
     'slurm': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'slurmdb',
         'USER': 'slurm-stats',
         'PASSWORD': 'changeme',
-        'HOST': '10.75.73.155',
-        'PORT': '3306',
+        'HOST': 'proxysql101',
+        'PORT': '6033',
+        'OPTIONS': {
+            'ssl': {
+                'ca': '/home/sigui4/proxysql-ca.pem',
+            },
+        }
     },
     'ldap': {
         'ENGINE': 'ldapdb.backends.ldap',
@@ -201,12 +211,13 @@ EXPORTER_INSTALLED = [
     'node_exporter',
     'redfish_exporter',
     'lfs_quota',
+    'lustre_exporter',
 ]
 
-CLUSTER_NAME = 'beluga'
-STORAGE_NAME = 'beluga-storage'
-COMPUTE_NAME = 'beluga' # beluga-compute or beluga-gpu
-LUSTRE_FS_NAMES = ['lustre02', 'lustre03', 'lustre04']
+CLUSTER_NAME = 'narval'  # used for slurm stats
+STORAGE_NAME = 'narval-storage'
+COMPUTE_NAME = 'narval'  # narval-compute or narval-gpu
+LUSTRE_FS_NAMES = ['lustre05', 'lustre06', 'lustre07']
 
 # value used in the next variables, not showned in the UI, can be removed
 HARDWARE_OVERHEAD = 1.10  # cables, racks, etc.
@@ -232,10 +243,21 @@ QUOTA_TYPES = {
     'project': ('/lustre06/project/', 'project')
 }
 
-CLUSTER_NAME_TITLE = 'Béluga'
+CLUSTER_NAME_TITLE = 'Narval'
+
+CLUSTER_INTRO = """
+<p>Narval is a general purpose cluster designed for a variety of workloads; it is located at the <a href="https://www.etsmtl.ca/en/home">École de technologie supérieure in Montreal</a> and is managed by <a href="https://www.calculquebec.ca/">Calcul Québec</a>. The cluster is named in honour of the <a href="https://en.wikipedia.org/wiki/Narwhal">narwhal</a>, a species of whale which has occasionally been observed in the Gulf of St. Lawrence.</p>
+
+<p>This cluster is composed of over 80720 cores and 636 GPUs, all nodes are connected at 100Gb/s.</p>
+
+<p>This portal is intended for our users, the menu on the left provides multiple tools to measure job performance and current cluster utilization</p>
+
+<p><a href="https://docs.computecanada.ca/wiki/Narval/">Documentation</a></p>
+"""
 
 SETTINGS_EXPORT = [
     'CLUSTER_NAME_TITLE',
+    'CLUSTER_INTRO',
     'EXPORTER_INSTALLED',
     'INSTALLED_APPS',
     'CLOUD_CPU_CORE_COST_PER_HOUR',

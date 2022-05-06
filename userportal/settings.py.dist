@@ -219,6 +219,17 @@ CLUSTER_NAME = 'narval'  # used for slurm stats
 STORAGE_NAME = 'narval-storage'
 COMPUTE_NAME = 'narval'  # narval-compute or narval-gpu
 LUSTRE_FS_NAMES = ['lustre05', 'lustre06', 'lustre07']
+LOGINS = {
+    'narval1': {
+        'network_interface': 'eno34',
+    },
+    'narval2': {
+        'network_interface': 'eno34',
+    },
+    'narval3': {
+        'network_interface': 'eno34',
+    },
+}
 
 # value used in the next variables, not showned in the UI, can be removed
 HARDWARE_OVERHEAD = 1.10  # cables, racks, etc.

@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>Logins</h2>
+
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">Last week</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">Last day</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">Last hour</a>
+    </li>
+</ul>
+
+<h3>CPU</h3>
+<div class="container">
+    <div class="row">
+    {% for login in logins %}
+        <div class="col-sm">
+            <h4>{{login}}</h4>
+            <div id="graph_{{login}}_cpu"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<h3>Memory</h3>
+<div class="container">
+    <div class="row">
+    {% for login in logins %}
+        <div class="col-sm">
+            <h4>{{login}}</h4>
+            <div id="graph_{{login}}_memory"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<h3>Load</h3>
+<div class="container">
+    <div class="row">
+    {% for login in logins %}
+        <div class="col-sm">
+            <h4>{{login}}</h4>
+            <div id="graph_{{login}}_load"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<h3>Network</h3>
+<div class="container">
+    <div class="row">
+    {% for login in logins %}
+        <div class="col-sm">
+            <h4>{{login}}</h4>
+            <div id="graph_{{login}}_network"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<script>
+    function loadGraphs(delta){
+        {% for login in logins %}
+        loadGraph('graph_{{login}}_cpu', 'graph/cpu/{{login}}.json?delta=' + delta);
+        loadGraph('graph_{{login}}_memory', 'graph/memory/{{login}}.json?delta=' + delta);
+        loadGraph('graph_{{login}}_load', 'graph/load/{{login}}.json?delta=' + delta);
+        loadGraph('graph_{{login}}_network', 'graph/network/{{login}}.json?delta=' + delta);
+        {% endfor %}
+    }
+    $(document).ready(function(){
+        loadGraphs('1w');
+
+        $('#myTabs a').click(function (e) {
+            if($(this).attr('href') == '#last_week'){
+                loadGraphs('1w');
+            }
+            if($(this).attr('href') == '#last_day'){
+                loadGraphs('1d');
+            }
+            if($(this).attr('href') == '#last_hour'){
+                loadGraphs('1h');
+            }
+        })
+    });
+</script>
+
+
+{% endblock content %}

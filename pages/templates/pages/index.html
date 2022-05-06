@@ -14,10 +14,10 @@
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='filesystem/'><span data-feather="hard-drive"></span> Filesystems performance</a></li>
 {% endif %}
-{% comment %}
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> Logins nodes</a></li>
 {% endif %}
+{% comment %}
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> Scheduler</a></li>
 {% endif %}

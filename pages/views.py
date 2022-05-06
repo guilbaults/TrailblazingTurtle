@@ -11,6 +11,7 @@ def index(request):
     context = {}
     return render(request, 'pages/index.html', context)
 
+
 def filesystem(request):
     context = {}
     context['fs'] = settings.LUSTRE_FS_NAMES

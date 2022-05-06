@@ -9,38 +9,22 @@
 
 {{ settings.CLUSTER_INTRO | safe }}
 
+
+<ul class="list-group">
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-<h2>Filesystems performance</h2>
-
-<h3>Bandwidth</h3>
-<div class="container">
-    <div class="row">
-    {% for filesystem in fs %}
-        <div class="col-sm">
-            <h4>{{filesystem}}</h4>
-            <div id="graph_{{filesystem}}_ost"></div>
-        </div>
-    {% endfor %}
-    </div>
-</div>
-
-<h3>Metadata</h3>
-<div class="container">
-    <div class="row">
-        {% for filesystem in fs %}
-            <div class="col-sm">
-                <h4>{{filesystem}}</h4>
-                <div id="graph_{{filesystem}}_mdt"></div>
-            </div>
-        {% endfor %}
-            </div>
-</div>
-<script>
-    {% for filesystem in fs %}
-    loadGraph('graph_{{filesystem}}_ost', 'graph/lustre/{{filesystem}}/ost.json');
-    loadGraph('graph_{{filesystem}}_mdt', 'graph/lustre/{{filesystem}}/mdt.json');
-    {% endfor %}
-</script>
+    <li class="list-group-item"><a href='filesystem/'><span data-feather="hard-drive"></span> Filesystems performance</a></li>
 {% endif %}
+{% comment %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> Logins nodes</a></li>
+{% endif %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> Scheduler</a></li>
+{% endif %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='dtn/'><span data-feather="globe"></span> Data transfer nodes</a></li>
+{% endif %}
+{% endcomment %}
+</ul>
 
 {% endblock content %}

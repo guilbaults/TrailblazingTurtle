@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>Filesystems performance</h2>
+
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">Last week</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">Last day</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">Last hour</a>
+    </li>
+</ul>
+
+<h3>Bandwidth</h3>
+<div class="container">
+    <div class="row">
+    {% for filesystem in fs %}
+        <div class="col-sm">
+            <h4>{{filesystem}}</h4>
+            <div id="graph_{{filesystem}}_ost"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<h3>Metadata</h3>
+<div class="container">
+    <div class="row">
+        {% for filesystem in fs %}
+            <div class="col-sm">
+                <h4>{{filesystem}}</h4>
+                <div id="graph_{{filesystem}}_mdt"></div>
+            </div>
+        {% endfor %}
+            </div>
+</div>
+
+<script>
+    function loadGraphs(delta){
+        {% for filesystem in fs %}
+        loadGraph('graph_{{filesystem}}_ost', 'graph/lustre/{{filesystem}}/ost.json?delta=' + delta);
+        loadGraph('graph_{{filesystem}}_mdt', 'graph/lustre/{{filesystem}}/mdt.json?delta=' + delta);
+        {% endfor %}
+    }
+    $(document).ready(function(){
+        loadGraphs('1w');
+
+        $('#myTabs a').click(function (e) {
+            if($(this).attr('href') == '#last_week'){
+                loadGraphs('1w');
+            }
+            if($(this).attr('href') == '#last_day'){
+                loadGraphs('1d');
+            }
+            if($(this).attr('href') == '#last_hour'){
+                loadGraphs('1h');
+            }
+        })
+    });
+</script>
+
+
+{% endblock content %}

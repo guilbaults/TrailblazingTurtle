@@ -212,6 +212,7 @@ EXPORTER_INSTALLED = [
     'redfish_exporter',
     'lfs_quota',
     'lustre_exporter',
+    'slurm_exporter',
 ]
 
 CLUSTER_NAME = 'narval'  # used for slurm stats

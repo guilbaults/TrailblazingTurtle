@@ -230,6 +230,20 @@ LOGINS = {
         'network_interface': 'eno34',
     },
 }
+DTNS = {
+    'narval-dtn1': {
+        'network_interface': 'bond0',
+    },
+    'narval-dtn2': {
+        'network_interface': 'bond0',
+    },
+    'narval-dtn3': {
+        'network_interface': 'bond0',
+    },
+    'narval-dtn4': {
+        'network_interface': 'bond0',
+    },
+}
 
 # value used in the next variables, not showned in the UI, can be removed
 HARDWARE_OVERHEAD = 1.10  # cables, racks, etc.

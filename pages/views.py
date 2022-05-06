@@ -15,13 +15,19 @@ def index(request):
 def filesystem(request):
     context = {}
     context['fs'] = settings.LUSTRE_FS_NAMES
-    return render(request, 'pages/filesystem.html', context)
+    return render(request, 'pages/filesystems.html', context)
 
 
 def logins(request):
     context = {}
     context['logins'] = settings.LOGINS.keys()
     return render(request, 'pages/logins.html', context)
+
+
+def dtns(request):
+    context = {}
+    context['dtns'] = settings.DTNS.keys()
+    return render(request, 'pages/dtns.html', context)
 
 
 def query_time(request):
@@ -235,11 +241,24 @@ def graph_login_load(request, login):
 def graph_login_network(request, login):
     if login not in settings.LOGINS.keys():
         return JsonResponse({'error': 'Unknown login node'})
+
     device = settings.LOGINS[login]['network_interface']
+    return graph_network(request, login, device)
+
+
+def graph_dtn_network(request, dtn):
+    if dtn not in settings.DTNS.keys():
+        return JsonResponse({'error': 'Unknown dtn node'})
+
+    device = settings.DTNS[dtn]['network_interface']
+    return graph_network(request, dtn, device)
+
+
+def graph_network(request, node, device):
     timing = query_time(request)
     data = {'lines': []}
-    query_rx = 'rate(node_network_receive_bytes_total{{instance=~"{login}:.*", device="{device}", {filter} }}[{step}]) * 8'.format(
-        login=login,
+    query_rx = 'rate(node_network_receive_bytes_total{{instance=~"{node}:.*", device="{device}", {filter} }}[{step}]) * 8'.format(
+        node=node,
         filter=prom.get_filter(),
         device=device,
         step=timing[1],
@@ -253,8 +272,8 @@ def graph_login_network(request, login):
         'name': '{}'.format('Receive'),
     })
 
-    query_tx = 'rate(node_network_transmit_bytes_total{{instance=~"{login}:.*", device="{device}", {filter} }}[{step}]) * 8'.format(
-        login=login,
+    query_tx = 'rate(node_network_transmit_bytes_total{{instance=~"{node}:.*", device="{device}", {filter} }}[{step}]) * 8'.format(
+        node=node,
         filter=prom.get_filter(),
         device=device,
         step=timing[1],

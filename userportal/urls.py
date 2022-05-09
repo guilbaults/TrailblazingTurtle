@@ -19,8 +19,13 @@ from django.contrib import admin
 import debug_toolbar
 from rest_framework import routers
 from django.conf import settings
+if 'jobstats' in settings.INSTALLED_APPS:
+    from jobstats.views import JobScriptViewSet
 
 router = routers.DefaultRouter()
+
+if 'jobstats' in settings.INSTALLED_APPS:
+    router.register(r'jobscripts', JobScriptViewSet)
 
 urlpatterns = [
     path('', include('pages.urls')),
@@ -31,8 +36,6 @@ urlpatterns = [
 ]
 
 if 'jobstats' in settings.INSTALLED_APPS:
-    from jobstats.views import JobScriptViewSet
-    router.register(r'jobscripts', JobScriptViewSet)
     urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))
 
 if 'accountstats' in settings.INSTALLED_APPS:

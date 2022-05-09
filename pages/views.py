@@ -30,6 +30,11 @@ def dtns(request):
     return render(request, 'pages/dtns.html', context)
 
 
+def sheduler(request):
+    context = {}
+    return render(request, 'pages/scheduler.html', context)
+
+
 def query_time(request):
     delta = request.GET.get('delta', '1h')
 
@@ -293,6 +298,88 @@ def graph_network(request, node, device):
             'tickformat': '~s',
         },
         'showlegend': False,
+        'margin': {
+            'l': 70,
+            'r': 0,
+            'b': 50,
+            't': 0,
+            'pad': 0
+        },
+        'height': 300,
+    }
+
+    return JsonResponse(data)
+
+
+def graph_scheduler_cpu(request):
+    return graph_scheduler_cpu_gpu(request, 'cpu')
+
+
+def graph_scheduler_gpu(request):
+    return graph_scheduler_cpu_gpu(request, 'gpu')
+
+
+def graph_scheduler_cpu_gpu(request, res_type='cpu'):
+    timing = query_time(request)
+    data = {'lines': []}
+    if res_type == 'cpu':
+        query_used = 'slurm_job:used_core:sum{{ {filter} }}'.format(
+            filter=prom.get_filter(),
+        )
+    else:
+        query_used = 'slurm_job:used_gpu:sum{{ {filter} }}'.format(
+            filter=prom.get_filter(),
+        )
+
+    stats_used = prom.query_prometheus(query_used, timing[0], step=timing[1])
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
+        'y': stats_used[1],
+        'type': 'scatter',
+        'name': 'Used',
+    })
+
+    query_alloc = 'slurm_{res_type}s_alloc{{ {filter} }}'.format(
+        res_type=res_type,
+        filter=prom.get_filter(),
+    )
+    stats_alloc = prom.query_prometheus(query_alloc, timing[0], step=timing[1])
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+        'y': stats_alloc[1],
+        'type': 'scatter',
+        'name': 'Allocated',
+    })
+
+    if res_type == 'gpu':
+        query_non_idle = 'sum(slurm_job:non_idle_gpu:sum_user_account{{ {filter} }})'.format(
+            filter=prom.get_filter(),
+        )
+        stats_non_idle = prom.query_prometheus(query_non_idle, timing[0], step=timing[1])
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_non_idle[0])),
+            'y': stats_non_idle[1],
+            'type': 'scatter',
+            'name': 'Non-IDLE GPUs',
+        })
+
+    query_total = 'slurm_{res_type}s_total{{ {filter} }}'.format(
+        res_type=res_type,
+        filter=prom.get_filter(),
+    )
+    stats_total = prom.query_prometheus(query_total, timing[0], step=timing[1])
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_total[0])),
+        'y': stats_total[1],
+        'type': 'scatter',
+        'name': 'Total',
+    })
+
+    data['layout'] = {
+        'yaxis': {
+            'range': [0, max(stats_total[1])],
+        },
+        'showlegend': True,
         'margin': {
             'l': 70,
             'r': 0,

@@ -17,11 +17,9 @@
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> Logins nodes</a></li>
 {% endif %}
-{% comment %}
-{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+{% if 'slurm_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> Scheduler</a></li>
 {% endif %}
-{% endcomment %}
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='dtns/'><span data-feather="globe"></span> Data transfer nodes</a></li>
 {% endif %}

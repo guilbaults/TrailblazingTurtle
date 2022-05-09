@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>Sheduler</h2>
+
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">Last week</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">Last day</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">Last hour</a>
+    </li>
+</ul>
+
+<h3>Allocated resources</h3>
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            <h4>Allocated CPUs</h4>
+            <p>This include the CPU cores on the GPU nodes</p>
+            <div id="graph_allocated_cpu"></div>
+        </div>
+        <div class="col-sm">
+            <h4>Allocated GPUs</h4>
+            <p>Used GPUs is the sum of % of the reported utilization, so 2 GPUs running at 50% will be reported as 1</p>
+            <p>Non-IDLE GPUs means the number of GPUs using at least 1% of their compute cycles</p>
+            <div id="graph_allocated_gpu"></div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function loadGraphs(delta){
+        loadGraph('graph_allocated_cpu', 'graph/allocated_cpu.json?delta=' + delta);
+        loadGraph('graph_allocated_gpu', 'graph/allocated_gpu.json?delta=' + delta);
+    }
+    $(document).ready(function(){
+        loadGraphs('1w');
+
+        $('#myTabs a').click(function (e) {
+            if($(this).attr('href') == '#last_week'){
+                loadGraphs('1w');
+            }
+            if($(this).attr('href') == '#last_day'){
+                loadGraphs('1d');
+            }
+            if($(this).attr('href') == '#last_hour'){
+                loadGraphs('1h');
+            }
+        })
+    });
+</script>
+
+
+{% endblock content %}

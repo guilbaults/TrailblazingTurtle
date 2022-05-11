@@ -19,4 +19,32 @@
     {% else %}
     <p>{% translate "You have no projects" %}</p>
     {% endif %}
+
+{% if request.META.is_staff %}
+  <h3>{% translate "All projects" %}</h3>
+  <h4>CPU used</h4>
+  <div id="graph_cpu"></div>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>{% translate "Project" %}</th>
+        <th>{% translate "Allocated cores" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+  {% for project in all_projects %}
+    <tr>
+      <td><a href="{{ project.name }}">{{project.name}}</a></td>
+      <td>{{project.cores}}</td>
+    </tr>
+  {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
+
+{% if request.META.is_staff %}
+<script>
+  loadGraph('graph_cpu', 'graph/cpu.json');
+</script>
+{% endif %}
 {% endblock content %}

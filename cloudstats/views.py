@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from userportal.common import openstackproject_or_staff, cloud_projects_by_user, request_to_username, Prometheus
+from userportal.common import openstackproject_or_staff, cloud_projects_by_user, request_to_username, staff, Prometheus
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -13,6 +13,15 @@ prom = Prometheus(settings.PROMETHEUS)
 def index(request):
     context = {}
     context['projects'] = cloud_projects_by_user(request_to_username(request))
+
+    if request.META['is_staff']:
+        context['all_projects'] = []
+        query_projects = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
+            filter=prom.get_filter(),
+        )
+        for project in prom.query_last(query_projects):
+            context['all_projects'].append({'name': project['metric']['project_name'], 'cores': int(project['value'][1])})
+
     return render(request, 'cloudstats/index.html', context)
 
 
@@ -81,6 +90,36 @@ def project_graph_cpu(request, project):
         data['lines'].append({
             'x': x,
             'y': y,
+            'type': 'scatter',
+            'name': 'Running'
+        })
+
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def projects_graph_cpu(request):
+    data = {'lines': []}
+    query_used = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[5m])) by (project_name) / 1000000000'.format(
+        filter=prom.get_filter())
+    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
+    for line in stats_used:
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['project_name']
+        })
+
+    query_running = 'sum(count(libvirtd_domain_vcpu_time{{ {filter} }})) by (project_name)'.format(
+        filter=prom.get_filter())
+    stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
+    for line in stats_running:
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
             'type': 'scatter',
             'name': 'Running'
         })

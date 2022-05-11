@@ -24,6 +24,8 @@
   <h3>{% translate "All projects" %}</h3>
   <h4>CPU used</h4>
   <div id="graph_cpu"></div>
+  <h4>Memory used</h4>
+  <div id="graph_mem"></div>
   <table class="table table-striped">
     <thead class="thead-dark">
       <tr>
@@ -45,6 +47,7 @@
 {% if request.META.is_staff %}
 <script>
   loadGraph('graph_cpu', 'graph/cpu.json');
+  loadGraph('graph_mem', 'graph/mem.json');
 </script>
 {% endif %}
 {% endblock content %}

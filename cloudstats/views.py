@@ -124,6 +124,11 @@ def projects_graph_cpu(request):
             'name': 'Running'
         })
 
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': 'Cores',
+        }
+    }
     return JsonResponse(data)
 
 
@@ -251,6 +256,42 @@ def instance_graph_memory(request, project, uuid):
         data['lines'].append({
             'x': x,
             'y': y,
+            'type': 'scatter',
+            'name': 'Running'
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': 'GiB',
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@staff
+def projects_graph_mem(request):
+    data = {'lines': []}
+    query_used = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
+        filter=prom.get_filter())
+    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(days=7), datetime.now())
+    for line in stats_used:
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['project_name']
+        })
+
+    query_running = 'sum((libvirtd_domain_balloon_current{{ {filter} }})/1024/1024)'.format(
+        filter=prom.get_filter())
+    stats_running = prom.query_prometheus_multiple(query_running, datetime.now() - timedelta(days=7), datetime.now())
+    for line in stats_running:
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
             'type': 'scatter',
             'name': 'Running'
         })

@@ -10,11 +10,11 @@
 
 {% for fs in lustre_fs_names %}
 <h2>{{fs}}</h2>
-<h3>IOPS</h3>
+<h3>{% translate "IOPS" %}</h3>
 <div id="graph_mdt_{{fs}}"></div>
-<h3>Read</h3>
+<h3>{% translate "Read" %}</h3>
 <div id="graph_ost_read_{{fs}}"></div>
-<h3>Write</h3>
+<h3>{% translate "Write" %}</h3>
 <div id="graph_ost_write_{{fs}}"></div>
 
 {% endfor %}

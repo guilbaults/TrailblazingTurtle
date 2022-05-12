@@ -5,23 +5,23 @@
 {% endblock title %}
 
 {% block content %}
-<h2>Cluster and services description</h2>
+<h2>{% translate "Cluster and services description" %}</h2>
 
 {{ settings.CLUSTER_INTRO | safe }}
 
 
 <ul class="list-group">
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-    <li class="list-group-item"><a href='filesystems/'><span data-feather="hard-drive"></span> Filesystems performance</a></li>
+    <li class="list-group-item"><a href='filesystems/'><span data-feather="hard-drive"></span> {% translate "Filesystems performance" %}</a></li>
 {% endif %}
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
-    <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> Logins nodes</a></li>
+    <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> {% translate "Logins nodes" %}</a></li>
 {% endif %}
 {% if 'slurm_exporter' in settings.EXPORTER_INSTALLED %}
-    <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> Scheduler</a></li>
+    <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> {% translate "Scheduler" %}</a></li>
 {% endif %}
 {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
-    <li class="list-group-item"><a href='dtns/'><span data-feather="globe"></span> Data transfer nodes</a></li>
+    <li class="list-group-item"><a href='dtns/'><span data-feather="globe"></span> {% translate "Data transfer nodes" %}</a></li>
 {% endif %}
 </ul>
 

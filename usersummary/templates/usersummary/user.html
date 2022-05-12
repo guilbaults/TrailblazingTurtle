@@ -12,19 +12,19 @@
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">Filesystem</th>
-      <th scope="col">Inodes</th>
-      <th scope="col">Size</th>
+      <th scope="col">{% translate "Filesystem" %}</th>
+      <th scope="col">{% translate "Inodes" %}</th>
+      <th scope="col">{% translate "Size" %}</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <th scope="row">Home</th>
+      <th scope="row">{% translate "Home" %}</th>
       <th scope="row">{{ home.inodes | intword | default_if_none:"less than 50" }} on {{ home.inodes_quota | intword }}</th>
       <th scope="row">{{ home.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ home.bytes_quota | filesizeformat }}</th>
     </tr>
     <tr>
-      <th scope="row">Scratch</th>
+      <th scope="row">{% translate "Scratch" %}</th>
       <th scope="row">{{ scratch.inodes | intword | default_if_none:"less than 50" }} on {{ scratch.inodes_quota | intword }}</th>
       <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ scratch.bytes_quota | filesizeformat }}</th>
     </tr>

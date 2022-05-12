@@ -5,7 +5,7 @@
 {% endblock title %}
 
 {% block content %}
-<h2>Filesystems performance</h2>
+<h2>{% translate "Filesystems performance" %}</h2>
 
 <ul class="nav nav-tabs" id="myTabs" role="tablist">
     <li class="nav-item">
@@ -19,7 +19,7 @@
     </li>
 </ul>
 
-<h3>Bandwidth</h3>
+<h3>{% translate "Bandwidth" %}</h3>
 <div class="container">
     <div class="row">
     {% for filesystem in fs %}
@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<h3>Metadata</h3>
+<h3>{% translate "Metadata" %}</h3>
 <div class="container">
     <div class="row">
         {% for filesystem in fs %}

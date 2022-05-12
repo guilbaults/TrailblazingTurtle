@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-12 20:38+0000\n"
+"POT-Creation-Date: 2022-05-12 20:49+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -34,7 +34,7 @@ msgid "GPUs"
 msgstr "GPUs"
 
 #: accountstats/templates/accountstats/account.html:29
-#: pages/templates/pages/scheduler.html:31 top/templates/top/compute.html:48
+#: pages/templates/pages/scheduler.html:32 top/templates/top/compute.html:48
 msgid "Allocated GPUs"
 msgstr "GPUs allouées"
 
@@ -67,7 +67,7 @@ msgstr "Cœurs CPU gaspillés"
 #: jobstats/templates/jobstats/job.html:152
 #: jobstats/templates/jobstats/user.html:28
 #: jobstats/templates/jobstats/user.html:42
-#: pages/templates/pages/logins.html:34
+#: pages/templates/pages/logins.html:35
 msgid "Memory"
 msgstr "Mémoire"
 
@@ -112,6 +112,38 @@ msgstr "Vos projets"
 #: cloudstats/templates/cloudstats/index.html:20
 msgid "You have no projects"
 msgstr "Vous avez aucun projet"
+
+#: cloudstats/templates/cloudstats/index.html:26
+#: cloudstats/templates/cloudstats/instance.html:14
+#: cloudstats/templates/cloudstats/project.html:34
+#, fuzzy
+#| msgid "Last hour"
+msgid "Last month"
+msgstr "Dernier mois"
+
+#: cloudstats/templates/cloudstats/index.html:29
+#: cloudstats/templates/cloudstats/instance.html:17
+#: cloudstats/templates/cloudstats/project.html:37
+#: pages/templates/pages/dtns.html:13 pages/templates/pages/filesystems.html:13
+#: pages/templates/pages/logins.html:13 pages/templates/pages/scheduler.html:13
+msgid "Last week"
+msgstr "Dernière semaine"
+
+#: cloudstats/templates/cloudstats/index.html:32
+#: cloudstats/templates/cloudstats/instance.html:20
+#: cloudstats/templates/cloudstats/project.html:40
+#: pages/templates/pages/dtns.html:16 pages/templates/pages/filesystems.html:16
+#: pages/templates/pages/logins.html:16 pages/templates/pages/scheduler.html:16
+msgid "Last day"
+msgstr "Dernier jour"
+
+#: cloudstats/templates/cloudstats/index.html:35
+#: cloudstats/templates/cloudstats/instance.html:23
+#: cloudstats/templates/cloudstats/project.html:43
+#: pages/templates/pages/dtns.html:19 pages/templates/pages/filesystems.html:19
+#: pages/templates/pages/logins.html:19 pages/templates/pages/scheduler.html:19
+msgid "Last hour"
+msgstr "Dernière heure"
 
 #: cloudstats/templates/cloudstats/index.html:39
 msgid "All projects"
@@ -251,9 +283,9 @@ msgid "Resources used (details)"
 msgstr "Ressources utilisées (détails)"
 
 #: jobstats/templates/jobstats/job.html:150
-#: pages/templates/pages/logins.html:22
+#: pages/templates/pages/logins.html:23
 msgid "CPU"
-msgstr "Core CPU"
+msgstr "Coeur CPU"
 
 #: jobstats/templates/jobstats/job.html:159
 #, fuzzy
@@ -396,77 +428,65 @@ msgstr ""
 msgid "Unevictable"
 msgstr ""
 
-#: pages/templates/pages/dtns.html:8 pages/templates/pages/index.html:24
+#: pages/templates/pages/dtns.html:9 pages/templates/pages/index.html:25
 msgid "Data transfer nodes"
 msgstr "Nœuds de transfert de données"
 
-#: pages/templates/pages/dtns.html:12 pages/templates/pages/scheduler.html:12
-msgid "Last week"
-msgstr "La semaine dernière"
-
-#: pages/templates/pages/dtns.html:15 pages/templates/pages/scheduler.html:15
-msgid "Last day"
-msgstr "Dernier jour"
-
-#: pages/templates/pages/dtns.html:18 pages/templates/pages/scheduler.html:18
-msgid "Last hour"
-msgstr "Dernière heure"
-
-#: pages/templates/pages/dtns.html:22 pages/templates/pages/filesystems.html:22
+#: pages/templates/pages/dtns.html:23 pages/templates/pages/filesystems.html:23
 msgid "Bandwidth"
 msgstr "Bande passante"
 
-#: pages/templates/pages/filesystems.html:8 pages/templates/pages/index.html:15
+#: pages/templates/pages/filesystems.html:9 pages/templates/pages/index.html:16
 #, fuzzy
 #| msgid "Filesystem quotas"
 msgid "Filesystems performance"
 msgstr "Performance des système de fichiers"
 
-#: pages/templates/pages/filesystems.html:34
+#: pages/templates/pages/filesystems.html:35
 msgid "Metadata"
 msgstr "Métadonnées"
 
-#: pages/templates/pages/index.html:8
+#: pages/templates/pages/index.html:9
 msgid "Cluster and services description"
 msgstr "Description de la grappe et des services"
 
-#: pages/templates/pages/index.html:18
+#: pages/templates/pages/index.html:19
 msgid "Logins nodes"
 msgstr "Noeuds de connexions"
 
-#: pages/templates/pages/index.html:21
+#: pages/templates/pages/index.html:22
 msgid "Scheduler"
 msgstr "Ordonnanceur"
 
-#: pages/templates/pages/logins.html:8
+#: pages/templates/pages/logins.html:9
 msgid "Logins"
 msgstr ""
 
-#: pages/templates/pages/logins.html:46
+#: pages/templates/pages/logins.html:47
 msgid "Load"
 msgstr "Charge"
 
-#: pages/templates/pages/logins.html:58
+#: pages/templates/pages/logins.html:59
 msgid "Network"
 msgstr "Réseau"
 
-#: pages/templates/pages/scheduler.html:8
+#: pages/templates/pages/scheduler.html:9
 msgid "Sheduler"
 msgstr "Ordonnanceur"
 
-#: pages/templates/pages/scheduler.html:22
+#: pages/templates/pages/scheduler.html:23
 msgid "Allocated resources"
 msgstr "Ressources allouées"
 
-#: pages/templates/pages/scheduler.html:26
+#: pages/templates/pages/scheduler.html:27
 msgid "Allocated CPUs"
 msgstr "Cœurs alloués"
 
-#: pages/templates/pages/scheduler.html:27
+#: pages/templates/pages/scheduler.html:28
 msgid "This include the CPU cores on the GPU nodes"
 msgstr "Ceci comprend les cœurs CPU sur les noeuds GPU"
 
-#: pages/templates/pages/scheduler.html:32
+#: pages/templates/pages/scheduler.html:33
 #, python-format
 msgid ""
 "Used GPUs is the sum of %% of the reported utilization, so 2 GPUs running at "
@@ -475,7 +495,7 @@ msgstr ""
 "Les GPU utilisées sont la somme de %% de l'utilisation rapportée, donc 2 GPU "
 "fonctionnant à 50%% seront rapportées comme 1"
 
-#: pages/templates/pages/scheduler.html:33
+#: pages/templates/pages/scheduler.html:34
 #, python-format
 msgid ""
 "Non-IDLE GPUs means the number of GPUs using at least 1%% of their compute "

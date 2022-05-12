@@ -9,6 +9,21 @@
 {% block content %}
 <h1>{% translate "Your instance use" %}</h1>
 
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">Last month</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">Last week</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">Last day</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">Last hour</a>
+    </li>
+  </ul>
+
 <h3>{% translate "CPU cores" %}</h3>
 <div id="graph_cpu"></div>
 
@@ -25,12 +40,31 @@
 <div id="graph_network_bandwidth"></div>
 
 <script>
-loadGraph('graph_cpu', 'graph/cpu.json');
-loadGraph('graph_memory', 'graph/memory.json');
-loadGraph('graph_disk_bandwidth', 'graph/disk_bandwidth.json');
-loadGraph('graph_disk_iops', 'graph/disk_iops.json');
-loadGraph('graph_network_bandwidth', 'graph/network_bandwidth.json');
+function loadGraphs(delta){
+    loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
+    loadGraph('graph_memory', 'graph/memory.json?delta=' + delta);
+    loadGraph('graph_disk_bandwidth', 'graph/disk_bandwidth.json?delta=' + delta);
+    loadGraph('graph_disk_iops', 'graph/disk_iops.json?delta=' + delta);
+    loadGraph('graph_network_bandwidth', 'graph/network_bandwidth.json?delta=' + delta);
+  }
+  $(document).ready(function(){
+    loadGraphs('1w');
 
+    $('#myTabs a').click(function (e) {
+        if($(this).attr('href') == '#last_month'){
+          loadGraphs('1m');
+        }
+        if($(this).attr('href') == '#last_week'){
+            loadGraphs('1w');
+        }
+        if($(this).attr('href') == '#last_day'){
+            loadGraphs('1d');
+        }
+        if($(this).attr('href') == '#last_hour'){
+            loadGraphs('1h');
+        }
+    })
+  });
 </script>
 
 {% endblock content %}

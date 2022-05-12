@@ -21,6 +21,21 @@
     {% endif %}
 
 {% if request.META.is_staff %}
+  <ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">Last month</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">Last week</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">Last day</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">Last hour</a>
+    </li>
+  </ul>
+
   <h3>{% translate "All projects" %}</h3>
   <h4>CPU used</h4>
   <div id="graph_cpu"></div>
@@ -46,8 +61,28 @@
 
 {% if request.META.is_staff %}
 <script>
-  loadGraph('graph_cpu', 'graph/cpu.json');
-  loadGraph('graph_mem', 'graph/mem.json');
+  function loadGraphs(delta){
+    loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
+    loadGraph('graph_mem', 'graph/mem.json?delta=' + delta);
+}
+$(document).ready(function(){
+    loadGraphs('1w');
+
+    $('#myTabs a').click(function (e) {
+        if($(this).attr('href') == '#last_month'){
+          loadGraphs('1m');
+        }
+        if($(this).attr('href') == '#last_week'){
+            loadGraphs('1w');
+        }
+        if($(this).attr('href') == '#last_day'){
+            loadGraphs('1d');
+        }
+        if($(this).attr('href') == '#last_hour'){
+            loadGraphs('1h');
+        }
+    })
+});
 </script>
 {% endif %}
 {% endblock content %}

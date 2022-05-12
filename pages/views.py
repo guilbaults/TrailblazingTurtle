@@ -1,8 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
-from userportal.common import Prometheus
-from datetime import datetime, timedelta
+from userportal.common import Prometheus, query_time
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -33,23 +32,6 @@ def dtns(request):
 def sheduler(request):
     context = {}
     return render(request, 'pages/scheduler.html', context)
-
-
-def query_time(request):
-    delta = request.GET.get('delta', '1h')
-
-    if delta == '1w':
-        start = datetime.now() - timedelta(weeks=1)
-        step = '1h'
-    elif delta == '1d':
-        start = datetime.now() - timedelta(days=1)
-        step = '15m'
-    else:
-        # default to 1 hour
-        start = datetime.now() - timedelta(hours=1)
-        step = '1m'
-
-    return (start, step)
 
 
 def graph_lustre_mdt(request, fs):

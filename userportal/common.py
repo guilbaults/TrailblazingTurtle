@@ -1,7 +1,7 @@
 import functools
 from django.http import HttpResponseNotFound
 from prometheus_api_client import PrometheusConnect
-from datetime import datetime
+from datetime import datetime, timedelta
 from ccldap.models import LdapAllocation, LdapUser
 from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline
 import yaml
@@ -138,6 +138,24 @@ def uid_to_username(uid):
 def request_to_username(request):
     """return the username of a request"""
     return request.user.username.split('@')[0]
+
+
+def query_time(request):
+    delta = request.GET.get('delta', '1h')
+    if delta == '1m':
+        start = datetime.now() - timedelta(weeks=4)
+        step = '3h'
+    elif delta == '1w':
+        start = datetime.now() - timedelta(weeks=1)
+        step = '30m'
+    elif delta == '1d':
+        start = datetime.now() - timedelta(days=1)
+        step = '5m'
+    else:
+        # default to 1 hour
+        start = datetime.now() - timedelta(hours=1)
+        step = '1m'
+    return (start, step)
 
 
 class Prometheus:

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-12 20:26+0000\n"
+"POT-Creation-Date: 2022-05-12 20:38+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -91,7 +91,7 @@ msgstr "Mémoire gaspillée"
 #, fuzzy
 #| msgid "Filesystem quotas"
 msgid "Filesystem"
-msgstr "Quotas des système de fichiers"
+msgstr "Système de fichiers"
 
 #: accountstats/templates/accountstats/index.html:6
 #: accountstats/templates/accountstats/index.html:10
@@ -111,7 +111,7 @@ msgstr "Vos projets"
 
 #: cloudstats/templates/cloudstats/index.html:20
 msgid "You have no projects"
-msgstr "Vous n'avez aucun projet"
+msgstr "Vous avez aucun projet"
 
 #: cloudstats/templates/cloudstats/index.html:39
 msgid "All projects"
@@ -195,7 +195,7 @@ msgstr "Type"
 #, fuzzy
 #| msgid "Allocated GPUs"
 msgid "Allocated"
-msgstr "GPUs allouées"
+msgstr "Allouées"
 
 #: jobstats/templates/jobstats/job.html:46
 #: jobstats/templates/jobstats/user.html:18 jobstats/views.py:183
@@ -204,7 +204,7 @@ msgstr "GPUs allouées"
 #, fuzzy
 #| msgid "Used GPUs"
 msgid "Used"
-msgstr "GPUs utilisées"
+msgstr "Utilisées"
 
 #: jobstats/templates/jobstats/job.html:56
 msgid "Nodes"
@@ -259,7 +259,7 @@ msgstr "Core CPU"
 #, fuzzy
 #| msgid "GPUs"
 msgid "GPU"
-msgstr "GPUs"
+msgstr "GPU"
 
 #: jobstats/templates/jobstats/job.html:160
 msgid "GPU Compute cycle used"
@@ -281,13 +281,13 @@ msgstr "Puissance GPU"
 #, fuzzy
 #| msgid "Network bandwidth"
 msgid "GPU PCIe bandwidth"
-msgstr "Bande passante réseau"
+msgstr "Bande passante GPU"
 
 #: jobstats/templates/jobstats/job.html:173
 #, fuzzy
 #| msgid "Allocated resources"
 msgid "Whole node resources"
-msgstr "Ressources allouées"
+msgstr "Ressources du noeud entier"
 
 #: jobstats/templates/jobstats/job.html:175
 msgid "Infiniband"
@@ -322,7 +322,7 @@ msgstr "Vos tâches"
 #, fuzzy
 #| msgid "Your account use"
 msgid "Your current use"
-msgstr "Utilisation fait présentement"
+msgstr "Utilisation en cours"
 
 #: jobstats/templates/jobstats/user.html:60 top/templates/top/largemem.html:15
 #: usersummary/templates/usersummary/user.html:48

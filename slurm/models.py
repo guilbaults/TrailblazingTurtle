@@ -245,6 +245,12 @@ class JobTable(models.Model):
             return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
 
+    def time_in_queue_dt(self):
+        if self.time_start == 0:
+            # job hasn't started yet, return difference from now
+            return datetime.datetime.now() - self.time_submit_dt()
+        return self.time_start_dt() - self.time_submit_dt()
+
     def used_time(self):
         if self.time_start != 0 and self.time_end != 0:
             # job started and finished

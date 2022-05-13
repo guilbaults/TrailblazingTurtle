@@ -91,6 +91,24 @@ def job(request, username, job_id):
     except JobScript.DoesNotExist:
         context['job_script'] = None
 
+    if 'slurm_exporter' in settings.EXPORTER_INSTALLED:
+        try:
+            query_priority = 'slurm_account_levelfs{{account="{account}", {filter}}}'.format(
+                account=job.account,
+                filter=prom.get_filter()
+            )
+            if job.time_start_dt() is not None:
+                # If the job has started, use the start time.
+                stats_priority = prom.query_prometheus(query_priority, job.time_start_dt(), job.time_start_dt() + timedelta(minutes=15))
+                context['priority'] = stats_priority[1][0]
+            else:
+                # Otherwise, use the current time.
+                stats_priority = prom.query_last(query_priority)
+                print(stats_priority)
+                context['priority'] = stats_priority[0]['value'][1]
+        except ValueError:
+            context['priority'] = 'N/A'
+
     if job.time_start_dt() is None:
         return render(request, 'jobstats/job.html', context)
 

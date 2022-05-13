@@ -37,6 +37,42 @@
 </p>
 {% endif %}
 
+<h2>{% translate "Scheduler info" %}</h2>
+<table class="table table-striped">
+  <thead class="thead-dark">
+    <tr>
+      <th scope="col">{% translate "Account" %}</th>
+      <th scope="col">{% translate "Submit time" %}</th>
+      <th scope="col">{% translate "Time waiting in queue" %}</th>
+      <th scope="col">{% translate "Start time" %}</th>
+      <th scope="col">{% translate "End time" %}</th>
+      <th scope="col">
+        {% if job.time_start_dt %}
+        <span data-toggle="tooltip" data-placement="top" title="{% translate "LevelFS at job start" %}">{% translate "Priority" %}</span>
+        {% else %}
+        <span data-toggle="tooltip" data-placement="top" title="{% translate "Current LevelFS" %}">{% translate "Priority" %}</span>
+        {% endif %}
+      </th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        {% if 'accountstats' in settings.INSTALLED_APPS %}
+          <a href="/secure/accountstats/{{ job.account }}">{{job.account}}</a>
+        {% else %}
+          {{job.account}}
+        {% endif %}
+      </td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}}</span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_in_queue_dt}}">{{job.time_in_queue_dt | naturaltime}}</span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}}</span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}}</span></td>
+      <td>{{priority}}</td>
+    </tr>
+  </tbody>
+</table>
+
 <h2>Resources</h2>
 <table class="table table-striped">
   <thead class="thead-dark">

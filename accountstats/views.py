@@ -396,9 +396,9 @@ def graph_gpu_priority(request, account):
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data = {'lines': []}
     if gpu_or_cpu == 'gpu':
-        query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}})'.format(account, prom.get_filter())
+        query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
-        query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}})'.format(account, prom.get_filter())
+        query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0]))
@@ -426,9 +426,9 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         })
 
     if gpu_or_cpu == 'gpu':
-        query_used = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}})'.format(account, prom.get_filter())
+        query_used = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
-        query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}})'.format(account, prom.get_filter())
+        query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     stats_used = prom.query_prometheus(query_used, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0]))

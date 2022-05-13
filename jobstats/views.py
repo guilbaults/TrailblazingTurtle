@@ -104,7 +104,6 @@ def job(request, username, job_id):
             else:
                 # Otherwise, use the current time.
                 stats_priority = prom.query_last(query_priority)
-                print(stats_priority)
                 context['priority'] = stats_priority[0]['value'][1]
         except ValueError:
             context['priority'] = 'N/A'

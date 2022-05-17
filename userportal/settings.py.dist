@@ -269,6 +269,10 @@ QUOTA_TYPES = {
     'project': ('/lustre06/project/', 'project')
 }
 
+SLURM_TRES = {
+    '1001=': 'NVIDIA A100-SXM4-40GB',
+}
+
 CLUSTER_NAME_TITLE = 'Narval'
 
 CLUSTER_INTRO = """

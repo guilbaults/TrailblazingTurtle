@@ -297,10 +297,12 @@ class JobTable(models.Model):
             return 0
 
     def gpu_type(self):
-        if '1001=' in self.tres_alloc:
-            return 'NVIDIA A100-SXM4-40GB'  # Only for Narval, need to figure out how to map this on other clusters
-        else:
-            return None
+        print(settings.SLURM_TRES, self.tres_alloc)
+        for key in settings.SLURM_TRES:
+            print(key)
+            if key in self.tres_alloc:
+                return settings.SLURM_TRES[key]
+        return None
 
     def wallclock_progress(self):
         if self.time_start == 0:

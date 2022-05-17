@@ -13,9 +13,9 @@ from jobstats.serializers import JobScriptSerializer
 import statistics
 from django.core.paginator import Paginator
 
-GPU_MEMORY = {'v100': 16, 'NVIDIA A100-SXM4-40GB': 40}
-GPU_FULL_POWER = {'v100': 300, 'NVIDIA A100-SXM4-40GB': 400}
-GPU_IDLE_POWER = {'v100': 55, 'NVIDIA A100-SXM4-40GB': 55}
+GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
+GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
+GPU_IDLE_POWER = {'Tesla V100-SXM2-16GB': 55, 'NVIDIA A100-SXM4-40GB': 55}
 
 prom = Prometheus(settings.PROMETHEUS)
 

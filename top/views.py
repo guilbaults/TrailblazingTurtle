@@ -53,34 +53,43 @@ def compute(request):
     context['cpu_users'] = []
     for line in stats_cpu:
         user = line['metric']['user']
-        mem_ratio = int(stats_mem_max[user]) / int(stats_mem_asked[user])
-        if int(stats_mem_asked[user]) < 1 * 1024 * 1024 * 1024:
-            # Asking under 1 GB, ignoring it
-            mem_badge = None
-        elif mem_ratio < 0.1:
-            mem_badge = 'danger'
-        elif mem_ratio < 0.5:
-            mem_badge = 'warning'
-        else:
+        try:
+            mem_ratio = int(stats_mem_max[user]) / int(stats_mem_asked[user])
+            if int(stats_mem_asked[user]) < 1 * 1024 * 1024 * 1024:
+                # Asking under 1 GB, ignoring it
+                mem_badge = None
+            elif mem_ratio < 0.1:
+                mem_badge = 'danger'
+            elif mem_ratio < 0.5:
+                mem_badge = 'warning'
+            else:
+                mem_badge = None
+        except KeyError:
             mem_badge = None
 
-        cpu_ratio = float(stats_cpu_used[user]) / float(stats_cpu_asked[user])
-        if cpu_ratio < 0.75:
-            cpu_badge = 'danger'
-        elif cpu_ratio < 0.9:
-            cpu_badge = 'warning'
-        else:
-            cpu_badge = None
+        try:
+            cpu_ratio = float(stats_cpu_used[user]) / float(stats_cpu_asked[user])
+            if cpu_ratio < 0.75:
+                cpu_badge = 'danger'
+            elif cpu_ratio < 0.9:
+                cpu_badge = 'warning'
+            else:
+                cpu_badge = None
+        except KeyError:
+            cpu_ratio = None
 
-        context['cpu_users'].append({
-            'user': user,
-            'cpu_asked': stats_cpu_asked[user],
-            'cpu_used': stats_cpu_used[user],
-            'mem_asked': stats_mem_asked[user],
-            'mem_max': stats_mem_max[user],
-            'mem_badge': mem_badge,
-            'cpu_badge': cpu_badge,
-        })
+        try:
+            context['cpu_users'].append({
+                'user': user,
+                'cpu_asked': stats_cpu_asked[user],
+                'cpu_used': stats_cpu_used[user],
+                'mem_asked': stats_mem_asked[user],
+                'mem_max': stats_mem_max[user],
+                'mem_badge': mem_badge,
+                'cpu_badge': cpu_badge,
+            })
+        except KeyError:
+            pass
 
     query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {} }}) by (user))'.format(prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)

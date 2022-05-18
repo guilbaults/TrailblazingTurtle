@@ -1,13 +1,13 @@
 from django.shortcuts import render
 from django.http import HttpResponseNotFound, JsonResponse
-from userportal.common import staff
-from userportal.common import Prometheus
+from userportal.common import staff, Prometheus, uid_to_username
 from slurm.models import JobTable
-from ccldap.models import LdapUser
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import time
 from datetime import datetime, timedelta
+
+prom = Prometheus(settings.PROMETHEUS)
 
 
 @login_required
@@ -16,78 +16,108 @@ def index(request):
     return render(request, 'top/index.html')
 
 
+def metrics_to_user(metrics):
+    users_metrics = {}
+    for line in metrics:
+        users_metrics[line['metric']['user']] = line['value'][1]
+    return users_metrics
+
+
+def metrics_to_job(metrics):
+    jobs_metrics = {}
+    for line in metrics:
+        jobs_metrics[line['metric']['slurmjobid']] = line['value'][1]
+    return jobs_metrics
+
+
 @login_required
 @staff
 def compute(request):
     context = {}
-    prom = Prometheus(settings.PROMETHEUS)
 
-    query_cpu = 'topk(100, count(slurm_job_core_usage_total) by (user))'
+    query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account) by (user))'
     stats_cpu = prom.query_last(query_cpu)
     cpu_users = []
     for line in stats_cpu:
+        cpu_users.append(line['metric']['user'])
+    stats_cpu_asked = metrics_to_user(stats_cpu)
+
+    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    stats_cpu_used = metrics_to_user(prom.query_last(query_cpu_used))
+
+    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    stats_mem_asked = metrics_to_user(prom.query_last(query_mem_asked))
+    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
+
+    context['cpu_users'] = []
+    for line in stats_cpu:
         user = line['metric']['user']
-        stats_cpu_asked = line['value'][1]
-        query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{user="{}"}}[2m]) / 1000000000)'.format(user)
-        stats_cpu_used = prom.query_last(query_cpu_used)
-
-        query_mem_asked = 'sum(slurm_job_memory_limit{{user="{}"}})'.format(user)
-        stats_mem_asked = prom.query_last(query_mem_asked)
-        query_mem_max = 'sum(slurm_job_memory_max{{user="{}"}})'.format(user)
-        stats_mem_max = prom.query_last(query_mem_max)
-
-        mem_ratio = int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1])
-        if int(stats_mem_asked[0]['value'][1]) < 1 * 1024 * 1024 * 1024:
-            # Asking under 1 GB, ignoring it
-            mem_badge = None
-        elif mem_ratio < 0.1:
-            mem_badge = 'danger'
-        elif mem_ratio < 0.5:
-            mem_badge = 'warning'
-        else:
+        try:
+            mem_ratio = int(stats_mem_max[user]) / int(stats_mem_asked[user])
+            if int(stats_mem_asked[user]) < 1 * 1024 * 1024 * 1024:
+                # Asking under 1 GB, ignoring it
+                mem_badge = None
+            elif mem_ratio < 0.1:
+                mem_badge = 'danger'
+            elif mem_ratio < 0.5:
+                mem_badge = 'warning'
+            else:
+                mem_badge = None
+        except KeyError:
             mem_badge = None
 
-        if float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked) < 0.9:
-            cpu_badge = 'danger'
-        else:
-            cpu_badge = None
+        try:
+            cpu_ratio = float(stats_cpu_used[user]) / float(stats_cpu_asked[user])
+            if cpu_ratio < 0.75:
+                cpu_badge = 'danger'
+            elif cpu_ratio < 0.9:
+                cpu_badge = 'warning'
+            else:
+                cpu_badge = None
+        except KeyError:
+            cpu_ratio = None
 
-        cpu_users.append({
-            'user': user,
-            'cpu_asked': stats_cpu_asked,
-            'cpu_used': stats_cpu_used[0]['value'][1],
-            'mem_asked': stats_mem_asked[0]['value'][1],
-            'mem_max': stats_mem_max[0]['value'][1],
-            'mem_badge': mem_badge,
-            'cpu_badge': cpu_badge,
-        })
+        try:
+            context['cpu_users'].append({
+                'user': user,
+                'cpu_asked': stats_cpu_asked[user],
+                'cpu_used': stats_cpu_used[user],
+                'mem_asked': stats_mem_asked[user],
+                'mem_max': stats_mem_max[user],
+                'mem_badge': mem_badge,
+                'cpu_badge': cpu_badge,
+            })
+        except KeyError:
+            pass
 
-    context['cpu_users'] = cpu_users
-
-    query_gpu = 'topk(100, count(slurm_job_utilization_gpu) by (user))'
+    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {} }}) by (user))'.format(prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)
     gpu_users = []
     for line in stats_gpu:
+        gpu_users.append(line['metric']['user'])
+
+    stats_gpu_asked = metrics_to_user(stats_gpu)
+
+    query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(gpu_users), prom.get_filter())
+    stats_gpu_util = metrics_to_user(prom.query_last(query_gpu_util))
+
+    query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(gpu_users), prom.get_filter())
+    stats_gpu_used = metrics_to_user(prom.query_last(query_gpu_used))
+
+    context['gpu_users'] = []
+    for line in stats_gpu:
         user = line['metric']['user']
-        stats_gpu_asked = line['value'][1]
-        query_gpu_util = 'sum(slurm_job_utilization_gpu{{user="{}"}})/100'.format(user)
-        stats_gpu_util = prom.query_last(query_gpu_util)
-        gpu_util = stats_gpu_util[0]['value'][1]
+        if user not in stats_gpu_used:
+            # User is not using any GPU
+            stats_gpu_used[user] = 0
 
-        query_gpu_used = 'count(slurm_job_utilization_gpu{{user="{}"}} !=0)'.format(user)
-        stats_gpu_used = prom.query_last(query_gpu_used)
-        try:
-            gpu_used = stats_gpu_used[0]['value'][1]
-        except IndexError:
-            gpu_used = 0
-
-        gpu_users.append({
+        context['gpu_users'].append({
             'user': user,
-            'gpu_asked': stats_gpu_asked,
-            'gpu_util': gpu_util,
-            'gpu_used': gpu_used,
+            'gpu_asked': stats_gpu_asked[user],
+            'gpu_util': stats_gpu_util[user],
+            'gpu_used': stats_gpu_used[user],
         })
-    context['gpu_users'] = gpu_users
     return render(request, 'top/compute.html', context)
 
 
@@ -95,7 +125,6 @@ def compute(request):
 @staff
 def largemem(request):
     context = {}
-    prom = Prometheus(settings.PROMETHEUS)
 
     hour_ago = int(time.time()) - (3600)
     week_ago = int(time.time()) - (3600 * 24 * 7)
@@ -108,48 +137,52 @@ def largemem(request):
 
     jobs = []
     for job in jobs_running:
+        jobs.append(str(job.id_job))
+
+    query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    stats_cpu_asked = metrics_to_job(prom.query_last(query_cpu_asked))
+    query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[2m]) / 1000000000) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    stats_cpu_used = metrics_to_job(prom.query_last(query_cpu_used))
+
+    query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    stats_mem_asked = metrics_to_job(prom.query_last(query_mem_asked))
+    query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    stats_mem_max = metrics_to_job(prom.query_last(query_mem_max))
+
+    context['jobs'] = []
+    for job in jobs_running:
         try:
-            query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid="{}"}})'.format(job.id_job)
-            stats_cpu_asked = prom.query_last(query_cpu_asked)
-            query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}"}}[2m]) / 1000000000)'.format(job.id_job)
-            stats_cpu_used = prom.query_last(query_cpu_used)
-
-            query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid="{}"}})'.format(job.id_job)
-            stats_mem_asked = prom.query_last(query_mem_asked)
-            query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid="{}"}})'.format(job.id_job)
-            stats_mem_max = prom.query_last(query_mem_max)
-
-            if int(stats_mem_max[0]['value'][1]) < 4 * 1024 * 1024 * 1024:
+            job_id = str(job.id_job)
+            if int(stats_mem_max[job_id]) < 4 * 1024 * 1024 * 1024:
                 mem_badge = 'danger'
-            elif int(stats_mem_max[0]['value'][1]) / int(stats_mem_asked[0]['value'][1]) < 0.5:
+            elif int(stats_mem_max[job_id]) / int(stats_mem_asked[job_id]) < 0.5:
                 mem_badge = 'warning'
             else:
                 mem_badge = None
 
-            if float(stats_cpu_used[0]['value'][1]) / float(stats_cpu_asked[0]['value'][1]) < 0.9:
+            if float(stats_cpu_used[job_id]) / float(stats_cpu_asked[job_id]) < 0.9:
                 cpu_badge = 'danger'
             else:
                 cpu_badge = None
 
-            jobs.append({
-                'user': LdapUser.objects.filter(uid=job.id_user).get().username,
+            context['jobs'].append({
+                'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
                 'time_start_dt': job.time_start_dt,
-                'cpu_asked': stats_cpu_asked[0]['value'][1],
-                'cpu_used': stats_cpu_used[0]['value'][1],
-                'mem_asked': stats_mem_asked[0]['value'][1],
-                'mem_max': stats_mem_max[0]['value'][1],
+                'cpu_asked': stats_cpu_asked[job_id],
+                'cpu_used': stats_cpu_used[job_id],
+                'mem_asked': stats_mem_asked[job_id],
+                'mem_max': stats_mem_max[job_id],
                 'mem_badge': mem_badge,
                 'cpu_badge': cpu_badge,
             })
         except IndexError:
-            jobs.append({
-                'user': LdapUser.objects.filter(uid=job.id_user).get().username,
+            context['jobs'].append({
+                'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
                 'mem_asked': 'error',
                 'mem_max': 'error',
             })
-        context['jobs'] = jobs
     return render(request, 'top/largemem.html', context)
 
 
@@ -166,9 +199,7 @@ def lustre(request):
 @login_required
 @staff
 def graph_lustre_mdt(request, fs):
-    prom = Prometheus(settings.PROMETHEUS)
-
-    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root"}}[5m])))'.format(fs)
+    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root", {}}}[5m])))'.format(fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
     for line in stats:
@@ -199,9 +230,8 @@ def graph_lustre_ost(request, fs, rw):
     if rw not in ['read', 'write']:
         return HttpResponseNotFound
 
-    prom = Prometheus(settings.PROMETHEUS)
     data = {'lines': []}
-    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*"}}[5m])))/1024/1024'.format(rw, fs)
+    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*", {}}}[5m])))/1024/1024'.format(rw, fs, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
     for line in stats:

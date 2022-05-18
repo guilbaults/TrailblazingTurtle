@@ -8,6 +8,8 @@
 from django.db import models
 import datetime
 from django.conf import settings
+import re
+import time
 
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
@@ -189,8 +191,6 @@ class JobTable(models.Model):
     id_wckey = models.PositiveIntegerField()
     id_user = models.PositiveIntegerField()
     id_group = models.PositiveIntegerField()
-    pack_job_id = models.PositiveIntegerField()
-    pack_job_offset = models.PositiveIntegerField()
     kill_requid = models.IntegerField()
     state_reason_prev = models.PositiveIntegerField()
     mcs_label = models.TextField(blank=True, null=True)
@@ -207,8 +207,6 @@ class JobTable(models.Model):
     time_start = models.PositiveBigIntegerField()
     time_end = models.PositiveBigIntegerField()
     time_suspended = models.PositiveBigIntegerField()
-    gres_req = models.TextField()
-    gres_alloc = models.TextField()
     gres_used = models.TextField()
     wckey = models.TextField()
     work_dir = models.TextField()
@@ -247,9 +245,26 @@ class JobTable(models.Model):
             return None
         return datetime.datetime.fromtimestamp(self.time_suspended)
 
-    def used_time_display(self):
+    def time_in_queue_dt(self):
+        if self.time_start == 0:
+            # job hasn't started yet, return difference from now
+            return datetime.datetime.now() - self.time_submit_dt()
+        return self.time_start_dt() - self.time_submit_dt()
+
+    def used_time(self):
         if self.time_start != 0 and self.time_end != 0:
-            t = (self.time_end - self.time_start) / 60
+            # job started and finished
+            return self.time_end - self.time_start
+        elif self.time_start != 0 and self.time_end == 0:
+            # job started but not finished
+            return time.time() - self.time_start
+        else:
+            return None
+
+    def used_time_display(self):
+        used = self.used_time()
+        if used is not None:
+            t = used / 60
             if t > 60 * 4:
                 return '{:.1f}h'.format(t / 60)
             else:
@@ -275,16 +290,17 @@ class JobTable(models.Model):
         return '{}'.format(status[self.state])
 
     def gpu_count(self):
-        if 'gpu' in self.gres_req:
-            return int(self.gres_req.split(':')[2])
+        gpu_match = re.match(r'.*1001=(\d+)', self.tres_alloc)
+        if gpu_match:
+            return int(gpu_match.group(1))
         else:
             return 0
 
     def gpu_type(self):
-        if 'gpu' in self.gres_req:
-            return self.gres_req.split(':')[1]
-        else:
-            return None
+        for key in settings.SLURM_TRES:
+            if key in self.tres_alloc:
+                return settings.SLURM_TRES[key]
+        return None
 
     def wallclock_progress(self):
         if self.time_start == 0:

@@ -3,13 +3,25 @@
 {% load i18n %}
 
 {% block title %}
-{% translate "Your instance use" %}
+{% translate "Your cloud use" %}
 {% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your instance use" %}</h1>
+<h1>{% translate "Your cloud use" %}</h1>
 
-<ul class="nav nav-tabs" id="myTabs" role="tablist">
+<h3>{% translate "Your projects" %}</h3>
+    {% if projects %}
+    <ul>
+    {% for project in projects %}
+      <li><a href="{{ project }}">{{project}}</a></li>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p>{% translate "You have no projects" %}</p>
+    {% endif %}
+
+{% if request.META.is_staff %}
+  <ul class="nav nav-tabs" id="myTabs" role="tablist">
     <li class="nav-item">
       <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">{% translate "Last month" %}</a>
     </li>
@@ -24,30 +36,36 @@
     </li>
   </ul>
 
-<h3>{% translate "CPU cores" %}</h3>
-<div id="graph_cpu"></div>
+  <h3>{% translate "All projects" %}</h3>
+  <h4>CPU used</h4>
+  <div id="graph_cpu"></div>
+  <h4>Memory used</h4>
+  <div id="graph_mem"></div>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>{% translate "Project" %}</th>
+        <th>{% translate "Allocated cores" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+  {% for project in all_projects %}
+    <tr>
+      <td><a href="{{ project.name }}">{{project.name}}</a></td>
+      <td>{{project.cores}}</td>
+    </tr>
+  {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
 
-<h3>{% translate "Memory" %}</h3>
-<div id="graph_memory"></div>
-
-<h3>{% translate "Disk bandwidth" %}</h3>
-<div id="graph_disk_bandwidth"></div>
-
-<h3>{% translate "Disk IOPS" %}</h3>
-<div id="graph_disk_iops"></div>
-
-<h3>{% translate "Network bandwidth" %}</h3>
-<div id="graph_network_bandwidth"></div>
-
+{% if request.META.is_staff %}
 <script>
-function loadGraphs(delta){
+  function loadGraphs(delta){
     loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
-    loadGraph('graph_memory', 'graph/memory.json?delta=' + delta);
-    loadGraph('graph_disk_bandwidth', 'graph/disk_bandwidth.json?delta=' + delta);
-    loadGraph('graph_disk_iops', 'graph/disk_iops.json?delta=' + delta);
-    loadGraph('graph_network_bandwidth', 'graph/network_bandwidth.json?delta=' + delta);
-  }
-  $(document).ready(function(){
+    loadGraph('graph_mem', 'graph/mem.json?delta=' + delta);
+}
+$(document).ready(function(){
     loadGraphs('1w');
 
     $('#myTabs a').click(function (e) {
@@ -64,7 +82,7 @@ function loadGraphs(delta){
             loadGraphs('1h');
         }
     })
-  });
+});
 </script>
-
+{% endif %}
 {% endblock content %}

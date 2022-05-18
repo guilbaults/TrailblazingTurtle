@@ -75,10 +75,16 @@ class LdapAllocation(ldapdb.models.Model):
                 continue
             s = res.split(':')
             resource_name = s[1]
-            if settings.STORAGE_NAME in resource_name:
+            if resource_name == settings.STORAGE_NAME:
                 quota_info = {}
                 for quota in s[2:]:
                     key, value = quota.split('=')
                     quota_info[key] = float(value)
                 resources.append(quota_info)
+            if resource_name == settings.COMPUTE_NAME + '-compute' or resource_name == settings.COMPUTE_NAME + '-gpu':
+                compute_info = {}
+                for compute in s[2:]:
+                    key, value = compute.split('=')
+                    compute_info[key] = float(value)
+                resources.append(compute_info)
         return resources

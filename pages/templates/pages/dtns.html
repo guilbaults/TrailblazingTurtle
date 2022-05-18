@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>{% translate "Data transfer nodes" %}</h2>
+
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">{% translate "Last week" %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">{% translate "Last day" %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">{% translate "Last hour" %}</a>
+    </li>
+</ul>
+
+<h3>{% translate "Bandwidth" %}</h3>
+<div class="container">
+    <div class="row">
+    {% for dtn in dtns %}
+        <div class="col-sm">
+            <h4>{{dtn}}</h4>
+            <div id="graph_{{dtn}}_network"></div>
+        </div>
+    {% endfor %}
+    </div>
+</div>
+
+<script>
+    function loadGraphs(delta){
+        {% for dtn in dtns %}
+        loadGraph('graph_{{dtn}}_network', 'graph/network/{{dtn}}.json?delta=' + delta);
+        {% endfor %}
+    }
+    $(document).ready(function(){
+        loadGraphs('1w');
+
+        $('#myTabs a').click(function (e) {
+            if($(this).attr('href') == '#last_week'){
+                loadGraphs('1w');
+            }
+            if($(this).attr('href') == '#last_day'){
+                loadGraphs('1d');
+            }
+            if($(this).attr('href') == '#last_hour'){
+                loadGraphs('1h');
+            }
+        })
+    });
+</script>
+
+
+{% endblock content %}

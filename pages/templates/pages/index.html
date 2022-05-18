@@ -1,10 +1,29 @@
 {% extends 'base.html' %}
 {% load humanize %}
+{% load i18n %}
 
 {% block title %}
 {% endblock title %}
 
 {% block content %}
-TODO
-{% endblock content %}
+<h2>{% translate "Cluster and services description" %}</h2>
 
+{{ settings.CLUSTER_INTRO | safe }}
+
+
+<ul class="list-group">
+{% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='filesystems/'><span data-feather="hard-drive"></span> {% translate "Filesystems performance" %}</a></li>
+{% endif %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> {% translate "Logins nodes" %}</a></li>
+{% endif %}
+{% if 'slurm_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> {% translate "Scheduler" %}</a></li>
+{% endif %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+    <li class="list-group-item"><a href='dtns/'><span data-feather="globe"></span> {% translate "Data transfer nodes" %}</a></li>
+{% endif %}
+</ul>
+
+{% endblock content %}

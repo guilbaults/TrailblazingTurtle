@@ -52,3 +52,4 @@ class AcctStat(models.Model):
         managed = False
         db_table = 'ACCT_STAT'
         unique_together = (('uid', 'gid', 'type', 'lhsm_status'),)
+        app_label = 'quotas'

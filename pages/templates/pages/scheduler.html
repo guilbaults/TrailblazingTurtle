@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}
+{% endblock title %}
+
+{% block content %}
+<h2>{% translate "Sheduler" %}</h2>
+
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+    <li class="nav-item">
+      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">{% translate "Last week" %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">{% translate "Last day" %}</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">{% translate "Last hour" %}</a>
+    </li>
+</ul>
+
+<h3>{% translate "Allocated resources" %}</h3>
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            <h4>{% translate "Allocated CPUs" %}</h4>
+            <p>{% translate "This include the CPU cores on the GPU nodes" %}</p>
+            <div id="graph_allocated_cpu"></div>
+        </div>
+        <div class="col-sm">
+            <h4>{% translate "Allocated GPUs" %}</h4>
+            <p>{% translate "Used GPUs is the sum of % of the reported utilization, so 2 GPUs running at 50% will be reported as 1" %}</p>
+            <p>{% translate "Non-IDLE GPUs means the number of GPUs using at least 1% of their compute cycles" %}</p>
+            <div id="graph_allocated_gpu"></div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    function loadGraphs(delta){
+        loadGraph('graph_allocated_cpu', 'graph/allocated_cpu.json?delta=' + delta);
+        loadGraph('graph_allocated_gpu', 'graph/allocated_gpu.json?delta=' + delta);
+    }
+    $(document).ready(function(){
+        loadGraphs('1w');
+
+        $('#myTabs a').click(function (e) {
+            if($(this).attr('href') == '#last_week'){
+                loadGraphs('1w');
+            }
+            if($(this).attr('href') == '#last_day'){
+                loadGraphs('1d');
+            }
+            if($(this).attr('href') == '#last_hour'){
+                loadGraphs('1h');
+            }
+        })
+    });
+</script>
+
+
+{% endblock content %}

@@ -1,11 +1,15 @@
 import functools
 from django.http import HttpResponseNotFound
 from prometheus_api_client import PrometheusConnect
-from datetime import datetime
-from ccldap.models import LdapAllocation
+from datetime import datetime, timedelta
+from ccldap.models import LdapAllocation, LdapUser
+from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline
+import yaml
+from django.conf import settings
 
 
 def user_or_staff(func):
+    """Decorator to allow access only to staff members or to the user"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         if request.META['username'] == kwargs['username']:
@@ -19,6 +23,7 @@ def user_or_staff(func):
 
 
 def account_or_staff(func):
+    """Decorator to allow access if its the user is inside the project allocation or a staff member"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         alloc_name = kwargs['account'].split('_')[0]
@@ -38,6 +43,7 @@ def account_or_staff(func):
 
 
 def openstackproject_or_staff(func):
+    """Decorator to allow access if its the user is inside the project allocation or a staff member"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         if request.META['is_staff']:
@@ -50,6 +56,7 @@ def openstackproject_or_staff(func):
 
 
 def staff(func):
+    """Decorator to allow access only to staff members"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         if request.META['is_staff']:
@@ -59,26 +66,122 @@ def staff(func):
     return wrapper
 
 
+def compute_allocations_by_user(username):
+    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
+    return convert_ldap_to_allocation(allocations)
+
+
+def compute_allocation_by_account(account):
+    allocations = LdapAllocation.objects.filter(name=account, status='active').all()
+    return convert_ldap_to_allocation(allocations)
+
+
+def compute_default_allocation_by_user(username):
+    """return the default allocations account names for a user"""
+    allocs = []
+    for alloc in LdapAllocation.objects.filter(members=username, status='active').all():
+        if alloc.name.startswith('def-'):
+            allocs.append(alloc.name)
+    return allocs
+
+
+def compute_allocations_by_slurm_account(account):
+    """takes a slurm account name and return the number of cpu or gpu allocated to that account"""
+    account_name = account.rstrip('_gpu').rstrip('_cpu')
+    allocations = compute_allocation_by_account(account_name)
+    if account.endswith('_gpu'):
+        for alloc in allocations:
+            if 'gpu' in alloc:
+                return alloc['gpu']
+    else:
+        for alloc in allocations:
+            if 'cpu' in alloc:
+                return alloc['cpu']
+    return None
+
+
+def storage_project_allocations_by_user(username):
+    """return the storage allocation for a user"""
+    return storage_allocations_project(username)
+
+
+def storage_nearline_allocations_by_user(username):
+    """return the nearline allocation for a user"""
+    return storage_allocations_nearline(username)
+
+
+def cloud_projects_by_user(username):
+    """return the cloud allocation for a user"""
+    # open the yaml file with the allocations
+    with open(settings.CLOUD_ALLOCATIONS_FILE, 'r') as f:
+        data = yaml.safe_load(f)
+    # get the list of projects
+    returned_projects = []
+    projects = data['projects']
+    for key in projects.keys():
+        if username in projects[key]['members']:
+            returned_projects.append(key)
+
+    return returned_projects
+
+
+def username_to_uid(username):
+    """return the uid of a username"""
+    return LdapUser.objects.filter(username=username).get().uid
+
+
+def uid_to_username(uid):
+    """return the username of a uid"""
+    return LdapUser.objects.filter(uid=uid).get().username
+
+
+def request_to_username(request):
+    """return the username of a request"""
+    return request.user.username.split('@')[0]
+
+
+def query_time(request):
+    delta = request.GET.get('delta', '1h')
+    if delta == '1m':
+        start = datetime.now() - timedelta(weeks=4)
+        step = '3h'
+    elif delta == '1w':
+        start = datetime.now() - timedelta(weeks=1)
+        step = '30m'
+    elif delta == '1d':
+        start = datetime.now() - timedelta(days=1)
+        step = '5m'
+    else:
+        # default to 1 hour
+        start = datetime.now() - timedelta(hours=1)
+        step = '1m'
+    return (start, step)
+
+
 class Prometheus:
     def __init__(self, config):
         self.prom = PrometheusConnect(
             url=config['url'],
             headers=config['headers'])
+        self.filter = config['filter']
 
-    def query_prometheus(self, query, duration, step):
-        values = self.query_prometheus_multiple(query, duration, step)
+    def get_filter(self):
+        return self.filter
+
+    def query_prometheus(self, query, duration, end=None, step='3m'):
+        values = self.query_prometheus_multiple(query, duration, end, step)
         if len(values) == 0:
             raise ValueError
         return (values[0]['x'], values[0]['y'])
 
-    def query_prometheus_multiple(self, query, start, end=None):
+    def query_prometheus_multiple(self, query, start, end=None, step='3m'):
         if end is None:
             end = datetime.now()
         q = self.prom.custom_query_range(
             query=query,
             start_time=start,
             end_time=end,
-            step='3m',
+            step=step,
         )
         return_list = []
         for line in q:

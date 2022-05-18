@@ -29,6 +29,20 @@
   </tbody>
 </table>
 
+<ul class="nav nav-tabs" id="myTabs" role="tablist">
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">{% translate "Last month" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">{% translate "Last week" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">{% translate "Last day" %}</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">{% translate "Last hour" %}</a>
+  </li>
+</ul>
 
 <h3>{% translate "CPU cores" %}</h3>
 <div id="graph_cpu"></div>
@@ -46,22 +60,31 @@
 <div id="graph_network_bandwidth"></div>
 
 <script>
-$.getJSON('graph/cpu.json', function(data){
-  Plotly.newPlot('graph_cpu', data['lines'], data['layout']);
-});
-$.getJSON('graph/memory.json', function(data){
-  Plotly.newPlot('graph_memory', data['lines'], data['layout']);
-});
-$.getJSON('graph/disk_bandwidth.json', function(data){
-  Plotly.newPlot('graph_disk_bandwidth', data['lines'], data['layout']);
-});
-$.getJSON('graph/disk_iops.json', function(data){
-  Plotly.newPlot('graph_disk_iops', data['lines'], data['layout']);
-});
-$.getJSON('graph/network_bandwidth.json', function(data){
-  Plotly.newPlot('graph_network_bandwidth', data['lines'], data['layout']);
-});
+function loadGraphs(delta){
+  loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
+  loadGraph('graph_memory', 'graph/memory.json?delta=' + delta);
+  loadGraph('graph_disk_bandwidth', 'graph/disk_bandwidth.json?delta=' + delta);
+  loadGraph('graph_disk_iops', 'graph/disk_iops.json?delta=' + delta);
+  loadGraph('graph_network_bandwidth', 'graph/network_bandwidth.json?delta=' + delta);
+}
+$(document).ready(function(){
+  loadGraphs('1w');
 
+  $('#myTabs a').click(function (e) {
+      if($(this).attr('href') == '#last_month'){
+        loadGraphs('1m');
+      }
+      if($(this).attr('href') == '#last_week'){
+          loadGraphs('1w');
+      }
+      if($(this).attr('href') == '#last_day'){
+          loadGraphs('1d');
+      }
+      if($(this).attr('href') == '#last_hour'){
+          loadGraphs('1h');
+      }
+  })
+});
 </script>
 
 {% endblock content %}

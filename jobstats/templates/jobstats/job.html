@@ -10,7 +10,7 @@
 <h1>Details on job {{job.job_name}} ({{job_id}})</h1>
 <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
 <div class="progress">
-  {% if job.wallclock_animation  %}
+  {% if job.time_start != 0 and job.time_end == 0 %}
   <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
   {% else %}
   <div class="progress-bar bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
@@ -26,7 +26,9 @@
 </p>
 <div class="collapse" id="collapse_job_script">
   <div class="card card-body">
-{{job_script.submit_script | linebreaks}}
+    <pre>
+{{job_script.submit_script}}
+    </pre>
   </div>
 </div>
 {% else %}

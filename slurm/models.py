@@ -311,12 +311,6 @@ class JobTable(models.Model):
             delta = datetime.datetime.now() - self.time_start_dt()
             return (delta.total_seconds() / (self.timelimit * 60)) * 100
 
-    def wallclock_animation(self):
-        if self.time_start != 0 and self.time_end == 0:
-            return True
-        else:
-            return False
-
     def parse_tres_req(self):
         info = {}
         for item in self.tres_req.split(','):

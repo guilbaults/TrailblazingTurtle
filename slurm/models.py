@@ -297,9 +297,7 @@ class JobTable(models.Model):
             return 0
 
     def gpu_type(self):
-        print(settings.SLURM_TRES, self.tres_alloc)
         for key in settings.SLURM_TRES:
-            print(key)
             if key in self.tres_alloc:
                 return settings.SLURM_TRES[key]
         return None

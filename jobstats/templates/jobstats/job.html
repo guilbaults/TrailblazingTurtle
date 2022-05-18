@@ -50,9 +50,9 @@
       <th scope="col">{% translate "End time" %}</th>
       <th scope="col">
         {% if job.time_start_dt %}
-        <span data-toggle="tooltip" data-placement="top" title="{% translate "LevelFS at job start" %}">{% translate "Priority" %}</span>
+        <span data-toggle="tooltip" data-placement="top" title="{% translate "LevelFS at job start" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
         {% else %}
-        <span data-toggle="tooltip" data-placement="top" title="{% translate "Current LevelFS" %}">{% translate "Priority" %}</span>
+        <span data-toggle="tooltip" data-placement="top" title="{% translate "Current LevelFS" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
         {% endif %}
       </th>
     </tr>
@@ -66,10 +66,10 @@
           {{job.account}}
         {% endif %}
       </td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}}</span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_in_queue_dt}}">{{job.time_in_queue_dt | naturaltime}}</span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}}</span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}}</span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_in_queue_dt}}">{{job.time_in_queue_dt | naturaltime}} <span data-feather="info"></span></span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
       <td>{{priority}}</td>
     </tr>
   </tbody>
@@ -266,7 +266,7 @@
       }
 
       if(data.electric_car_range_km){
-        $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km</a>');
+        $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km </a>');
       }
 
       if(data.co2_emissions_kg) {

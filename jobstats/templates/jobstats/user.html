@@ -73,9 +73,9 @@
       <th scope="row"><a href="/secure/jobstats/{{username}}/{{job.id_job}}">{{job.id_job}}</a></th>
       <td><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></td>
       <td>{{job.job_name}}</td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}}</span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}}</span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}}</span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
+      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
       <td>{{job.timelimit_display | default_if_none:'' }}</td>
       <td>{{job.used_time_display | default_if_none:'' }}</td>
     </tr>

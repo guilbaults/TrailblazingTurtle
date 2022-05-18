@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-12 20:49+0000\n"
+"POT-Creation-Date: 2022-05-18 18:07+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,16 +36,16 @@ msgstr "GPUs"
 #: accountstats/templates/accountstats/account.html:29
 #: pages/templates/pages/scheduler.html:32 top/templates/top/compute.html:48
 msgid "Allocated GPUs"
-msgstr "GPUs allouées"
+msgstr "GPUs alloués"
 
 #: accountstats/templates/accountstats/account.html:31
 #: top/templates/top/compute.html:50
 msgid "Used GPUs"
-msgstr "GPUs utilisées"
+msgstr "GPUs utilisés"
 
 #: accountstats/templates/accountstats/account.html:33
 msgid "Wasted GPUs"
-msgstr "GPUs gaspillées"
+msgstr "GPUs gaspillés"
 
 #: accountstats/templates/accountstats/account.html:37
 msgid "Allocated CPU cores"
@@ -62,9 +62,9 @@ msgstr "Cœurs CPU gaspillés"
 #: accountstats/templates/accountstats/account.html:44
 #: cloudstats/templates/cloudstats/instance.html:30
 #: cloudstats/templates/cloudstats/project.html:50
-#: jobstats/templates/jobstats/job.html:66
-#: jobstats/templates/jobstats/job.html:74
-#: jobstats/templates/jobstats/job.html:152
+#: jobstats/templates/jobstats/job.html:104
+#: jobstats/templates/jobstats/job.html:112
+#: jobstats/templates/jobstats/job.html:190
 #: jobstats/templates/jobstats/user.html:28
 #: jobstats/templates/jobstats/user.html:42
 #: pages/templates/pages/logins.html:35
@@ -85,7 +85,7 @@ msgid "Wasted memory"
 msgstr "Mémoire gaspillée"
 
 #: accountstats/templates/accountstats/account.html:52
-#: jobstats/templates/jobstats/job.html:154
+#: jobstats/templates/jobstats/job.html:192
 #: jobstats/templates/jobstats/user.html:45
 #: usersummary/templates/usersummary/user.html:15
 #, fuzzy
@@ -166,7 +166,7 @@ msgstr "L'utilisation de votre instance"
 
 #: cloudstats/templates/cloudstats/instance.html:27
 #: cloudstats/templates/cloudstats/project.html:47
-#: jobstats/templates/jobstats/job.html:61
+#: jobstats/templates/jobstats/job.html:99
 #: jobstats/templates/jobstats/user.html:23
 #: jobstats/templates/jobstats/user.html:40
 msgid "CPU cores"
@@ -211,135 +211,182 @@ msgstr "Détails sur la tâche"
 msgid "Show submited job script"
 msgstr "Voir le script de tâche"
 
-#: jobstats/templates/jobstats/job.html:35
+#: jobstats/templates/jobstats/job.html:37
 msgid "Submited job script is not available"
 msgstr "Le script de tâche n'est pas disponible"
 
-#: jobstats/templates/jobstats/job.html:44
+#: jobstats/templates/jobstats/job.html:42
+#, fuzzy
+#| msgid "Scheduler"
+msgid "Scheduler info"
+msgstr "Ordonnanceur"
+
+#: jobstats/templates/jobstats/job.html:46
+#, fuzzy
+#| msgid "Job stats"
+msgid "Account"
+msgstr "Statistiques d'un compte"
+
+#: jobstats/templates/jobstats/job.html:47
+#: jobstats/templates/jobstats/user.html:63
+#: usersummary/templates/usersummary/user.html:51
+msgid "Submit time"
+msgstr "Temps de soumission"
+
+#: jobstats/templates/jobstats/job.html:48
+msgid "Time waiting in queue"
+msgstr ""
+
+#: jobstats/templates/jobstats/job.html:49
+#: jobstats/templates/jobstats/user.html:64 top/templates/top/largemem.html:16
+#: usersummary/templates/usersummary/user.html:52
+msgid "Start time"
+msgstr "Temps de démarrage"
+
+#: jobstats/templates/jobstats/job.html:50
+#: jobstats/templates/jobstats/user.html:65
+#: usersummary/templates/usersummary/user.html:53
+msgid "End time"
+msgstr "Temps de fin"
+
+#: jobstats/templates/jobstats/job.html:53
+msgid "LevelFS at job start"
+msgstr ""
+
+#: jobstats/templates/jobstats/job.html:53
+#: jobstats/templates/jobstats/job.html:55
+msgid "Priority"
+msgstr ""
+
+#: jobstats/templates/jobstats/job.html:55
+msgid "Current LevelFS"
+msgstr ""
+
+#: jobstats/templates/jobstats/job.html:82
 #: jobstats/templates/jobstats/user.html:16
 msgid "Type"
 msgstr "Type"
 
-#: jobstats/templates/jobstats/job.html:45
-#: jobstats/templates/jobstats/user.html:17 jobstats/views.py:192
-#: jobstats/views.py:217 jobstats/views.py:262 jobstats/views.py:465
-#: jobstats/views.py:593
+#: jobstats/templates/jobstats/job.html:83
+#: jobstats/templates/jobstats/user.html:17 jobstats/views.py:209
+#: jobstats/views.py:234 jobstats/views.py:279 jobstats/views.py:482
+#: jobstats/views.py:610
 #, fuzzy
 #| msgid "Allocated GPUs"
 msgid "Allocated"
-msgstr "Allouées"
+msgstr "Alloués"
 
-#: jobstats/templates/jobstats/job.html:46
-#: jobstats/templates/jobstats/user.html:18 jobstats/views.py:183
-#: jobstats/views.py:235 jobstats/views.py:264 jobstats/views.py:474
-#: jobstats/views.py:602
+#: jobstats/templates/jobstats/job.html:84
+#: jobstats/templates/jobstats/user.html:18 jobstats/views.py:200
+#: jobstats/views.py:252 jobstats/views.py:281 jobstats/views.py:491
+#: jobstats/views.py:619
 #, fuzzy
 #| msgid "Used GPUs"
 msgid "Used"
-msgstr "Utilisées"
+msgstr "Utilisés"
 
-#: jobstats/templates/jobstats/job.html:56
+#: jobstats/templates/jobstats/job.html:94
 msgid "Nodes"
 msgstr "Noeuds"
 
-#: jobstats/templates/jobstats/job.html:72
+#: jobstats/templates/jobstats/job.html:110
 msgid "GPUs per node"
 msgstr "GPUs par noeud"
 
-#: jobstats/templates/jobstats/job.html:74
+#: jobstats/templates/jobstats/job.html:112
 msgid "Cycles"
 msgstr ""
 
-#: jobstats/templates/jobstats/job.html:74
+#: jobstats/templates/jobstats/job.html:112
 msgid "Power"
 msgstr "Puissance"
 
-#: jobstats/templates/jobstats/job.html:81
+#: jobstats/templates/jobstats/job.html:119
 msgid "Energy"
 msgstr "Énergie"
 
-#: jobstats/templates/jobstats/job.html:93
+#: jobstats/templates/jobstats/job.html:131
 msgid "Electric car range equivalent"
 msgstr "Distance équivalente fait par une voiture électrique"
 
-#: jobstats/templates/jobstats/job.html:106
+#: jobstats/templates/jobstats/job.html:144
 msgid "CO2 emissions"
 msgstr "Émissions CO2"
 
-#: jobstats/templates/jobstats/job.html:119
+#: jobstats/templates/jobstats/job.html:157
 msgid "Internal cost"
 msgstr "Coût interne"
 
-#: jobstats/templates/jobstats/job.html:133
+#: jobstats/templates/jobstats/job.html:171
 #, fuzzy
 #| msgid "Fully used GPUs equivalent"
 msgid "Cloud cost equivalent"
 msgstr "Équivalent coût cloud"
 
-#: jobstats/templates/jobstats/job.html:149
+#: jobstats/templates/jobstats/job.html:187
 #, fuzzy
 #| msgid "More details"
 msgid "Resources used (details)"
 msgstr "Ressources utilisées (détails)"
 
-#: jobstats/templates/jobstats/job.html:150
+#: jobstats/templates/jobstats/job.html:188
 #: pages/templates/pages/logins.html:23
 msgid "CPU"
 msgstr "Coeur CPU"
 
-#: jobstats/templates/jobstats/job.html:159
+#: jobstats/templates/jobstats/job.html:197
 #, fuzzy
 #| msgid "GPUs"
 msgid "GPU"
 msgstr "GPU"
 
-#: jobstats/templates/jobstats/job.html:160
+#: jobstats/templates/jobstats/job.html:198
 msgid "GPU Compute cycle used"
 msgstr "Cycle de calcul GPU utilisé"
 
-#: jobstats/templates/jobstats/job.html:162
+#: jobstats/templates/jobstats/job.html:200
 msgid "GPU Memory access cycle used"
 msgstr "Cycle d'accès GPU mémoire utilisé"
 
-#: jobstats/templates/jobstats/job.html:164
+#: jobstats/templates/jobstats/job.html:202
 msgid "GPU Memory used"
 msgstr "Mémoire GPU utilisée"
 
-#: jobstats/templates/jobstats/job.html:166
+#: jobstats/templates/jobstats/job.html:204
 msgid "GPU Power"
 msgstr "Puissance GPU"
 
-#: jobstats/templates/jobstats/job.html:168
+#: jobstats/templates/jobstats/job.html:206
 #, fuzzy
 #| msgid "Network bandwidth"
 msgid "GPU PCIe bandwidth"
 msgstr "Bande passante GPU"
 
-#: jobstats/templates/jobstats/job.html:173
+#: jobstats/templates/jobstats/job.html:211
 #, fuzzy
 #| msgid "Allocated resources"
 msgid "Whole node resources"
 msgstr "Ressources du noeud entier"
 
-#: jobstats/templates/jobstats/job.html:175
+#: jobstats/templates/jobstats/job.html:213
 msgid "Infiniband"
 msgstr "Infiniband"
 
-#: jobstats/templates/jobstats/job.html:177
+#: jobstats/templates/jobstats/job.html:215
 msgid "Localscratch IOPS"
 msgstr "IOPS sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:179
+#: jobstats/templates/jobstats/job.html:217
 #, fuzzy
 #| msgid "Network bandwidth"
 msgid "Localscratch bandwidth"
 msgstr "Bande passante sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:181
+#: jobstats/templates/jobstats/job.html:219
 msgid "Localscratch space used"
 msgstr "Espace utilisé sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:184
+#: jobstats/templates/jobstats/job.html:222
 msgid "Power used"
 msgstr "Puissance utilisée"
 
@@ -371,21 +418,6 @@ msgstr "Statut"
 msgid "Job name"
 msgstr "Nom de la tâche"
 
-#: jobstats/templates/jobstats/user.html:63
-#: usersummary/templates/usersummary/user.html:51
-msgid "Submit time"
-msgstr "Temps de soumission"
-
-#: jobstats/templates/jobstats/user.html:64 top/templates/top/largemem.html:16
-#: usersummary/templates/usersummary/user.html:52
-msgid "Start time"
-msgstr "Temps de démarrage"
-
-#: jobstats/templates/jobstats/user.html:65
-#: usersummary/templates/usersummary/user.html:53
-msgid "End time"
-msgstr "Temps de fin"
-
 #: jobstats/templates/jobstats/user.html:66
 #: usersummary/templates/usersummary/user.html:54
 msgid "Asked time"
@@ -396,35 +428,35 @@ msgstr "Temps demandé"
 msgid "Used time"
 msgstr "Temps utilisé"
 
-#: jobstats/views.py:226 jobstats/views.py:263
+#: jobstats/views.py:243 jobstats/views.py:280
 msgid "Max used"
 msgstr "Max utilisé"
 
-#: jobstats/views.py:265
+#: jobstats/views.py:282
 msgid "Cache"
 msgstr ""
 
-#: jobstats/views.py:266
+#: jobstats/views.py:283
 msgid "RSS"
 msgstr ""
 
-#: jobstats/views.py:267
+#: jobstats/views.py:284
 msgid "RSS Huge"
 msgstr ""
 
-#: jobstats/views.py:268
+#: jobstats/views.py:285
 msgid "Memory mapped file"
 msgstr ""
 
-#: jobstats/views.py:269
+#: jobstats/views.py:286
 msgid "Active file"
 msgstr ""
 
-#: jobstats/views.py:270
+#: jobstats/views.py:287
 msgid "Inactive file"
 msgstr ""
 
-#: jobstats/views.py:271
+#: jobstats/views.py:288
 msgid "Unevictable"
 msgstr ""
 
@@ -492,7 +524,7 @@ msgid ""
 "Used GPUs is the sum of %% of the reported utilization, so 2 GPUs running at "
 "50%% will be reported as 1"
 msgstr ""
-"Les GPU utilisées sont la somme de %% de l'utilisation rapportée, donc 2 GPU "
+"Les GPU utilisés sont la somme de %% de l'utilisation rapportée, donc 2 GPU "
 "fonctionnant à 50%% seront rapportées comme 1"
 
 #: pages/templates/pages/scheduler.html:34
@@ -621,15 +653,15 @@ msgstr "Mémoire max"
 msgid "Fully used GPUs equivalent"
 msgstr "Équivalent GPU plein"
 
-#: top/templates/top/index.html:9
+#: top/templates/top/index.html:10
 msgid "Computes"
 msgstr "Noeuds de calcul"
 
-#: top/templates/top/index.html:10
+#: top/templates/top/index.html:11
 msgid "Large memory nodes"
 msgstr "Noeuds à mémoire large"
 
-#: top/templates/top/index.html:11
+#: top/templates/top/index.html:12
 msgid "Lustre"
 msgstr ""
 
@@ -653,11 +685,11 @@ msgstr "Lecture"
 msgid "Write"
 msgstr "Écriture"
 
-#: userportal/settings.py:188
+#: userportal/settings.py:183
 msgid "French"
 msgstr "Français"
 
-#: userportal/settings.py:189
+#: userportal/settings.py:184
 msgid "English"
 msgstr "Anglais"
 

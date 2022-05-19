@@ -19,20 +19,22 @@
   </thead>
   <tbody>
     <tr>
-      <th scope="row">{% translate "Home" %}</th>
-      <th scope="row">{{ home.inodes | intword | default_if_none:"less than 50" }} on {{ home.inodes_quota | intword }}</th>
-      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ home.bytes_quota | filesizeformat }}</th>
+      <th scope="row">/home</th>
+      {% translate 'less than 50' as less_than_50 %}
+      {% translate 'less than 4MB' as less_than_4MB %}
+      <th scope="row">{{ home.inodes | intword | default_if_none:less_than_50 }} on {{ home.inodes_quota | intword }} {% translate "inodes" %}</th>
+      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ home.bytes_quota | filesizeformat }}</th>
     </tr>
     <tr>
-      <th scope="row">{% translate "Scratch" %}</th>
-      <th scope="row">{{ scratch.inodes | intword | default_if_none:"less than 50" }} on {{ scratch.inodes_quota | intword }}</th>
-      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ scratch.bytes_quota | filesizeformat }}</th>
+      <th scope="row">/scratch</th>
+      <th scope="row">{{ scratch.inodes | intword | default_if_none:less_than_50 }} on {{ scratch.inodes_quota | intword }} {% translate "inodes" %}</th>
+      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ scratch.bytes_quota | filesizeformat }}</th>
     </tr>
     {% for project in alloc_projects %}
     <tr>
-      <th scope="row">{{ project.name }}</th>
-      <th scope="row">{{ project.inodes | intword | default_if_none:"less than 50" }} on {{ project.inodes_quota | intword }}</th>
-      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:"less than 4MB" }} on {{ project.project_storage_bytes | filesizeformat }}</th>
+      <th scope="row">/project/{{ project.name }}</th>
+      <th scope="row">{{ project.inodes | intword | default_if_none:less_than_50 }} on {{ project.inodes_quota | intword }} {% translate "inodes" %}</th>
+      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ project.project_storage_bytes | filesizeformat }}</th>
     </tr>
     {% endfor %}
   </tbody>

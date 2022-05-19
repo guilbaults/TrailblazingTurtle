@@ -7,14 +7,13 @@
 {% endblock title %}
 
 {% block content %}
-<h1>Details on job {{job.job_name}} ({{job_id}})</h1>
+<h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
 <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
 <div class="progress">
   {% if job.time_start != 0 and job.time_end == 0 %}
   <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
   {% else %}
   <div class="progress-bar bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
-
   {% endif%}
 </div>
 
@@ -75,7 +74,7 @@
   </tbody>
 </table>
 
-<h2>Resources</h2>
+<h2>{% translate "Resources" %}</h2>
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
@@ -86,7 +85,7 @@
   </thead>
   <tbody>
     <tr>
-      <td>Time</td>
+      <td>{% translate "Time" %}</td>
       <td>{{job.timelimit_display | default_if_none:'' }}</td>
       <td>{{job.used_time_display | default_if_none:'' }}</td>
     </tr>
@@ -209,7 +208,7 @@
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     <h2>{% translate "Whole node resources" %}</h2>
-    <p>Those stats are not accurate when the node is shared with multiple users</p>
+    <p>{% translate "Those stats are not accurate when the node is shared with multiple users" %}</p>
     <h3>{% translate "Infiniband" %}</h3>
     <div id="graph_infiniband_bdw"></div>
     <h3>{% translate "Localscratch IOPS" %}</h3>
@@ -266,7 +265,7 @@
       }
 
       if(data.electric_car_range_km){
-        $('#car_range').html('<a href="#" data-toggle="tooltip" title="Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km </a>');
+        $('#car_range').html('<a href="#" data-toggle="tooltip" title=Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km </a>');
       }
 
       if(data.co2_emissions_kg) {

@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from django.conf import settings
 from userportal.common import Prometheus, query_time
+from django.utils.translation import gettext as _
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -55,7 +56,7 @@ def graph_lustre_mdt(request, fs):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' IOPS'
+            'ticksuffix': ' ' + _('IOPS')
         },
         'showlegend': False,
         'margin': {
@@ -133,7 +134,7 @@ def graph_login_cpu(request, login):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'Cores',
+            'ticksuffix': _('Cores'),
             'tickformat': '~s',
             'range': [0, core_count],
         },
@@ -318,7 +319,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
-        'name': 'Used',
+        'name': _('Used'),
     })
 
     query_alloc = 'slurm_{res_type}s_alloc{{ {filter} }}'.format(
@@ -330,7 +331,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
-        'name': 'Allocated',
+        'name': _('Allocated'),
     })
 
     if res_type == 'gpu':
@@ -342,7 +343,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_non_idle[0])),
             'y': stats_non_idle[1],
             'type': 'scatter',
-            'name': 'Non-IDLE GPUs',
+            'name': _('Active GPUs'),
         })
 
     query_total = 'slurm_{res_type}s_total{{ {filter} }}'.format(
@@ -354,7 +355,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_total[0])),
         'y': stats_total[1],
         'type': 'scatter',
-        'name': 'Total',
+        'name': _('Total'),
     })
 
     data['layout'] = {

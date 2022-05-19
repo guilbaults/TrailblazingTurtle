@@ -21,25 +21,12 @@
     {% endif %}
 
 {% if request.META.is_staff %}
-  <ul class="nav nav-tabs" id="myTabs" role="tablist">
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">{% translate "Last month" %}</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">{% translate "Last week" %}</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">{% translate "Last day" %}</a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">{% translate "Last hour" %}</a>
-    </li>
-  </ul>
+{% include "nav_last_month.html" %}
 
   <h3>{% translate "All projects" %}</h3>
-  <h4>CPU used</h4>
+  <h4>{% translate "CPU used" %}</h4>
   <div id="graph_cpu"></div>
-  <h4>Memory used</h4>
+  <h4>{% translate "Memory used" %}</h4>
   <div id="graph_mem"></div>
   <table class="table table-striped">
     <thead class="thead-dark">

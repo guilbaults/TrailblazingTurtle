@@ -9,13 +9,13 @@
 {% block content %}
 <h1>{% translate "Your account use" %}</h1>
 {% if gpu %}
-<p>{{gpu_count}} GPUs were allocated by the RAC process</p>
+<p>{{gpu_count}} {% translate "GPUs were allocated" %}</p>
 {% else %}
-<p>{{cpu_count}} CPUs were allocated by the RAC process</p>
+<p>{{cpu_count}} {% translate "CPUs were allocated" %}</p>
 {% endif %}
 
-<p>A priority under 1 means you were previously using more resources than allocated during the RAC. Your new jobs are now launched at a lower priority to let the other user catch up their fair share.</p>
-<p>A priority above 1 means you were not using the cluster as much as you were allocated during the RAC. Your new jobs are now launched at a higher priority to catch up your fair share.</p>
+<p>{% translate "A priority under 1 means you were previously using more resources than allocated. Your new jobs are now launched at a lower priority to let the other user catch up their fair share." %}</p>
+<p>{% translate "A priority above 1 means you were not using the cluster as much as you were allocated. Your new jobs are now launched at a higher priority to catch up your fair share." %}</p>
 
 {% if gpu %}
 <div id="graph_gpu_priority"></div>

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-05-19 18:15+0000\n"
+"POT-Creation-Date: 2022-05-26 20:00+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -51,7 +51,7 @@ msgstr "Utilisation détaillée par utilisateur"
 
 #: accountstats/templates/accountstats/account.html:28
 #: jobstats/templates/jobstats/user.html:33
-#: jobstats/templates/jobstats/user.html:50
+#: jobstats/templates/jobstats/user.html:50 pages/views.py:382
 msgid "GPUs"
 msgstr "GPUs"
 
@@ -89,7 +89,7 @@ msgstr "Cœurs CPU gaspillés"
 #: jobstats/templates/jobstats/job.html:189
 #: jobstats/templates/jobstats/user.html:28
 #: jobstats/templates/jobstats/user.html:42
-#: pages/templates/pages/logins.html:25
+#: pages/templates/pages/logins.html:25 pages/views.py:179
 msgid "Memory"
 msgstr "Mémoire"
 
@@ -292,14 +292,14 @@ msgstr "Ressources"
 #: jobstats/templates/jobstats/job.html:82
 #: jobstats/templates/jobstats/user.html:17 jobstats/views.py:209
 #: jobstats/views.py:234 jobstats/views.py:279 jobstats/views.py:482
-#: jobstats/views.py:610 pages/views.py:334
+#: jobstats/views.py:610 pages/views.py:339
 msgid "Allocated"
 msgstr "Alloués"
 
 #: jobstats/templates/jobstats/job.html:83
 #: jobstats/templates/jobstats/user.html:18 jobstats/views.py:200
 #: jobstats/views.py:252 jobstats/views.py:281 jobstats/views.py:491
-#: jobstats/views.py:619 pages/views.py:322
+#: jobstats/views.py:619 pages/views.py:327
 msgid "Used"
 msgstr "Utilisés"
 
@@ -374,7 +374,9 @@ msgstr "Ressources du noeud au complet"
 #: jobstats/templates/jobstats/job.html:211
 msgid ""
 "Those stats are not accurate when the node is shared with multiple users"
-msgstr "Ces statistiques ne sont pas précises quand le noeud est partagé avec plusieurs utilisateurs"
+msgstr ""
+"Ces statistiques ne sont pas précises quand le noeud est partagé avec "
+"plusieurs utilisateurs"
 
 #: jobstats/templates/jobstats/job.html:212
 msgid "Infiniband"
@@ -467,6 +469,7 @@ msgid "Data transfer nodes"
 msgstr "Nœuds de transfert de données"
 
 #: pages/templates/pages/dtns.html:13 pages/templates/pages/filesystems.html:13
+#: pages/views.py:95 pages/views.py:284
 msgid "Bandwidth"
 msgstr "Bande passante"
 
@@ -494,7 +497,7 @@ msgstr "Ordonnanceur"
 msgid "Logins"
 msgstr ""
 
-#: pages/templates/pages/logins.html:37
+#: pages/templates/pages/logins.html:37 pages/views.py:217
 msgid "Load"
 msgstr "Charge"
 
@@ -539,15 +542,15 @@ msgstr ""
 msgid "IOPS"
 msgstr ""
 
-#: pages/views.py:137
+#: pages/views.py:138 pages/views.py:384
 msgid "Cores"
 msgstr "Cœurs CPU"
 
-#: pages/views.py:346
+#: pages/views.py:351
 msgid "Active GPUs"
 msgstr "GPUs actifs"
 
-#: pages/views.py:358
+#: pages/views.py:363
 msgid "Total"
 msgstr "Total"
 
@@ -706,11 +709,11 @@ msgstr "Lecture"
 msgid "Write"
 msgstr "Écriture"
 
-#: userportal/settings.py:178
+#: userportal/settings.py:183
 msgid "French"
 msgstr "Français"
 
-#: userportal/settings.py:179
+#: userportal/settings.py:184
 msgid "English"
 msgstr "Anglais"
 

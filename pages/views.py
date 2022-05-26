@@ -56,7 +56,7 @@ def graph_lustre_mdt(request, fs):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' ' + _('IOPS')
+            'title': _('IOPS'),
         },
         'showlegend': False,
         'margin': {
@@ -92,6 +92,7 @@ def graph_lustre_ost(request, fs):
         'yaxis': {
             'ticksuffix': 'B/s',
             'tickformat': '~s',
+            'title': _('Bandwidth'),
         },
         'showlegend': False,
         'margin': {
@@ -134,8 +135,7 @@ def graph_login_cpu(request, login):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': _('Cores'),
-            'tickformat': '~s',
+            'title': _('Cores'),
             'range': [0, core_count],
         },
         'showlegend': False,
@@ -176,6 +176,7 @@ def graph_login_memory(request, login):
 
     data['layout'] = {
         'yaxis': {
+            'title': _('Memory'),
             'ticksuffix': 'B',
             'tickformat': '~s',
             'range': [0, total_mem],
@@ -212,6 +213,9 @@ def graph_login_load(request, login):
     })
 
     data['layout'] = {
+        'yaxis': {
+            'title': _('Load'),
+        },
         'showlegend': False,
         'margin': {
             'l': 70,
@@ -277,7 +281,8 @@ def graph_network(request, node, device):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'bps',
+            'title': _('Bandwidth'),
+            'ticksuffix': 'b/s',
             'tickformat': '~s',
         },
         'showlegend': False,
@@ -372,5 +377,10 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
         },
         'height': 300,
     }
+
+    if res_type == 'gpu':
+        data['layout']['yaxis']['title'] = _('GPUs')
+    else:
+        data['layout']['yaxis']['title'] = _('Cores')
 
     return JsonResponse(data)

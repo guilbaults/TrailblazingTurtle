@@ -13,6 +13,6 @@ flake8:
  stage: linting
  image: registry.gitlab.com/pipeline-components/flake8:latest
  script:
-  - flake8 --verbose --max-line-length 200 .
+  - flake8 --verbose --max-line-length 200 --extend-exclude example/ .
 
 # no blank lines after this

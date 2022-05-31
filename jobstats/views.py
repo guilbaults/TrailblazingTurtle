@@ -16,6 +16,7 @@ from django.core.paginator import Paginator
 GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
 GPU_IDLE_POWER = {'Tesla V100-SXM2-16GB': 55, 'NVIDIA A100-SXM4-40GB': 55}
+GPU_SHORT_NAME = {'NVIDIA A100-SXM4-40GB': 'A100', 'Tesla V100-SXM2-16GB': 'V100'}
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -180,6 +181,7 @@ def graph_cpu(request, username, job_id):
     data['layout'] = {
         'yaxis': {
             'range': [0, job.parse_tres_req()['total_cores']],
+            'title': _('Cores'),
         }
     }
 
@@ -214,6 +216,7 @@ def graph_cpu_user(request, username):
     data['layout'] = {
         'yaxis': {
             'range': [0, max(stats_alloc[1])],
+            'title': _('Cores'),
         }
     }
     return JsonResponse(data)
@@ -258,6 +261,7 @@ def graph_mem_user(request, username):
         'yaxis': {
             'ticksuffix': 'GiB',
             'range': [0, max(stats_alloc[1])],
+            'title': _('Memory'),
         }
     }
 
@@ -308,6 +312,7 @@ def graph_mem(request, username, job_id):
         'yaxis': {
             'ticksuffix': 'GiB',
             'range': [0, maximum],
+            'title': _('Memory'),
         }
     }
 
@@ -342,7 +347,7 @@ def graph_lustre_mdt(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' IOPS'
+            'title': _('IOPS'),
         }
     }
     return JsonResponse(data)
@@ -369,7 +374,7 @@ def graph_lustre_mdt_user(request, username):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' IOPS'
+            'title': _('IOPS'),
         }
     }
     return JsonResponse(data)
@@ -402,7 +407,8 @@ def graph_lustre_ost(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' MiB/s'
+            'ticksuffix': ' MiB/s',
+            'title': _('Bandwidth'),
         }
     }
     return JsonResponse(data)
@@ -429,7 +435,8 @@ def graph_lustre_ost_user(request, username):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' MiB/s'
+            'ticksuffix': ' MiB/s',
+            'title': _('Bandwidth'),
         }
     }
     return JsonResponse(data)
@@ -463,6 +470,7 @@ def graph_gpu_utilization(request, username, job_id):
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
+            'title': _('GPU Utilization'),
         }
     }
     return JsonResponse(data)
@@ -490,6 +498,12 @@ def graph_gpu_utilization_user(request, username):
         'type': 'scatter',
         'name': _('Used')
     })
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('GPU Utilization'),
+        }
+    }
 
     return JsonResponse(data)
 
@@ -522,6 +536,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
+            'title': _('GPU Memory Utilization'),
         }
     }
     return JsonResponse(data)
@@ -556,6 +571,7 @@ def graph_gpu_memory(request, username, job_id):
         'yaxis': {
             'ticksuffix': ' GiB',
             'range': [0, GPU_MEMORY[gpu_type]],
+            'title': _('GPU Memory Usage'),
         }
     }
     return JsonResponse(data)
@@ -586,10 +602,19 @@ def graph_gpu_power(request, username, job_id):
             'type': 'scatter',
             'name': '{} GPU {}'.format(compute_name, gpu_num)
         })
+
+    data['lines'].append({
+        'x': x,
+        'y': [GPU_IDLE_POWER[gpu_type] for x in y],
+        'type': 'scatter',
+        'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+    })
+
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' W',
             'range': [0, GPU_FULL_POWER[gpu_type]],
+            'title': _('GPU Power Usage'),
         }
     }
     return JsonResponse(data)
@@ -600,28 +625,41 @@ def graph_gpu_power(request, username, job_id):
 def graph_gpu_power_user(request, username):
     data = {'lines': []}
 
-    # Fixme only support v100 at the moment
-    query_alloc = 'count(slurm_job_power_gpu{{user="{}", {}}}) * 300'.format(username, prom.get_filter())
-    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
-        'y': stats_alloc[1],
-        'type': 'scatter',
-        'name': _('Allocated')
-    })
+    query_alloc = 'count(slurm_job_power_gpu{{user="{}", {}}}) by (gpu_type)'.format(username, prom.get_filter())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
+    for line in stats_alloc:
+        gpu_type = line['metric']['gpu_type']
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': [GPU_FULL_POWER[gpu_type] * z for z in y],
+            'type': 'scatter',
+            'name': '{} {}'.format(_('Allocated'), GPU_SHORT_NAME[gpu_type])
+        })
 
-    query_used = 'sum(slurm_job_power_gpu{{user="{}", {}}})/1000'.format(username, prom.get_filter())
-    stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
-        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
-        'y': stats_used[1],
-        'type': 'scatter',
-        'name': _('Used')
-    })
+        data['lines'].append({
+            'x': x,
+            'y': [GPU_IDLE_POWER[gpu_type] * z for z in y],
+            'type': 'scatter',
+            'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+        })
+
+    query_used = 'sum(slurm_job_power_gpu{{user="{}", {}}}) by (gpu_type) / 1000'.format(username, prom.get_filter())
+    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(hours=6), datetime.now())
+    for line in stats_used:
+        gpu_type = line['metric']['gpu_type']
+        data['lines'].append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'name': '{} {}'.format(_('Used'), GPU_SHORT_NAME[gpu_type])
+        })
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' W'
+            'ticksuffix': 'W',
+            'title': _('GPU Power Usage'),
         }
     }
 
@@ -658,7 +696,8 @@ def graph_gpu_pcie(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' MB/s'
+            'ticksuffix': ' MB/s',
+            'title': _('Bandwidth'),
         }
     }
     return JsonResponse(data)
@@ -705,7 +744,8 @@ def graph_infiniband_bdw(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' Gb/s'
+            'ticksuffix': ' Gb/s',
+            'title': _('Bandwidth'),
         }
     }
 
@@ -757,7 +797,7 @@ def graph_disk_iops(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' IOPS'
+            'title': _('IOPS'),
         }
     }
 
@@ -809,7 +849,8 @@ def graph_disk_bdw(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'B/s'
+            'ticksuffix': 'B/s',
+            'title': _('Bandwidth'),
         }
     }
 
@@ -847,7 +888,8 @@ def graph_disk_used(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' GB'
+            'ticksuffix': ' GB',
+            'title': _('Disk used'),
         }
     }
 
@@ -905,7 +947,8 @@ def graph_power(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' W'
+            'ticksuffix': ' W',
+            'title': _('Power'),
         }
     }
 

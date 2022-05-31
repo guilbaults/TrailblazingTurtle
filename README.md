@@ -137,10 +137,10 @@ groups:
 ```
 
 ### slurm-exporter
-slurm-exporter is used to capture informations from slurm like the priority of each users.
+[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture informations from slurm like the priority of each users. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
 
 ### Access to the database of slurmacct
-This database is accessed with a read only user.
+This mysql database is accessed with a read only user. It does not need to be in the same database server where django is storing its data.
 
 ### lustre\_exporter and lustre\_exporter\_slurm
 Those 2 exporters are used to gather information about Lustre usage.

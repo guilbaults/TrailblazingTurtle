@@ -185,9 +185,24 @@ The information in this database is used to show the current utilization per use
 The REST API provided by Django is used by a small deamon running on every compute node. This deamon will upload the job script when a job is starting on the node. The content of this script is made available in the jobstats module.
 
 ## Test environment
-To test localy without having to use the SSO:
+There is a minimal config example in the example directory. This example only enable the `jobstats` and `top` module. Those modules only require the `slurm-job-exporter` exporter and a connection to the slurm database.
 
-`REMOTE_USER=sigui4@computecanada.ca affiliation=staff@computecanada.ca python manage.py runserver`
+Copy the 2 following files and edit them to your needs.
+The first file is the config file for the django application, databases connections, the name of the enabled exporters and other settings are defined here.
+
+nThe second file need to be modified so site specific information like where the allocations are stored can be used. The functions provided are meant to be examples, you can use them or create your own. Our production functions are located in `userportal/common.py`, some leftover are included in the comments of the `example/common.py` file. The functions to modify are indicated in the file with the comment `# IMPLEMENTATION`.
+
+```
+cp example/settings.py.dist example/settings.py
+cp example/common.py userportal/common.py
+```
+
+Then you can launch the example server:
+```
+REMOTE_USER=myuser@computecanada.ca affiliation=staff@computecanada.ca python manage.py runserver --settings example.settings
+```
+
+This will start the server on port 8000 and remove the requirement to authenticate using the SSO. You should test with your own username instead of "myuser" so the access to slurm can find some of your previous jobs. For the initial test, you can keep the `affiliation=staff@computecanada.ca`, this is how our production server is mapping staff and non-staff users.
 
 ## Production
 

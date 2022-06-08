@@ -4,6 +4,7 @@ from userportal.common import openstackproject_or_staff, cloud_projects_by_user,
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
+from django.utils.translation import gettext as _
 from collections import Counter
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -92,8 +93,14 @@ def project_graph_cpu(request, project):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Running'
+            'name': _('Running'),
         })
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('Cores'),
+        }
+    }
 
     return JsonResponse(data)
 
@@ -123,12 +130,12 @@ def projects_graph_cpu(request):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
-            'name': 'Running'
+            'name': _('Running'),
         })
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'Cores',
+            'title': _('Cores'),
         }
     }
     return JsonResponse(data)
@@ -153,7 +160,7 @@ def instance_graph_cpu(request, project, uuid):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': 'Core {}'.format(line['metric']['vcpu'])
+            'name': '{} {}'.format(_('Core'), line['metric']['vcpu'])
         })
 
     # Get the number of running cores
@@ -171,6 +178,12 @@ def instance_graph_cpu(request, project, uuid):
             'type': 'scatter',
             'name': 'Running'
         })
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('Cores'),
+        }
+    }
 
     return JsonResponse(data)
 
@@ -203,7 +216,7 @@ def project_graph_memory(request, project):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': 'Used {}'.format(name)
+            'name': '{} {}'.format(_('Used'), name)
         })
 
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}})/1024/1024'.format(
@@ -217,12 +230,13 @@ def project_graph_memory(request, project):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Running'
+            'name': _('Running'),
         })
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
+            'title': _('Memory'),
         }
     }
 
@@ -247,7 +261,7 @@ def instance_graph_memory(request, project, uuid):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Used'
+            'name': _('Used'),
         })
 
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
@@ -262,12 +276,13 @@ def instance_graph_memory(request, project, uuid):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Running'
+            'name': _('Running'),
         })
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
+            'title': _('Memory'),
         }
     }
 
@@ -299,12 +314,13 @@ def projects_graph_mem(request):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
-            'name': 'Running'
+            'name': _('Running'),
         })
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
+            'title': _('Memory'),
         }
     }
 
@@ -347,6 +363,7 @@ def project_graph_disk_bandwidth(request, project):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'MiB',
+            'title': _('Bandwidth'),
         }
     }
 
@@ -374,12 +391,13 @@ def instance_graph_disk_bandwidth(request, project, uuid):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} device {}'.format(direction, line['metric']['device'])
+                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device'])
             })
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'MiB',
+            'title': _('Bandwidth'),
         }
     }
 
@@ -419,6 +437,12 @@ def project_graph_disk_iops(request, project):
                 'name': '{} {}'.format(direction, name)
             })
 
+    data['layout'] = {
+        'yaxis': {
+            'title': _('IOPS'),
+        }
+    }
+
     return JsonResponse(data)
 
 
@@ -443,8 +467,14 @@ def instance_graph_disk_iops(request, project, uuid):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} device {}'.format(direction, line['metric']['device'])
+                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device'])
             })
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('IOPS'),
+        }
+    }
 
     return JsonResponse(data)
 
@@ -485,6 +515,7 @@ def project_graph_network_bandwidth(request, project):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'MiB',
+            'title': _('Bandwidth'),
         }
     }
 
@@ -518,6 +549,7 @@ def instance_graph_network_bandwidth(request, project, uuid):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'MiB',
+            'title': _('Bandwidth'),
         }
     }
 

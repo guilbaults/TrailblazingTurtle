@@ -1,5 +1,5 @@
 import functools
-from django.http import HttpResponseNotFound
+from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
 from ccldap.models import LdapAllocation, LdapUser
@@ -18,7 +18,7 @@ def user_or_staff(func):
         elif request.META['is_staff']:
             return func(request, *args, **kwargs)
         else:
-            return HttpResponseNotFound()
+            return HttpResponseForbidden()
     return wrapper
 
 
@@ -37,7 +37,7 @@ def account_or_staff(func):
                 status='active').get()
         except LdapAllocation.DoesNotExist:
             # This user is not in the allocation
-            return HttpResponseNotFound()
+            return HttpResponseForbidden()
         return func(request, *args, **kwargs)
     return wrapper
 
@@ -50,7 +50,7 @@ def openstackproject_or_staff(func):
             return func(request, *args, **kwargs)
         else:
             # TODO search in LDAP
-            return HttpResponseNotFound()
+            return HttpResponseForbidden()
         return func(request, *args, **kwargs)
     return wrapper
 
@@ -62,7 +62,7 @@ def staff(func):
         if request.META['is_staff']:
             return func(request, *args, **kwargs)
         else:
-            return HttpResponseNotFound()
+            return HttpResponseForbidden()
     return wrapper
 
 

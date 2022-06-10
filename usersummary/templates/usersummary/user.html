@@ -9,7 +9,7 @@
 {% block content %}
 {% if 'lfs_quota' in settings.EXPORTER_INSTALLED %}
 <h1>{% translate "Your filesystem quotas" %} {% if 'quotas' in settings.INSTALLED_APPS %}<a href="/secure/quotas/{{username}}">({% translate "More details" %})</a>{% endif %}</h1>
-<table class="table table-striped">
+<table class="table">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Filesystem" %}</th>
@@ -22,19 +22,47 @@
       <th scope="row">/home</th>
       {% translate 'less than 50' as less_than_50 %}
       {% translate 'less than 4MB' as less_than_4MB %}
-      <th scope="row">{{ home.inodes | intword | default_if_none:less_than_50 }} on {{ home.inodes_quota | intword }} {% translate "inodes" %}</th>
-      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ home.bytes_quota | filesizeformat }}</th>
+      <th scope="row">{{ home.inodes | intword | default_if_none:less_than_50 }} on {{ home.inodes_quota | intword }} {% translate "inodes" %}
+        {% if home.inodes > home.inodes_quota%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}
+        <br />
+        <div id="graph_home_inodes"></div>
+      </th>
+      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ home.bytes_quota | filesizeformat }}
+        {% if home.bytes > home.bytes_quota%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}<br />
+        <div id="graph_home_bytes"></th>
     </tr>
     <tr>
       <th scope="row">/scratch</th>
-      <th scope="row">{{ scratch.inodes | intword | default_if_none:less_than_50 }} on {{ scratch.inodes_quota | intword }} {% translate "inodes" %}</th>
-      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ scratch.bytes_quota | filesizeformat }}</th>
+      <th scope="row">{{ scratch.inodes | intword | default_if_none:less_than_50 }} on {{ scratch.inodes_quota | intword }} {% translate "inodes" %}
+        {% if scratch.inodes > scratch.inodes_quota%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}
+        <br />
+        <div id="graph_scratch_inodes"></th>
+      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ scratch.bytes_quota | filesizeformat }}
+        {% if scratch.bytes > scratch.project_storage_bytes%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}<br />
+        <div id="graph_scratch_bytes"></th>
     </tr>
     {% for project in alloc_projects %}
     <tr>
       <th scope="row">/project/{{ project.name }}</th>
-      <th scope="row">{{ project.inodes | intword | default_if_none:less_than_50 }} on {{ project.inodes_quota | intword }} {% translate "inodes" %}</th>
-      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ project.project_storage_bytes | filesizeformat }}</th>
+      <th scope="row">{{ project.inodes | intword | default_if_none:less_than_50 }} on {{ project.inodes_quota | intword }} {% translate "inodes" %}
+        {% if project.inodes > project.inodes_quota%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}
+        <br />
+        <div id="graph_project_inodes_{{ project.name }}"></th>
+      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ project.project_storage_bytes | filesizeformat }}
+        {% if project.bytes > project.project_storage_bytes%}
+        <br /><span class="text-danger">{% translate "Over quota" %}</span>
+        {% endif %}<br />
+        <div id="graph_project_bytes_{{ project.name }}"></th>
     </tr>
     {% endfor %}
   </tbody>
@@ -74,6 +102,18 @@
 </table>
 {% endif %}
 <script>
+  {% if 'lfs_quota' in settings.EXPORTER_INSTALLED %}
+    loadGraph('graph_home_inodes', 'graph/home/inodes.json');
+    loadGraph('graph_home_bytes', 'graph/home/bytes.json');
+    loadGraph('graph_scratch_inodes', 'graph/scratch/inodes.json');
+    loadGraph('graph_scratch_bytes', 'graph/scratch/bytes.json');
+
+    {% for project in alloc_projects %}
+      loadGraph('graph_project_inodes_{{ project.name }}', 'graph/project/inodes.json?project_name={{ project.name }}');
+      loadGraph('graph_project_bytes_{{ project.name }}', 'graph/project/bytes.json?project_name={{ project.name }}');
+    {% endfor %}
+
+  {% endif %}
 </script>
 
 {% endblock content %}

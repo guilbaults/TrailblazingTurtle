@@ -2,9 +2,7 @@
 {% load humanize %}
 {% load i18n %}
 
-{% block title %}
-{% translate "User summary" %}
-{% endblock title %}
+{% block title %}{% translate "User summary" %}{% endblock title %}
 
 {% block content %}
 {% if 'lfs_quota' in settings.EXPORTER_INSTALLED %}

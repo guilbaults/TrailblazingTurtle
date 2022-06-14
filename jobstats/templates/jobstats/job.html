@@ -2,9 +2,7 @@
 {% load humanize %}
 {% load i18n %}
 
-{% block title %}
-{% translate "Details on job" %} {{job_id}}
-{% endblock title %}
+{% block title %}{% translate "Details on job" %} {{job_id}} {% endblock title %}
 
 {% block content %}
 <h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>

@@ -339,6 +339,18 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
         'name': _('Allocated'),
     })
 
+    query_alloc = 'slurm_{res_type}s_alloc{{ {filter} }} + slurm_{res_type}s_idle{{ {filter} }}'.format(
+        res_type=res_type,
+        filter=prom.get_filter(),
+    )
+    stats_alloc = prom.query_prometheus(query_alloc, timing[0], step=timing[1])
+    data['lines'].append({
+        'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
+        'y': stats_alloc[1],
+        'type': 'scatter',
+        'name': _('Usable'),
+    })
+
     if res_type == 'gpu':
         query_non_idle = 'sum(slurm_job:non_idle_gpu:sum_user_account{{ {filter} }})'.format(
             filter=prom.get_filter(),

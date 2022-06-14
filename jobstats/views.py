@@ -571,7 +571,7 @@ def graph_gpu_memory(request, username, job_id):
         'yaxis': {
             'ticksuffix': ' GiB',
             'range': [0, GPU_MEMORY[gpu_type]],
-            'title': _('GPU Memory Usage'),
+            'title': _('GPU Memory'),
         }
     }
     return JsonResponse(data)
@@ -614,7 +614,7 @@ def graph_gpu_power(request, username, job_id):
         'yaxis': {
             'ticksuffix': ' W',
             'range': [0, GPU_FULL_POWER[gpu_type]],
-            'title': _('GPU Power Usage'),
+            'title': _('GPU Power'),
         }
     }
     return JsonResponse(data)
@@ -659,7 +659,7 @@ def graph_gpu_power_user(request, username):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'W',
-            'title': _('GPU Power Usage'),
+            'title': _('GPU Power'),
         }
     }
 
@@ -889,7 +889,7 @@ def graph_disk_used(request, username, job_id):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' GB',
-            'title': _('Disk used'),
+            'title': _('Disk'),
         }
     }
 

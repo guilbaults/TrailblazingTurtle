@@ -396,12 +396,16 @@ def graph_lustre_ost(request, username, job_id):
 
         for line in stats:
             fs = line['metric']['fs']
+            if i == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
+                'fill': 'tozeroy',
                 'name': '{} {}'.format(i, fs)
             })
 
@@ -425,11 +429,15 @@ def graph_lustre_ost_user(request, username):
         for line in stats:
             fs = line['metric']['fs']
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if i == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
+                'fill': 'tozeroy',
                 'name': '{} {}'.format(i, fs)
             })
 
@@ -684,13 +692,15 @@ def graph_gpu_pcie(request, username, job_id):
         gpu_num = int(line['metric']['gpu'])
         compute_name = line['metric']['instance'].split(':')[0]
         direction = line['metric']['direction']
+        if direction == 'RX':
+            y = line['y']
+        else:
+            y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'stackgroup': 'one',
             'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
         })
 
@@ -729,7 +739,7 @@ def graph_infiniband_bdw(request, username, job_id):
             'name': 'Received {}'.format(compute_name)
         })
 
-    query_transmitted = 'rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{}", {}}}[2m]) * 8 /(1000*1000*1000)'.format(instances, prom.get_filter())
+    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{}", {}}}[2m]) * 8 /(1000*1000*1000)'.format(instances, prom.get_filter())
     stats_transmitted = prom.query_prometheus_multiple(query_transmitted, job.time_start_dt(), job.time_end_dt())
     for line in stats_transmitted:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -832,7 +842,7 @@ def graph_disk_bdw(request, username, job_id):
             'name': 'Read {}'.format(compute_name)
         })
 
-    query_write = 'rate(node_disk_written_bytes_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[2m])'.format(instances, prom.get_filter())
+    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[2m])'.format(instances, prom.get_filter())
     stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt())
     for line in stats_write:
         compute_name = "{} {}".format(

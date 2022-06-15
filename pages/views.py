@@ -81,10 +81,15 @@ def graph_lustre_ost(request, fs):
         query = 'lustre:{}_bytes:rate3m{{fs="{}", {}}}'.format(i, fs, prom.get_filter())
         stats = prom.query_prometheus_multiple(query, timing[0], step=timing[1])
         for line in stats:
+            if i == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
-                'y': line['y'],
+                'y': y,
                 'type': 'scatter',
+                'fill': 'tozeroy',
                 'name': '{}'.format(i)
             })
 
@@ -94,7 +99,12 @@ def graph_lustre_ost(request, fs):
             'tickformat': '~s',
             'title': _('Bandwidth'),
         },
-        'showlegend': False,
+        'showlegend': True,
+        'legend': {
+            'x': 0,
+            'y': 1,
+            'xanchor': 'right',
+        },
         'margin': {
             'l': 70,
             'r': 0,
@@ -130,6 +140,7 @@ def graph_login_cpu(request, login):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
+            'stackgroup': 'one',
             'name': '{}'.format(line['metric']['mode']),
         })
 
@@ -138,7 +149,12 @@ def graph_login_cpu(request, login):
             'title': _('Cores'),
             'range': [0, core_count],
         },
-        'showlegend': False,
+        'showlegend': True,
+        'legend': {
+            'x': 0,
+            'y': 1,
+            'xanchor': 'right',
+        },
         'margin': {
             'l': 70,
             'r': 0,
@@ -172,6 +188,7 @@ def graph_login_memory(request, login):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
         'y': stats[1],
         'type': 'scatter',
+        'fill': 'tozeroy',
     })
 
     data['layout'] = {
@@ -210,6 +227,7 @@ def graph_login_load(request, login):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
         'y': stats[1],
         'type': 'scatter',
+        'fill': 'tozeroy',
     })
 
     data['layout'] = {
@@ -259,8 +277,9 @@ def graph_network(request, node, device):
 
     data['lines'].append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_rx[0])),
-        'y': stats_rx[1],
+        'y': [-x for x in stats_rx[1]],
         'type': 'scatter',
+        'fill': 'tozeroy',
         'name': '{}'.format('Receive'),
     })
 
@@ -276,6 +295,7 @@ def graph_network(request, node, device):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_tx[0])),
         'y': stats_tx[1],
         'type': 'scatter',
+        'fill': 'tozeroy',
         'name': '{}'.format('Transmit'),
     })
 
@@ -285,7 +305,12 @@ def graph_network(request, node, device):
             'ticksuffix': 'b/s',
             'tickformat': '~s',
         },
-        'showlegend': False,
+        'showlegend': True,
+        'legend': {
+            'x': 0,
+            'y': 1,
+            'xanchor': 'right',
+        },
         'margin': {
             'l': 70,
             'r': 0,

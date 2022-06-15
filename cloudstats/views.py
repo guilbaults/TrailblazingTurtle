@@ -348,7 +348,10 @@ def project_graph_disk_bandwidth(request, project):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
@@ -386,11 +389,15 @@ def instance_graph_disk_bandwidth(request, project, uuid):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
+                'fill': 'tozeroy',
                 'name': '{} {} {}'.format(direction, _('device'), line['metric']['device'])
             })
 
@@ -425,7 +432,10 @@ def project_graph_disk_iops(request, project):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
@@ -462,7 +472,10 @@ def instance_graph_disk_iops(request, project, uuid):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': x,
                 'y': y,
@@ -500,7 +513,10 @@ def project_graph_network_bandwidth(request, project):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'rx':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
@@ -538,11 +554,15 @@ def instance_graph_network_bandwidth(request, project, uuid):
 
         for line in stats_bandwidth:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if direction == 'rx':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
+                'fill': 'tozeroy',
                 'name': direction
             })
 

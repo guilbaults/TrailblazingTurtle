@@ -222,7 +222,10 @@ def graph_lustre_ost(request, account):
             fs = line['metric']['fs']
             user = line['metric']['user']
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
+            if i == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
             data['lines'].append({
                 'x': x,
                 'y': y,

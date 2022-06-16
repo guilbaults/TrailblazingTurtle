@@ -11,18 +11,15 @@
 <h2>{{fs}}</h2>
 <h3>{% translate "IOPS" %}</h3>
 <div id="graph_mdt_{{fs}}"></div>
-<h3>{% translate "Read" %}</h3>
-<div id="graph_ost_read_{{fs}}"></div>
-<h3>{% translate "Write" %}</h3>
-<div id="graph_ost_write_{{fs}}"></div>
+<h3>{% translate "Bandwidth" %}</h3>
+<div id="graph_ost_{{fs}}"></div>
 
 {% endfor %}
 
 <script>
 {% for fs in lustre_fs_names %}
 loadGraph('graph_mdt_{{fs}}', 'graph/lustre_mdt/{{fs}}.json');
-loadGraph('graph_ost_read_{{fs}}', 'graph/lustre_ost_read/{{fs}}.json');
-loadGraph('graph_ost_write_{{fs}}', 'graph/lustre_ost_write/{{fs}}.json');
+loadGraph('graph_ost_{{fs}}', 'graph/lustre_ost/{{fs}}.json');
 {% endfor %}
 </script>
 

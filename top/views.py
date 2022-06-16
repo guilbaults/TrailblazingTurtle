@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponseNotFound, JsonResponse
+from django.http import JsonResponse
 from userportal.common import staff, Prometheus, uid_to_username
 from slurm.models import JobTable
 from django.conf import settings
@@ -35,19 +35,26 @@ def metrics_to_job(metrics):
 def compute(request):
     context = {}
 
-    query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account) by (user))'
+    query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account{{ {filter} }}) by (user))'.format(
+        filter=prom.get_filter())
     stats_cpu = prom.query_last(query_cpu)
     cpu_users = []
     for line in stats_cpu:
         cpu_users.append(line['metric']['user'])
     stats_cpu_asked = metrics_to_user(stats_cpu)
 
-    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
+        users='|'.join(cpu_users),
+        filter=prom.get_filter())
     stats_cpu_used = metrics_to_user(prom.query_last(query_cpu_used))
 
-    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+        users='|'.join(cpu_users),
+        filter=prom.get_filter())
     stats_mem_asked = metrics_to_user(prom.query_last(query_mem_asked))
-    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(cpu_users), prom.get_filter())
+    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+        users='|'.join(cpu_users),
+        filter=prom.get_filter())
     stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
 
     context['cpu_users'] = []
@@ -91,7 +98,8 @@ def compute(request):
         except KeyError:
             pass
 
-    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {} }}) by (user))'.format(prom.get_filter())
+    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {filter} }}) by (user))'.format(
+        filter=prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)
     gpu_users = []
     for line in stats_gpu:
@@ -99,10 +107,14 @@ def compute(request):
 
     stats_gpu_asked = metrics_to_user(stats_gpu)
 
-    query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(gpu_users), prom.get_filter())
+    query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
+        users='|'.join(gpu_users),
+        filter=prom.get_filter())
     stats_gpu_util = metrics_to_user(prom.query_last(query_gpu_util))
 
-    query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user=~"{}", {}}}) by (user)'.format('|'.join(gpu_users), prom.get_filter())
+    query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+        users='|'.join(gpu_users),
+        filter=prom.get_filter())
     stats_gpu_used = metrics_to_user(prom.query_last(query_gpu_used))
 
     context['gpu_users'] = []
@@ -139,14 +151,22 @@ def largemem(request):
     for job in jobs_running:
         jobs.append(str(job.id_job))
 
-    query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    query_cpu_asked = 'count(slurm_job_core_usage_total{{slurmjobid=~"{jobs}", {filter}}}) by (slurmjobid)'.format(
+        jobs='|'.join(jobs),
+        filter=prom.get_filter())
     stats_cpu_asked = metrics_to_job(prom.query_last(query_cpu_asked))
-    query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[2m]) / 1000000000) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    query_cpu_used = 'sum(rate(slurm_job_core_usage_total{{slurmjobid=~"{jobs}", {filter}}}[2m]) / 1000000000) by (slurmjobid)'.format(
+        jobs='|'.join(jobs),
+        filter=prom.get_filter())
     stats_cpu_used = metrics_to_job(prom.query_last(query_cpu_used))
 
-    query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    query_mem_asked = 'sum(slurm_job_memory_limit{{slurmjobid=~"{jobs}", {filter}}}) by (slurmjobid)'.format(
+        jobs='|'.join(jobs),
+        filter=prom.get_filter())
     stats_mem_asked = metrics_to_job(prom.query_last(query_mem_asked))
-    query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid=~"{}", {}}}) by (slurmjobid)'.format('|'.join(jobs), prom.get_filter())
+    query_mem_max = 'sum(slurm_job_memory_max{{slurmjobid=~"{jobs}", {filter}}}) by (slurmjobid)'.format(
+        jobs='|'.join(jobs),
+        filter=prom.get_filter())
     stats_mem_max = metrics_to_job(prom.query_last(query_mem_max))
 
     context['jobs'] = []
@@ -199,7 +219,9 @@ def lustre(request):
 @login_required
 @staff
 def graph_lustre_mdt(request, fs):
-    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{}-mds.*", user!="root", {}}}[5m])))'.format(fs, prom.get_filter())
+    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{fs}-mds.*", user!="root", {filter}}}[5m])))'.format(
+        fs=fs,
+        filter=prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
     for line in stats:
@@ -226,27 +248,32 @@ def graph_lustre_mdt(request, fs):
 
 @login_required
 @staff
-def graph_lustre_ost(request, fs, rw):
-    if rw not in ['read', 'write']:
-        return HttpResponseNotFound
-
+def graph_lustre_ost(request, fs):
     data = {'lines': []}
-    query = 'topk(5, sum by (user) (rate(lustre_job_{}_bytes_total{{target=~"{}.*", {}}}[5m])))/1024/1024'.format(rw, fs, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    for rw in ['read', 'write']:
+        query = 'topk(5, sum by (user) (rate(lustre_job_{rw}_bytes_total{{target=~"{fs}.*", {filter}}}[5m])))/1024/1024'.format(
+            rw=rw,
+            fs=fs,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
-    for line in stats:
-        try:
-            user = line['metric']['user']
-        except KeyError:
-            user = 'others'
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data['lines'].append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': '{} {}'.format(rw, user)
-        })
+        for line in stats:
+            try:
+                user = line['metric']['user']
+            except KeyError:
+                user = 'others'
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            if rw == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(rw, user)
+            })
 
     data['layout'] = {
         'yaxis': {

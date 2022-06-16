@@ -6,12 +6,12 @@ function replace_div_nodata(container_div){
     $(container_div).html('<div class="alert alert-primary" role="alert">No data</div>');
 }
 
-function loadGraph(container, url){
+function loadGraph(container, url, step = '3m'){
     var container_div = '#' + container;
     $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">Loading...</span></div>');
 
     $.ajax({
-        url : url,
+        url : url + '?step=' + step,
         type : 'GET',
         tryCount : 0,
         retryLimit : 3,

@@ -222,27 +222,27 @@
   {% endif %}
 
   <script>
-  loadGraph('graph_cpu', 'graph/cpu.json', '{{step}}');
-  loadGraph('graph_mem', 'graph/mem.json', '{{step}}');
-  loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json', '{{step}}');
-  loadGraph('graph_lustre_ost', 'graph/lustre_ost.json', '{{step}}');
+  loadGraph('graph_cpu', 'graph/cpu.json?step={{step}}');
+  loadGraph('graph_mem', 'graph/mem.json?step={{step}}');
+  loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
+  loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
 
   {% if job.gpu_count > 0 %}
-    loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json', '{{step}}');
-    loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json', '{{step}}');
-    loadGraph('graph_gpu_memory', 'graph/gpu_memory.json', '{{step}}');
-    loadGraph('graph_gpu_power', 'graph/gpu_power.json', '{{step}}');
-    loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json', '{{step}}');
+    loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json?step={{step}}');
+    loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json?step={{step}}');
+    loadGraph('graph_gpu_memory', 'graph/gpu_memory.json?step={{step}}');
+    loadGraph('graph_gpu_power', 'graph/gpu_power.json?step={{step}}');
+    loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json?step={{step}}');
   {% endif %}
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
-    loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json', '{{step}}');
-    loadGraph('graph_disk_iops', 'graph/disk_iops.json', '{{step}}');
-    loadGraph('graph_disk_bdw', 'graph/disk_bdw.json', '{{step}}');
-    loadGraph('graph_disk_used', 'graph/disk_used.json', '{{step}}');
+    loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json?step={{step}}');
+    loadGraph('graph_disk_iops', 'graph/disk_iops.json?step={{step}}');
+    loadGraph('graph_disk_bdw', 'graph/disk_bdw.json?step={{step}}');
+    loadGraph('graph_disk_used', 'graph/disk_used.json?step={{step}}');
   {% endif %}
 
   {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-    loadGraph('graph_power', 'graph/power.json', '{{step}}');
+    loadGraph('graph_power', 'graph/power.json?step={{step}}');
   {% endif %}
 
   const formatter = new Intl.NumberFormat('en-CA', {

@@ -290,7 +290,7 @@ msgstr "Détails sur la tâche"
 
 #: jobstats/templates/jobstats/job.html:22
 msgid "Show submited job script"
-msgstr "Voir le script de tâche"
+msgstr "Voir le script de la tâche"
 
 #: jobstats/templates/jobstats/job.html:35
 msgid "Submited job script is not available"

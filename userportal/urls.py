@@ -16,6 +16,9 @@ Including another URLconf
 
 from django.urls import include, path
 from django.contrib import admin
+from django.views.decorators.http import last_modified
+from django.utils import timezone
+from django.views.i18n import JavaScriptCatalog
 import debug_toolbar
 from rest_framework import routers
 from django.conf import settings
@@ -24,11 +27,17 @@ if 'jobstats' in settings.INSTALLED_APPS:
 
 router = routers.DefaultRouter()
 
+last_modified_date = timezone.now()
+
 if 'jobstats' in settings.INSTALLED_APPS:
     router.register(r'jobscripts', JobScriptViewSet)
 
 urlpatterns = [
     path('', include('pages.urls')),
+    path('i18n/', include('django.conf.urls.i18n')),
+    path('jsi18n/',
+         last_modified(lambda req, **kw: last_modified_date)(JavaScriptCatalog.as_view()),
+         name='javascript-catalog'),
     path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
     path('api/', include((router.urls, 'app_name'))),

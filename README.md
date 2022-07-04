@@ -300,7 +300,11 @@ python manage.py migrate
 ## Translation
 Create the .po files for french: `python manage.py makemessages -l fr`
 
-Update all message files for all languages: `python manage.py makemessages -a`
+Update all message files for all languages:
+```
+python manage.py makemessages -a
+python manage.py makemessages -a -d djangojs
+```
 
 Compile messages: `python manage.py compilemessages`
 

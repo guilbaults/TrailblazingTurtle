@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load i18n %}
+{% load static %}
 
 {% block title %}{% translate "Details on job" %} {{job_id}} {% endblock title %}
 
@@ -42,7 +43,7 @@
     <tr>
       <th scope="col">{% translate "Account" %}</th>
       <th scope="col">{% translate "Submit time" %}</th>
-      <th scope="col">{% translate "Time waiting in queue" %}</th>
+      <th scope="col">{% translate "Queue time" %}</th>
       <th scope="col">{% translate "Start time" %}</th>
       <th scope="col">{% translate "End time" %}</th>
       <th scope="col">
@@ -64,7 +65,7 @@
         {% endif %}
       </td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_in_queue_dt}}">{{job.time_in_queue_dt | naturaltime}} <span data-feather="info"></span></span></td>
+      <td>{{job.time_in_queue_dt | naturaltime}}</td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
       <td>{{priority}}</td>
@@ -244,61 +245,7 @@
   {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_power', 'graph/power.json?step={{step}}');
   {% endif %}
-
-  const formatter = new Intl.NumberFormat('en-CA', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-
-  $.ajax({
-    url : 'value/cost.json',
-    type : 'GET',
-    tryCount : 0,
-    retryLimit : 3,
-    dataType    : 'json',
-    contentType : 'application/json',
-    success : function(data) {
-      if(data.kwh) {
-        $('#energy').html(formatter.format(data.kwh) + ' kWh');
-      }
-
-      if(data.electric_car_range_km){
-        $('#car_range').html('<a href="#" data-toggle="tooltip" title=Based on the efficiency of a Tesla Model 3">' + formatter.format(data.electric_car_range_km) + ' km </a>');
-      }
-
-      if(data.co2_emissions_kg) {
-        $('#co2').html(formatter.format(data.co2_emissions_kg * 1000) + ' g');
-      }
-
-      if(data.electricity_cost_dollar && data.cooling_cost_dollar && data.hardware_cost_dollar){
-        $('#cost').html('Electricity: ' + formatter.format(data.electricity_cost_dollar)
-        + ' $ <br /> Cooling: ' + formatter.format(data.cooling_cost_dollar)
-        + ' $ <br /> <a href="#" data-toggle="tooltip" title="Amortized over {{settings.AMORTIZATION_YEARS}} years">Hardware:</a> ' + formatter.format(data.hardware_cost_dollar)
-        + ' $ <br /> Total: ' + formatter.format(data.electricity_cost_dollar + data.cooling_cost_dollar + data.hardware_cost_dollar) + ' $');
-      }
-
-      if(data.cloud_cost_dollar){
-        $('#cloud').html('<a href="#" data-toggle="tooltip" title="Based on the price of c6a.16xlarge and g5.12xlarge">On-Demand instance:</a> ' +formatter.format(data.cloud_cost_dollar) + ' $');
-      }
-      $('[data-toggle="tooltip"]').tooltip();
-    },
-    error : function(xhr, textStatus, errorThrown ) {
-      if (textStatus == 'timeout' || textStatus == 'error') {
-        this.tryCount++;
-        if (this.tryCount <= this.retryLimit) {
-            //try again
-            $.ajax(this);
-            return;
-        }
-      }
-      $('#energy').html('No data');
-      $('#car_range').html('No data');
-      $('#co2').html('No data');
-      $('#cost').html('No data');
-      $('#cloud').html('No data');
-    }
-  });
-
   </script>
+  <script src="{% static 'jobstats/job.js' %}"></script>
 {% endif %}
 {% endblock content %}

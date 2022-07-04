@@ -1,14 +1,17 @@
 function replace_div_alert(container_div){
-    $(container_div).html('<div class="alert alert-warning" role="alert">Could not load this graph</div>');
+    const alertString = gettext('Error while loading data');
+    $(container_div).html('<div class="alert alert-warning" role="alert">' + alertString + '</div>');
 }
 
 function replace_div_nodata(container_div){
-    $(container_div).html('<div class="alert alert-primary" role="alert">No data</div>');
+    const nodataString = gettext('No data available');
+    $(container_div).html('<div class="alert alert-primary" role="alert">' + nodataString + '</div>');
 }
 
 function loadGraph(container, url){
     var container_div = '#' + container;
-    $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">Loading...</span></div>');
+    const loadingString = gettext('Loading...');
+    $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
 
     $.ajax({
         url : url,

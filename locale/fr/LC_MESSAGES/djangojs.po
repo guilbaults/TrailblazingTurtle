@@ -1,0 +1,58 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2022-07-04 14:44+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+
+#: jobstats/static/jobstats/job.js:19
+msgid "Based on the efficiency of a Tesla Model 3"
+msgstr "Basé sur l'efficacité d'une Tesla Model 3"
+
+#: jobstats/static/jobstats/job.js:28
+#, javascript-format
+msgid ""
+"Electricity: %s $ <br /> Cooling: %s $ <br /> <a href=\"#\" data-toggle="
+"\"tooltip\" title=\"Amortized over %s years\"> Hardware:</a> %s $ <br /> "
+"Total: %s $"
+msgstr ""
+"Electricité: %s $ <br /> Refroidissement: %s $ <br /> <a href=\"#\" data-"
+"toggle=\"tooltip\" title=\"Amortis sur %s ans\"> Matériel:</a> %s $ <br /> "
+"Total: %s $"
+
+#: jobstats/static/jobstats/job.js:38
+msgid "Based on the price of c6a.16xlarge and g5.12xlarge"
+msgstr "Basé sur le prix de c6a.16xlarge et g5.12xlarge"
+
+#: jobstats/static/jobstats/job.js:38
+msgid "On-Demand instance"
+msgstr "Instance à la demande"
+
+#: jobstats/static/jobstats/job.js:51
+msgid "No data"
+msgstr "Pas de données"
+
+#: static/custom.js:2
+msgid "Error while loading data"
+msgstr "Erreur lors du chargement des données"
+
+#: static/custom.js:7
+msgid "No data available"
+msgstr "Pas de données disponibles"
+
+#: static/custom.js:13
+msgid "Loading..."
+msgstr "Chargement..."

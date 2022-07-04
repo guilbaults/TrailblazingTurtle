@@ -1039,6 +1039,8 @@ def value_cost(request, username, job_id):
             response['cooling_cost_dollar'] = kwh * settings.COOLING_COST_PER_KWH
         if settings.CO2_KG_PER_MWH:
             response['co2_emissions_kg'] = kwh / 1000 * settings.CO2_KG_PER_MWH
+        if settings.AMORTIZATION_YEARS:
+            response['amortization_years'] = settings.AMORTIZATION_YEARS
 
     if job.gpu_count() > 0:
         # Cost for a GPU job

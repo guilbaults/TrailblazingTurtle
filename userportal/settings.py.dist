@@ -274,6 +274,7 @@ SLURM_TRES = {
 }
 
 CLUSTER_NAME_TITLE = 'Narval'
+FAVICON = 'https://object-arbutus.cloud.computecanada.ca/userportal-public/narval.png'
 
 CLUSTER_INTRO = """
 <p>Narval is a general purpose cluster designed for a variety of workloads; it is located at the <a href="https://www.etsmtl.ca/en/home">École de technologie supérieure in Montreal</a> and is managed by <a href="https://www.calculquebec.ca/">Calcul Québec</a>. The cluster is named in honour of the <a href="https://en.wikipedia.org/wiki/Narwhal">narwhal</a>, a species of whale which has occasionally been observed in the Gulf of St. Lawrence.</p>
@@ -287,6 +288,7 @@ CLUSTER_INTRO = """
 
 SETTINGS_EXPORT = [
     'CLUSTER_NAME_TITLE',
+    'FAVICON',
     'CLUSTER_INTRO',
     'EXPORTER_INSTALLED',
     'INSTALLED_APPS',

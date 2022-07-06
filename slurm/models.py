@@ -602,6 +602,7 @@ class FederationTable(models.Model):
 
 
 class QosTable(models.Model):
+    id = models.AutoField(primary_key=True, null=False)
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField(blank=True, null=True)
@@ -645,6 +646,7 @@ class QosTable(models.Model):
 
 
 class ResTable(models.Model):
+    id = models.AutoField(primary_key=True, null=False)
     creation_time = models.PositiveBigIntegerField()
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField(blank=True, null=True)
@@ -674,6 +676,7 @@ class TableDefsTable(models.Model):
 
 
 class TresTable(models.Model):
+    id = models.AutoField(primary_key=True, null=False)
     creation_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
     type = models.TextField()
@@ -686,6 +689,7 @@ class TresTable(models.Model):
 
 
 class TxnTable(models.Model):
+    id = models.AutoField(primary_key=True, null=False)
     timestamp = models.PositiveBigIntegerField()
     action = models.SmallIntegerField()
     name = models.TextField()

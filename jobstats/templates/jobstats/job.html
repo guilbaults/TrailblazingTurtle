@@ -184,8 +184,32 @@
 {% if job.time_start_dt %}
   <h2>{% translate "Resources used (details)" %}</h2>
   <h3>{% translate "CPU" %}</h3>
+  <p>{% translate "Ratio of cycles consumed on each CPU core by all processes in this job. This graph should be all filled up most of the time, if not, you can lower the cores requested to the scheduler. Unused cycles does not improve your job performance and will lower your priority when cores are wasted." %}</p>
   <div id="graph_cpu"></div>
   <h3>{% translate "Memory" %}</h3>
+  <p>{% translate "The max used memory should be close to the allocated memory. If the memory is not used by the job, ask a lower amount, your jobs will be able to start faster. Unused memory does not increase your job performance." %}</p>
+  <dl>
+    <dt>{% translate "Allocated" %}</dt>
+    <dd>{% translate "Memory allocated by the scheduler and enforced for the job" %}</dd>
+    <dt>{% translate "Max used" %}</dt>
+    <dd>{% translate "Maximum recorded during the job. This is not using samples and is measured by the kernel, so this will catch large allocations that only last for a fraction of a second" %}</dd>
+    <dt>{% translate "Used" %}</dt>
+    <dd>{% translate "Memory being used by the job. Include the memory of the items below" %}</dd>
+    <dt>{% translate "Cache" %}</dt>
+    <dd>{% translate "Page cache memory, this memory is used to cache data recently read from the filesystem" %}</dd>
+    <dt>{% translate "RSS (Resident Set Size)" %}</dt>
+    <dd>{% translate "Memory allocated to the processes in ram. It include memory from the program itself, shared libraries, stack and heap. (includes transparent hugepages)" %}</dd>
+    <dt>{% translate "RSS Huge" %}</dt>
+    <dd>{% translate "Some application can use <a href=\"https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt\">hugepages</a>" %}</dd>
+    <dt>{% translate "Memory mapped file" %}</dt>
+    <dd>{% translate "Memory mapped file (includes tmpfs/shmem and <a href=\"https://man7.org/linux/man-pages/man2/mmap.2.html\">mmap</a>)" %}</dd>
+    <dt>{% translate "Active file" %}</dt>
+    <dd>{% translate "File-backed memory on active LRU list" %}</dd>
+    <dt>{% translate "Inactive" %}</dt>
+    <dd>{% translate "File-backed memory on inactive LRU list. This memory would be the first to be swapped out if swap is enabled" %}</dd>
+    <dt>{% translate "Unevictable" %}</dt>
+    <dd>{% translate "Memory that cannot be reclaimed (mlocked etc). It can be used by cryptography to prevent memory containing keys from being swapped out" %}</dd>
+  </dl>
   <div id="graph_mem"></div>
   <h3>{% translate "Filesystem" %}</h3>
   <div id="graph_lustre_mdt"></div>
@@ -194,16 +218,29 @@
   {% if job.gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>
     <h4>{% translate "GPU Compute cycle used" %}</h4>
+    <dl>
+      <dt>{% translate "SM Active" %}</dt>
+      <dd>{% translate "The % of cycles an Streaming Multiprocessor (SM) has at least 1 <a href=\"https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/\">warp</a> assigned" %}</dd>
+      <dt><a href="https://docs.nvidia.com/gameworks/content/developertools/desktop/analysis/report/cudaexperiments/kernellevel/achievedoccupancy.htm">{% translate "SM Occupancy" %}</a></dt>
+      <dd>{% translate "The % of number of warps resident on an SM" %}</dd>
+      <dt>{% translate "Tensor" %}</dt>
+      <dd>{% translate "The % of cycles the <a href=\"https://developer.nvidia.com/tensor-cores\">tensor</a> (HMMA) pipe is active" %}</dd>
+      <dt>{% translate "FP64/32/16" %}</dt>
+      <dd>{% translate "The % of cycles the floating point 64/32/16 pipe is active" %}</dd>
+    </dl>
     <div id="graph_gpu_utilization"></div>
     <h4>{% translate "GPU Memory access cycle used" %}</h4>
+    <p>{% translate "The ratio of cycles the device memory interface is active sending or receiving data" %}</p>
     <div id="graph_gpu_memory_utilization"></div>
     <h4>{% translate "GPU Memory used" %}</h4>
     <div id="graph_gpu_memory"></div>
     <h4>{% translate "GPU Power" %}</h4>
     <div id="graph_gpu_power"></div>
     <h4>{% translate "GPU PCIe bandwidth" %}</h4>
+    <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
     <div id="graph_gpu_pcie"></div>
     <h4>{% translate "GPU Nvlink bandwidth" %}</h4>
+    <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
     <div id="graph_gpu_nvlink"></div>
   {% endif %}
 

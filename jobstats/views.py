@@ -21,15 +21,17 @@ GPU_SHORT_NAME = {'NVIDIA A100-SXM4-40GB': 'A100', 'Tesla V100-SXM2-16GB': 'V100
 prom = Prometheus(settings.PROMETHEUS)
 
 
-def sanitize_step(request):
-    if request.GET.get('step') == '1h':
-        return '1h'
-    elif request.GET.get('step') == '15m':
-        return '15m'
-    elif request.GET.get('step') == '30s':
+def sanitize_step(request, minimum='30s'):
+    if request.GET.get('step') == '30s' and minimum == '30s':
         return '30s'
-    else:
+    elif request.GET.get('step') == '3m' and minimum in ['3m', '30s']:
         return '3m'
+    elif request.GET.get('step') == '15m' and minimum in ['15m', '3m', '30s']:
+        return '15m'
+    elif request.GET.get('step') == '1h' and minimum in ['1h', '15m', '3m', '30s']:
+        return '1h'
+    else:
+        return '5m'
 
 
 @login_required
@@ -351,11 +353,11 @@ def graph_lustre_mdt(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",jobid=~"{job_id}", {filter}}}[{step}])) by (operation, fs) !=0'.format(
+    query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid="{job_id}", {filter}}}[{step}])) by (operation, fs) !=0'.format(
         job_id=job_id,
-        step=sanitize_step(request),
+        step=sanitize_step(request, minimum="3m"),
         filter=prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum="3m"))
 
     data = {'lines': []}
     for line in stats:
@@ -417,12 +419,12 @@ def graph_lustre_ost(request, username, job_id):
 
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{i}_bytes_total{{component=~"ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}])) by (fs)) / (1024*1024)'.format(
+        query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid="{job_id}",target=~".*-OST.*", {filter}}}[{step}])) by (fs)) / (1024*1024)'.format(
             i=i,
             job_id=job_id,
-            step=sanitize_step(request),
+            step=sanitize_step(request, minimum="3m"),
             filter=prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt())
+        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum="3m"))
 
         for line in stats:
             fs = line['metric']['fs']
@@ -803,12 +805,13 @@ def graph_infiniband_bdw(request, username, job_id):
     instances = '|'.join([s + ':9100' for s in nodes])
 
     data = {'lines': []}
+    step = sanitize_step(request, minimum="3m")
 
     query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}]) * 8 / (1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=sanitize_step(request))
-    stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        step=step)
+    stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_received:
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -823,8 +826,8 @@ def graph_infiniband_bdw(request, username, job_id):
     query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{instances}", {filter}}}[{step}]) * 8 /(1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=sanitize_step(request))
-    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        step=step)
+    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_transmitted:
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -858,9 +861,10 @@ def graph_disk_iops(request, username, job_id):
     instances = '|'.join([s + ':9100' for s in nodes])
 
     data = {'lines': []}
+    step = sanitize_step(request, minimum="3m")
 
-    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[2m])'.format(instances, prom.get_filter())
-    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -874,8 +878,8 @@ def graph_disk_iops(request, username, job_id):
             'name': 'Read {}'.format(compute_name)
         })
 
-    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[2m])'.format(instances, prom.get_filter())
-    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -910,12 +914,13 @@ def graph_disk_bdw(request, username, job_id):
     instances = '|'.join([s + ':9100' for s in nodes])
 
     data = {'lines': []}
+    step = sanitize_step(request, minimum="3m")
 
     query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}",device=~"nvme0n1|sda", {filter}}}[{step}])'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=sanitize_step(request))
-    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        step=step)
+    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -932,8 +937,8 @@ def graph_disk_bdw(request, username, job_id):
     query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}",device=~"nvme0n1|sda", {filter}}}[{step}])'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=sanitize_step(request))
-    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        step=step)
+    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],

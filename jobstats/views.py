@@ -489,21 +489,32 @@ def graph_gpu_utilization(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    query = 'slurm_job_utilization_gpu{{slurmjobid="{}", {}}}'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
-
     data = {'lines': []}
-    for line in stats:
-        gpu_num = int(line['metric']['gpu'])
-        compute_name = line['metric']['instance'].split(':')[0]
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data['lines'].append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': '{} GPU {}'.format(compute_name, gpu_num)
-        })
+
+    queries = [
+        ('slurm_job_utilization_gpu', _('SM Active')),
+        ('slurm_job_sm_occupancy_gpu', _('SM Occupancy')),
+        ('slurm_job_tensor_gpu', _('Tensor')),
+        ('slurm_job_fp64_gpu', _('FP64')),
+        ('slurm_job_fp32_gpu', _('FP32')),
+        ('slurm_job_fp16_gpu', _('FP16')),
+    ]
+
+    for q in queries:
+        query = '{}{{slurmjobid="{}", {}}}'.format(q[0], job_id, prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+
+        for line in stats:
+            gpu_num = int(line['metric']['gpu'])
+            compute_name = line['metric']['instance'].split(':')[0]
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            y = line['y']
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': '{} GPU {} {}'.format(q[1], gpu_num, compute_name)
+            })
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' %',
@@ -714,8 +725,7 @@ def graph_gpu_pcie(request, username, job_id):
         return HttpResponseNotFound('Job not found')
 
     data = {'lines': []}
-    # Not sure if this scale is correct, the API report both bytes and kb/s
-    query = 'slurm_job_pcie_gpu{{slurmjobid="{}", {}}}/(1024*1024)'.format(job_id, prom.get_filter())
+    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(job_id, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
 
     for line in stats:
@@ -736,7 +746,45 @@ def graph_gpu_pcie(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' MB/s',
+            'ticksuffix': 'B/s',
+            'title': _('Bandwidth'),
+        }
+    }
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_gpu_nvlink(request, username, job_id):
+    uid = username_to_uid(username)
+    try:
+        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
+    except JobTable.DoesNotExist:
+        return HttpResponseNotFound('Job not found')
+
+    data = {'lines': []}
+    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(job_id, prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+
+    for line in stats:
+        gpu_num = int(line['metric']['gpu'])
+        compute_name = line['metric']['instance'].split(':')[0]
+        direction = line['metric']['direction']
+        if direction == 'RX':
+            y = line['y']
+        else:
+            y = [-x for x in line['y']]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': 'B/s',
             'title': _('Bandwidth'),
         }
     }

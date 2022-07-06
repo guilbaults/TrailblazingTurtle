@@ -203,6 +203,8 @@
     <div id="graph_gpu_power"></div>
     <h4>{% translate "GPU PCIe bandwidth" %}</h4>
     <div id="graph_gpu_pcie"></div>
+    <h4>{% translate "GPU Nvlink bandwidth" %}</h4>
+    <div id="graph_gpu_nvlink"></div>
   {% endif %}
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
@@ -234,6 +236,7 @@
     loadGraph('graph_gpu_memory', 'graph/gpu_memory.json?step={{step}}');
     loadGraph('graph_gpu_power', 'graph/gpu_power.json?step={{step}}');
     loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json?step={{step}}');
+    loadGraph('graph_gpu_nvlink', 'graph/gpu_nvlink.json?step={{step}}');
   {% endif %}
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json?step={{step}}');

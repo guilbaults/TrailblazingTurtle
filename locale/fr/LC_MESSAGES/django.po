@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-07-04 14:44+0000\n"
+"POT-Creation-Date: 2022-07-06 15:18+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -252,16 +252,17 @@ msgstr "Cœur"
 #: cloudstats/views.py:219 cloudstats/views.py:264
 #: jobstats/templates/jobstats/job.html:82
 #: jobstats/templates/jobstats/user.html:16 jobstats/views.py:225
-#: jobstats/views.py:278 jobstats/views.py:308 jobstats/views.py:537
-#: jobstats/views.py:694 pages/views.py:352
+#: jobstats/views.py:278 jobstats/views.py:308 jobstats/views.py:548
+#: jobstats/views.py:705 pages/views.py:352
 msgid "Used"
 msgstr "Utilisés"
 
 #: cloudstats/views.py:369 cloudstats/views.py:407 cloudstats/views.py:534
 #: cloudstats/views.py:572 jobstats/views.py:445 jobstats/views.py:477
-#: jobstats/views.py:740 jobstats/views.py:794 jobstats/views.py:905
-#: pages/templates/pages/dtns.html:12 pages/templates/pages/filesystems.html:12
-#: pages/views.py:100 pages/views.py:304 top/templates/top/lustre.html:14
+#: jobstats/views.py:750 jobstats/views.py:788 jobstats/views.py:842
+#: jobstats/views.py:953 pages/templates/pages/dtns.html:12
+#: pages/templates/pages/filesystems.html:12 pages/views.py:100
+#: pages/views.py:304 top/templates/top/lustre.html:14
 msgid "Bandwidth"
 msgstr "Bande passante"
 
@@ -270,7 +271,7 @@ msgid "device"
 msgstr ""
 
 #: cloudstats/views.py:452 cloudstats/views.py:488 jobstats/views.py:376
-#: jobstats/views.py:403 jobstats/views.py:846 pages/views.py:59
+#: jobstats/views.py:403 jobstats/views.py:894 pages/views.py:59
 #: top/templates/top/lustre.html:12
 msgid "IOPS"
 msgstr ""
@@ -345,8 +346,8 @@ msgstr "Ressources"
 
 #: jobstats/templates/jobstats/job.html:81
 #: jobstats/templates/jobstats/user.html:15 jobstats/views.py:234
-#: jobstats/views.py:260 jobstats/views.py:306 jobstats/views.py:528
-#: jobstats/views.py:676 pages/views.py:364
+#: jobstats/views.py:260 jobstats/views.py:306 jobstats/views.py:539
+#: jobstats/views.py:687 pages/views.py:364
 msgid "Allocated"
 msgstr "Alloués"
 
@@ -366,7 +367,7 @@ msgstr "GPUs par noeud"
 msgid "Cycles"
 msgstr ""
 
-#: jobstats/templates/jobstats/job.html:110 jobstats/views.py:1004
+#: jobstats/templates/jobstats/job.html:110 jobstats/views.py:1052
 msgid "Power"
 msgstr "Puissance"
 
@@ -406,8 +407,8 @@ msgstr "Cycle d'accès GPU mémoire utilisé"
 msgid "GPU Memory used"
 msgstr "Mémoire GPU utilisée"
 
-#: jobstats/templates/jobstats/job.html:202 jobstats/views.py:655
-#: jobstats/views.py:700
+#: jobstats/templates/jobstats/job.html:202 jobstats/views.py:666
+#: jobstats/views.py:711
 msgid "GPU Power"
 msgstr "Puissance GPU"
 
@@ -415,34 +416,38 @@ msgstr "Puissance GPU"
 msgid "GPU PCIe bandwidth"
 msgstr "Bande passante GPU sur le bus PCIe"
 
-#: jobstats/templates/jobstats/job.html:209
+#: jobstats/templates/jobstats/job.html:206
+msgid "GPU Nvlink bandwidth"
+msgstr "Bande passante GPU sur le bus Nvlink"
+
+#: jobstats/templates/jobstats/job.html:211
 msgid "Whole node resources"
 msgstr "Ressources du noeud au complet"
 
-#: jobstats/templates/jobstats/job.html:210
+#: jobstats/templates/jobstats/job.html:212
 msgid ""
 "Those stats are not accurate when the node is shared with multiple users"
 msgstr ""
 "Ces statistiques ne sont pas précises quand le noeud est partagé avec "
 "plusieurs utilisateurs"
 
-#: jobstats/templates/jobstats/job.html:211
+#: jobstats/templates/jobstats/job.html:213
 msgid "Infiniband"
 msgstr "Infiniband"
 
-#: jobstats/templates/jobstats/job.html:213
+#: jobstats/templates/jobstats/job.html:215
 msgid "Localscratch IOPS"
 msgstr "IOPS sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:215
+#: jobstats/templates/jobstats/job.html:217
 msgid "Localscratch bandwidth"
 msgstr "Bande passante sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:217
+#: jobstats/templates/jobstats/job.html:219
 msgid "Localscratch space used"
 msgstr "Espace utilisé sur le disque local"
 
-#: jobstats/templates/jobstats/job.html:220
+#: jobstats/templates/jobstats/job.html:222
 msgid "Power used"
 msgstr "Puissance utilisée"
 
@@ -512,28 +517,49 @@ msgstr ""
 msgid "Unevictable"
 msgstr ""
 
-#: jobstats/views.py:511 jobstats/views.py:542
+#: jobstats/views.py:495
+msgid "SM Active"
+msgstr ""
+
+#: jobstats/views.py:496
+msgid "SM Occupancy"
+msgstr ""
+
+#: jobstats/views.py:497
+msgid "Tensor"
+msgstr ""
+
+#: jobstats/views.py:498
+msgid "FP64"
+msgstr ""
+
+#: jobstats/views.py:499
+msgid "FP32"
+msgstr ""
+
+#: jobstats/views.py:500
+msgid "FP16"
+msgstr ""
+
+#: jobstats/views.py:522 jobstats/views.py:553
 msgid "GPU Utilization"
 msgstr "Utilisation GPU"
 
-#: jobstats/views.py:577
+#: jobstats/views.py:588
 msgid "GPU Memory Utilization"
 msgstr "Utilisation mémoire GPU"
 
-#: jobstats/views.py:612
-#, fuzzy
+#: jobstats/views.py:623
 msgid "GPU Memory"
 msgstr "Mémoire GPU"
 
-#: jobstats/views.py:648 jobstats/views.py:683
+#: jobstats/views.py:659 jobstats/views.py:694
 msgid "Idle power"
 msgstr "Puissance au repos"
 
-#: jobstats/views.py:945
-#, fuzzy
-#| msgid "Disk IOPS"
+#: jobstats/views.py:993
 msgid "Disk"
-msgstr "IOPS disque"
+msgstr "Disque"
 
 #: pages/templates/pages/dtns.html:5 pages/templates/pages/dtns.html:8
 #: pages/templates/pages/index.html:24
@@ -672,39 +698,39 @@ msgstr "Inodes sur ruban"
 msgid "Tape bytes"
 msgstr "Octets sur ruban"
 
-#: templates/base.html:32
+#: templates/base.html:33
 msgid "Logout"
 msgstr "Se déconnecter"
 
-#: templates/base.html:46
+#: templates/base.html:47
 msgid "Home"
 msgstr "Accueil"
 
-#: templates/base.html:53 usersummary/templates/usersummary/user.html:5
+#: templates/base.html:54 usersummary/templates/usersummary/user.html:5
 msgid "User summary"
 msgstr "Sommaire utilisateur"
 
-#: templates/base.html:61
+#: templates/base.html:62
 msgid "Job stats"
 msgstr "Statistique des tâches"
 
-#: templates/base.html:69
+#: templates/base.html:70
 msgid "Account stats"
 msgstr "Statistiques d'un compte"
 
-#: templates/base.html:77
+#: templates/base.html:78
 msgid "Filesystem quotas"
 msgstr "Quotas des système de fichiers"
 
-#: templates/base.html:85
+#: templates/base.html:86
 msgid "Cloud stats"
 msgstr "Statistiques du cloud"
 
-#: templates/base.html:93 top/templates/top/index.html:5
+#: templates/base.html:94 top/templates/top/index.html:5
 msgid "Top"
 msgstr ""
 
-#: templates/base.html:103
+#: templates/base.html:104
 msgid "User portal"
 msgstr "Portail utilisateur"
 

@@ -20,6 +20,7 @@ urlpatterns = [
     path('<str:username>/<int:job_id>/graph/gpu_memory.json', views.graph_gpu_memory),
     path('<str:username>/<int:job_id>/graph/gpu_power.json', views.graph_gpu_power),
     path('<str:username>/<int:job_id>/graph/gpu_pcie.json', views.graph_gpu_pcie),
+    path('<str:username>/<int:job_id>/graph/gpu_nvlink.json', views.graph_gpu_nvlink),
     path('<str:username>/<int:job_id>/graph/infiniband_bdw.json', views.graph_infiniband_bdw),
     path('<str:username>/<int:job_id>/graph/disk_iops.json', views.graph_disk_iops),
     path('<str:username>/<int:job_id>/graph/disk_bdw.json', views.graph_disk_bdw),

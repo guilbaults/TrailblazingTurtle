@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('', views.index),
     path('compute/', views.compute),
+    path('gpucompute/', views.gpucompute),
     path('largemem/', views.largemem),
     path('lustre/', views.lustre),
     path('lustre/graph/lustre_mdt/<str:fs>.json', views.graph_lustre_mdt),

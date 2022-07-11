@@ -98,6 +98,14 @@ def compute(request):
         except KeyError:
             pass
 
+    return render(request, 'top/compute.html', context)
+
+
+@login_required
+@staff
+def gpucompute(request):
+    context = {}
+
     query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {filter} }}) by (user))'.format(
         filter=prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)
@@ -130,7 +138,7 @@ def compute(request):
             'gpu_util': stats_gpu_util[user],
             'gpu_used': stats_gpu_used[user],
         })
-    return render(request, 'top/compute.html', context)
+    return render(request, 'top/gpucompute.html', context)
 
 
 @login_required

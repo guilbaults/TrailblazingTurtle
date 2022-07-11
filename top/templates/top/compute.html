@@ -6,7 +6,20 @@
 
 {% block content %}
 <h1>{% translate "Top compute users" %}</h1>
-
+<dl>
+  <dt>{% translate "Allocated Cores" %}</dt>
+  <dd>{% translate "Number of allocated cores" %}</dd>
+  <dt>{% translate "Used cores" %}</dt>
+  <dd>{% translate "Sum of % of cores cycle used" %} <br />
+    <span class="badge bg-danger">Under 75%</span><span class="badge bg-warning">Under 90%</span>
+  </dd>
+  <dt>{% translate "Allocated memory" %}</dt>
+  <dd>{% translate "Amount of memory allocated to the jobs" %}</dd>
+  <dt>{% translate "Max memory" %}
+  </dt>
+  <dd>{% translate "Maximum amount of memory used within the jobs" %} <br />
+    <span class="badge bg-danger">Under 10%</span><span class="badge bg-warning">Under 50%</span></dd>
+</dl>
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
@@ -23,16 +36,20 @@
       <td><a href="/secure/jobstats/{{cpu_user.user}}">{{cpu_user.user}}</a></td>
       <td>{{cpu_user.cpu_asked}}</td>
       <td>
-{% if cpu_user.cpu_badge %}
-<span class="badge bg-{{cpu_user.cpu_badge}}">{{cpu_user.cpu_used | floatformat:-2}}</span>
+{% if cpu_user.cpu_ratio < 0.75 %}
+<span class="badge bg-danger">{{cpu_user.cpu_used | floatformat:-2}}</span>
+{% elif cpu_user.cpu_ratio < 0.90 %}
+<span class="badge bg-warning">{{cpu_user.cpu_used | floatformat:-2}}</span>
 {% else %}
 {{cpu_user.cpu_used | floatformat:-2}}
 {% endif %}
       </td>
       <td>{{cpu_user.mem_asked | filesizeformat}}</td>
       <td>
-{% if cpu_user.mem_badge %}
-<span class="badge bg-{{cpu_user.mem_badge}}">{{cpu_user.mem_max | filesizeformat}}</span>
+{% if cpu_user.mem_ratio < 0.1 %}
+<span class="badge bg-danger">{{cpu_user.mem_max | filesizeformat}}</span>
+{% elif cpu_user.mem_ratio < 0.50 %}
+<span class="badge bg-warning">{{cpu_user.mem_max | filesizeformat}}</span>
 {% else %}
 {{cpu_user.mem_max | filesizeformat}}
 {% endif %}

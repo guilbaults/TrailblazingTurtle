@@ -6,14 +6,26 @@
 
 {% block content %}
 <h1>{% translate "Top GPU compute users" %}</h1>
+<dl>
+  <dt>{% translate "Allocated GPUs" %}</dt>
+  <dd>{% translate "Number of GPUs currently allocated" %}</dd>
+  <dt>{% translate "Used GPUs" %}</dt>
+  <dd>{% translate "Number of GPUs used more than 1%" %} </br />
+    {% translate "Legend" %}: <span class="badge bg-danger">If all GPUs are unused</span><span class="badge bg-warning">If some GPUs are unused</span>
+  </dd>
+  <dt>{% translate "Fully used GPUs equivalent" %}</dt>
+  <dd>{% translate "Sum of % of utilization, 2 GPUs used at 50% count as 1" %} <br />
+    {% translate "Legend" %}: <span class="badge bg-danger">Under 10%</span><span class="badge bg-warning">Under 20%</span>
+  </dd>
+</dl>
 
 <table class="table table-striped">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
       <th scope="col">{% translate "Allocated GPUs" %}</th>
-      <th scope="col">{% translate "Fully used GPUs equivalent" %}</th>
       <th scope="col">{% translate "Used GPUs" %}</th>
+      <th scope="col">{% translate "Fully used GPUs equivalent" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -23,18 +35,20 @@
       <td>{{gpu_user.gpu_asked}}</td>
       <td>
 {% if gpu_user.gpu_used == 0 %}
-<span class="badge bg-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
-{% else %}
-{{gpu_user.gpu_util | floatformat:-1}}
-{% endif %}
-      </td>
-      <td>
-{% if gpu_user.gpu_used == 0 %}
 <span class="badge bg-danger">{{gpu_user.gpu_used}}</span>
-{% elif gpu_user.gpu_used < gpu_user.gpu_asked %}
+{% elif gpu_user.gpu_used > gpu_user.gpu_asked %}
 <span class="badge bg-warning">{{gpu_user.gpu_used}}</span>
 {% else %}
 {{gpu_user.gpu_used}}
+{% endif %}
+      </td>
+      <td>
+{% if gpu_user.gpu_ratio < 0.1 %}
+<span class="badge bg-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
+{% elif gpu_user.gpu_ratio < 0.2 %}
+<span class="badge bg-warning">{{gpu_user.gpu_util | floatformat:-1}}</span>
+{% else %}
+{{gpu_user.gpu_util | floatformat:-1}}
 {% endif %}
       </td>
     </tr>

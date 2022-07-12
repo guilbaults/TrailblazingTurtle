@@ -130,7 +130,7 @@ def largemem(request):
         time_start__lt=hour_ago,
         time_eligible__gt=week_ago,  # until time_start is indexed...
         partition__icontains='large',
-        state=1).order_by('-time_submit')
+        state=1)
 
     jobs = []
     for job in jobs_running:
@@ -158,18 +158,9 @@ def largemem(request):
     for job in jobs_running:
         try:
             job_id = str(job.id_job)
-            if int(stats_mem_max[job_id]) < 4 * 1024 * 1024 * 1024:
-                mem_badge = 'danger'
-            elif int(stats_mem_max[job_id]) / int(stats_mem_asked[job_id]) < 0.5:
-                mem_badge = 'warning'
-            else:
-                mem_badge = None
 
-            if float(stats_cpu_used[job_id]) / float(stats_cpu_asked[job_id]) < 0.9:
-                cpu_badge = 'danger'
-            else:
-                cpu_badge = None
-
+            mem_ratio = float(stats_mem_max[job_id]) / float(stats_mem_asked[job_id])
+            cpu_ratio = float(stats_cpu_used[job_id]) / float(stats_cpu_asked[job_id])
             context['jobs'].append({
                 'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
@@ -178,8 +169,9 @@ def largemem(request):
                 'cpu_used': stats_cpu_used[job_id],
                 'mem_asked': stats_mem_asked[job_id],
                 'mem_max': stats_mem_max[job_id],
-                'mem_badge': mem_badge,
-                'cpu_badge': cpu_badge,
+                'mem_ratio': mem_ratio,
+                'cpu_ratio': cpu_ratio,
+                'min_ratio': min(mem_ratio, cpu_ratio),
             })
         except IndexError:
             context['jobs'].append({
@@ -188,6 +180,9 @@ def largemem(request):
                 'mem_asked': 'error',
                 'mem_max': 'error',
             })
+
+    # put the worst jobs first
+    context['jobs'].sort(key=lambda x: x['min_ratio'], reverse=False)
     return render(request, 'top/largemem.html', context)
 
 

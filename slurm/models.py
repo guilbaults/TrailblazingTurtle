@@ -10,6 +10,7 @@ import datetime
 from django.conf import settings
 import re
 import time
+from userportal.common import uid_to_username
 
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
@@ -330,6 +331,10 @@ class JobTable(models.Model):
 
     def nodes(self):
         return expand_nodelist(self.nodelist, as_list=True)
+
+    def username(self):
+        # convert user id to username from ldap database
+        return uid_to_username(self.id_user)
 
 
 class LastRanTable(models.Model):

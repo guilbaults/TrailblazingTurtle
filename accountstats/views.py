@@ -5,6 +5,8 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from userportal.common import account_or_staff, Prometheus
 from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account, compute_default_allocation_by_user
+from django.core.paginator import Paginator
+from slurm.models import JobTable, AssocTable
 
 LONG_PERIOD = timedelta(days=60)
 SHORT_PERIOD = timedelta(days=14)
@@ -32,6 +34,19 @@ def account(request, account):
     else:
         context['gpu'] = False
         context['cpu_count'] = allocation
+
+    # jobtable is not indexed by account, so we need to get assocs for this account, that one is indexed
+    assocs = []
+    for assoc in AssocTable.objects.filter(acct=account):
+        assocs.append(assoc.id_assoc)
+
+    jobs = JobTable.objects.filter(id_assoc__in=assocs).order_by('-time_submit')
+    paginator = Paginator(jobs, 100)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context['jobs'] = page_obj
+
     return render(request, 'accountstats/account.html', context)
 
 

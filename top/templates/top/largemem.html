@@ -13,13 +13,13 @@
   <dd>{% translate "Number of allocated cores" %}</dd>
   <dt>{% translate "Used cores" %}</dt>
   <dd>{% translate "Sum of % of cores cycle used" %} <br />
-    <span class="badge bg-danger">Under 75%</span><span class="badge bg-warning">Under 90%</span><span class="badge bg-success">Above 90%</span
+    <span class="badge badge-danger">Under 75%</span><span class="badge badge-warning">Under 90%</span><span class="badge badge-success">Above 90%</span
   </dd>
   <dt>{% translate "Allocated memory" %}</dt>
   <dd>{% translate "Amount of memory allocated to the jobs" %}</dd>
   <dt>{% translate "Max memory" %}</dt>
   <dd>{% translate "Maximum amount of memory used within the jobs" %} <br />
-    <span class="badge bg-danger">Under 10%</span><span class="badge bg-warning">Under 50%</span><span class="badge bg-success">Above 50%</span
+    <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 50%</span><span class="badge badge-success">Above 50%</span
   </dd>
   <dt>{% translate "Wasting" %}</dt>
   <dd>{% translate "Show the wasted resource" %}</dd>
@@ -47,42 +47,42 @@
       <td>{{job.cpu_asked}}</td>
       <td>
 {% if job.cpu_ratio < 0.75 %}
-<span class="badge bg-danger">{{job.cpu_used | floatformat:-2}}</span>
+<span class="badge badge-danger">{{job.cpu_used | floatformat:-2}}</span>
 {% elif job.cpu_ratio < 0.90 %}
-<span class="badge bg-warning">{{job.cpu_used | floatformat:-2}}</span>
+<span class="badge badge-warning">{{job.cpu_used | floatformat:-2}}</span>
 {% else %}
-<span class="badge bg-success">{{job.cpu_used | floatformat:-2}}</span>
+<span class="badge badge-success">{{job.cpu_used | floatformat:-2}}</span>
 {% endif %}
       </td>
       <td>{{job.mem_asked | filesizeformat}}</td>
       <td>
 {% if job.mem_ratio < 0.10 %}
-<span class="badge bg-danger">{{job.mem_max | filesizeformat}}</span>
+<span class="badge badge-danger">{{job.mem_max | filesizeformat}}</span>
 {% elif job.mem_ratio < 0.50 %}
-<span class="badge bg-warning">{{job.mem_max | filesizeformat}}</span>
+<span class="badge badge-warning">{{job.mem_max | filesizeformat}}</span>
 {% else %}
-<span class="badge bg-success">{{job.mem_max | filesizeformat}}</span>
+<span class="badge badge-success">{{job.mem_max | filesizeformat}}</span>
 {% endif %}
       </td>
       <td>
         {% if job.mem_ratio < 0.10 or job.cpu_ratio < 0.75 %}
           {% if job.mem_ratio < 0.10 and job.cpu_ratio > 0.75 %}
-          <span class="badge bg-danger">Memory</span>
+          <span class="badge badge-danger">Memory</span>
           {% elif job.mem_ratio > 0.10 and job.cpu_ratio < 0.75%}
-          <span class="badge bg-danger">Cores</span>
+          <span class="badge badge-danger">Cores</span>
           {% else %}
-          <span class="badge bg-danger">Cores & Memory</span>
+          <span class="badge badge-danger">Cores & Memory</span>
           {% endif %}
         {% elif job.mem_ratio < 0.50 or job.cpu_ratio < 0.90 %}
           {% if job.mem_ratio < 0.50 and job.cpu_ratio > 0.90 %}
-          <span class="badge bg-warning">Memory</span>
+          <span class="badge badge-warning">Memory</span>
           {% elif job.mem_ratio > 0.50 and job.cpu_ratio < 0.90%}
-          <span class="badge bg-warning">Cores</span>
+          <span class="badge badge-warning">Cores</span>
           {% else %}
-          <span class="badge bg-warning">Cores & Memory</span>
+          <span class="badge badge-warning">Cores & Memory</span>
           {% endif %}
         {% else %}
-        <span class="badge bg-success">OK</span>
+        <span class="badge badge-success">OK</span>
         {% endif %}
       </td>
     </tr>

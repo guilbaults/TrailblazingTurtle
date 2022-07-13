@@ -11,11 +11,11 @@
   <dd>{% translate "Number of GPUs currently allocated" %}</dd>
   <dt>{% translate "Used GPUs" %}</dt>
   <dd>{% translate "Number of GPUs used more than 1%" %} </br />
-    {% translate "Legend" %}: <span class="badge bg-danger">If all GPUs are unused</span><span class="badge bg-warning">If some GPUs are unused</span>
+    {% translate "Legend" %}: <span class="badge badge-danger">If all GPUs are unused</span><span class="badge badge-warning">If some GPUs are unused</span>
   </dd>
   <dt>{% translate "Fully used GPUs equivalent" %}</dt>
   <dd>{% translate "Sum of % of utilization, 2 GPUs used at 50% count as 1" %} <br />
-    {% translate "Legend" %}: <span class="badge bg-danger">Under 10%</span><span class="badge bg-warning">Under 20%</span>
+    {% translate "Legend" %}: <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 20%</span>
   </dd>
 </dl>
 
@@ -35,18 +35,18 @@
       <td>{{gpu_user.gpu_asked}}</td>
       <td>
 {% if gpu_user.gpu_used == 0 %}
-<span class="badge bg-danger">{{gpu_user.gpu_used}}</span>
+<span class="badge badge-danger">{{gpu_user.gpu_used}}</span>
 {% elif gpu_user.gpu_used > gpu_user.gpu_asked %}
-<span class="badge bg-warning">{{gpu_user.gpu_used}}</span>
+<span class="badge badge-warning">{{gpu_user.gpu_used}}</span>
 {% else %}
 {{gpu_user.gpu_used}}
 {% endif %}
       </td>
       <td>
 {% if gpu_user.gpu_ratio < 0.1 %}
-<span class="badge bg-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
+<span class="badge badge-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
 {% elif gpu_user.gpu_ratio < 0.2 %}
-<span class="badge bg-warning">{{gpu_user.gpu_util | floatformat:-1}}</span>
+<span class="badge badge-warning">{{gpu_user.gpu_util | floatformat:-1}}</span>
 {% else %}
 {{gpu_user.gpu_util | floatformat:-1}}
 {% endif %}

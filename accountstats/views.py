@@ -68,6 +68,7 @@ def graph_cpu_allocated(request, account):
             'stackgroup': 'one',
             'name': user
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -90,6 +91,7 @@ def graph_cpu_used(request, account):
             'stackgroup': 'one',
             'name': user
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -111,6 +113,7 @@ def graph_cpu_wasted(request, account):
             'type': 'scatter',
             'name': user
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -137,7 +140,8 @@ def graph_mem_allocated(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -165,7 +169,8 @@ def graph_mem_used(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -192,7 +197,8 @@ def graph_mem_wasted(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': 'GiB',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -220,7 +226,8 @@ def graph_lustre_mdt(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' IOPS'
-        }
+        },
+        'showlegend': True
     }
     return JsonResponse(data)
 
@@ -251,7 +258,8 @@ def graph_lustre_ost(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' MiB/s'
-        }
+        },
+        'showlegend': True
     }
     return JsonResponse(data)
 
@@ -273,6 +281,7 @@ def graph_gpu_allocated(request, account):
             'stackgroup': 'one',
             'name': line['metric']['user']
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -294,6 +303,7 @@ def graph_gpu_used(request, account):
             'stackgroup': 'one',
             'name': line['metric']['user']
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -314,6 +324,7 @@ def graph_gpu_wasted(request, account):
             'type': 'scatter',
             'name': line['metric']['user']
         })
+    data['layout'] = {'showlegend': True}
 
     return JsonResponse(data)
 
@@ -339,7 +350,8 @@ def graph_gpu_power_allocated(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' W',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -366,7 +378,8 @@ def graph_gpu_power_used(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' W',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -393,7 +406,8 @@ def graph_gpu_power_wasted(request, account):
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' W',
-        }
+        },
+        'showlegend': True
     }
 
     return JsonResponse(data)
@@ -490,7 +504,8 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
             'overlaying': 'y',
             'side': 'right',
             'range': [0, max(stats_levelfs[1])],
-        }
+        },
+        'showlegend': True,
     }
 
     return JsonResponse(data)

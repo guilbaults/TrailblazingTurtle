@@ -262,6 +262,9 @@ ELECTRIC_CAR_RANGE_KM_PER_KWH = 1 / 0.151  # 151Wh/km https://ev-database.org/ca
 CLOUD_CPU_CORE_COST_PER_HOUR = 2.448 / 64 * USD_TO_CAD  # c6a.16xlarge = 64 cores, 128GB, half the memory of Narval
 CLOUD_GPU_COST_PER_HOUR = 5.672 / 4 * USD_TO_CAD  # g5.12xlarge = 48 cores, 4 GPUs, 192GB of ram, less than half the memory of Narval
 
+# Used to set reasonable thresholds for the mem usage in the "top compute" page
+NORMAL_MEM_BY_CORE = 256/64 * 1024 * 1024 * 1024  # 256GB for 64 cores
+
 # Used to find the current quotas in prometheus
 QUOTA_TYPES = {
     'home': ('/lustre05/home/', 'project'),

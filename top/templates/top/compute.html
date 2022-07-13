@@ -11,14 +11,16 @@
   <dd>{% translate "Number of allocated cores" %}</dd>
   <dt>{% translate "Used cores" %}</dt>
   <dd>{% translate "Sum of % of cores cycle used" %} <br />
-    <span class="badge badge-danger">Under 75%</span><span class="badge badge-warning">Under 90%</span>
+    <span class="badge badge-danger">Under 75%</span><span class="badge badge-warning">Under 90%</span><span class="badge badge-success">Above 90%</span>
   </dd>
   <dt>{% translate "Allocated memory" %}</dt>
   <dd>{% translate "Amount of memory allocated to the jobs" %}</dd>
   <dt>{% translate "Max memory" %}</dt>
   <dd>{% translate "Maximum amount of memory used within the jobs" %} <br />
-    <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 50%</span>
+    <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 50%</span><span class="badge badge-success">Above 50%</span>
   </dd>
+  <dt>{% translate "Wasting" %}</dt>
+  <dd>{% translate "Show the wasted resource. The normal amount of memory per cores is taken into account to remove the memory flag when a user seems to use full nodes" %}</dd>
 </dl>
 <table class="table table-striped">
   <thead class="thead-dark">
@@ -28,6 +30,7 @@
       <th scope="col">{% translate "Used cores" %}</th>
       <th scope="col">{% translate "Allocated memory" %}</th>
       <th scope="col">{% translate "Max memory" %}</th>
+      <th scope="col">{% translate "Wasting" %}</th>
     </tr>
   </thead>
   <tbody>
@@ -53,6 +56,37 @@
 {% else %}
 {{cpu_user.mem_max | filesizeformat}}
 {% endif %}
+      </td>
+      <td>
+        {% if cpu_user.check_only_cpu %}
+          {% if cpu_user.cpu_ratio < 0.75 %}
+            <span class="badge badge-danger">Cores</span>
+          {% elif cpu_user.cpu_ratio < 0.90 %}
+            <span class="badge badge-warning">Cores</span>
+          {% else %}
+            <span class="badge badge-success">OK</span>
+          {% endif %}
+        {% else %}
+          {% if cpu_user.mem_ratio < 0.10 or cpu_user.cpu_ratio < 0.75 %}
+            {% if cpu_user.mem_ratio < 0.10 and cpu_user.cpu_ratio > 0.75 %}
+            <span class="badge badge-danger">Memory</span>
+            {% elif cpu_user.mem_ratio > 0.10 and cpu_user.cpu_ratio < 0.75%}
+            <span class="badge badge-danger">Cores</span>
+            {% else %}
+            <span class="badge badge-danger">Cores & Memory</span>
+            {% endif %}
+          {% elif cpu_user.mem_ratio < 0.50 or cpu_user.cpu_ratio < 0.90 %}
+            {% if cpu_user.mem_ratio < 0.50 and cpu_user.cpu_ratio > 0.90 %}
+            <span class="badge badge-warning">Memory</span>
+            {% elif cpu_user.mem_ratio > 0.50 and cpu_user.cpu_ratio < 0.90%}
+            <span class="badge badge-warning">Cores</span>
+            {% else %}
+            <span class="badge badge-warning">Cores & Memory</span>
+            {% endif %}
+          {% else %}
+          <span class="badge badge-success">OK</span>
+          {% endif %}
+        {% endif %}
       </td>
     </tr>
 {% endfor %}

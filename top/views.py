@@ -62,6 +62,12 @@ def compute(request):
         user = line['metric']['user']
 
         try:
+            reasonable_mem = int(stats_cpu_asked[user]) * settings.NORMAL_MEM_BY_CORE * 1.1
+            if int(stats_mem_asked[user]) < reasonable_mem:
+                # The user is probably using full nodes, so its normal some memory is not used
+                check_only_cpu = True
+            else:
+                check_only_cpu = False
             context['cpu_users'].append({
                 'user': user,
                 'cpu_asked': stats_cpu_asked[user],
@@ -70,6 +76,7 @@ def compute(request):
                 'mem_asked': stats_mem_asked[user],
                 'mem_max': stats_mem_max[user],
                 'mem_ratio': int(stats_mem_max[user]) / int(stats_mem_asked[user]),
+                'check_only_cpu': check_only_cpu,
             })
         except KeyError:
             pass

@@ -44,7 +44,7 @@
       <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}</a></td>
       <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
-      <td>{{job.cpu_asked}}</td>
+      <td>{{job.cpu_asked | floatformat}}</td>
       <td>
 {% if job.cpu_ratio < 0.75 %}
 <span class="badge badge-danger">{{job.cpu_used | floatformat:-2}}</span>
@@ -65,25 +65,11 @@
 {% endif %}
       </td>
       <td>
-        {% if job.mem_ratio < 0.10 or job.cpu_ratio < 0.75 %}
-          {% if job.mem_ratio < 0.10 and job.cpu_ratio > 0.75 %}
-          <span class="badge badge-danger">Memory</span>
-          {% elif job.mem_ratio > 0.10 and job.cpu_ratio < 0.75%}
-          <span class="badge badge-danger">Cores</span>
-          {% else %}
-          <span class="badge badge-danger">Cores & Memory</span>
-          {% endif %}
-        {% elif job.mem_ratio < 0.50 or job.cpu_ratio < 0.90 %}
-          {% if job.mem_ratio < 0.50 and job.cpu_ratio > 0.90 %}
-          <span class="badge badge-warning">Memory</span>
-          {% elif job.mem_ratio > 0.50 and job.cpu_ratio < 0.90%}
-          <span class="badge badge-warning">Cores</span>
-          {% else %}
-          <span class="badge badge-warning">Cores & Memory</span>
-          {% endif %}
-        {% else %}
+        {% for badge in job.waste_badges %}
+        <span class="badge badge-{{badge.0}}">{{badge.1}}</span>
+        {% empty %}
         <span class="badge badge-success">OK</span>
-        {% endif %}
+        {% endfor %}
       </td>
     </tr>
 {% endfor %}

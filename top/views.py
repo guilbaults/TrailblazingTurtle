@@ -19,65 +19,83 @@ def index(request):
 def metrics_to_user(metrics):
     users_metrics = {}
     for line in metrics:
-        users_metrics[line['metric']['user']] = line['value'][1]
+        users_metrics[line['metric']['user']] = float(line['value'][1])
     return users_metrics
 
 
 def metrics_to_job(metrics):
     jobs_metrics = {}
     for line in metrics:
-        jobs_metrics[line['metric']['slurmjobid']] = line['value'][1]
+        jobs_metrics[line['metric']['slurmjobid']] = float(line['value'][1])
     return jobs_metrics
+
+
+def stats_for_users(users=None):
+    if users is None:
+        # get the top 100 and use the same list for all the other queries
+        query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account{{ {filter} }}) by (user))'.format(
+            filter=prom.get_filter())
+        stats_cpu = prom.query_last(query_cpu)
+        users = []
+        for line in stats_cpu:
+            users.append(line['metric']['user'])
+    else:
+        # use the list of users as filter
+        query_cpu = 'sum(slurm_job:allocated_core:count_user_account{{ user=~"{users}", {filter} }}) by (user)'.format(
+            users='|'.join(users),
+            filter=prom.get_filter())
+        stats_cpu = prom.query_last(query_cpu)
+    stats_cpu_asked = metrics_to_user(stats_cpu)
+
+    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
+        users='|'.join(users),
+        filter=prom.get_filter())
+    stats_cpu_used = metrics_to_user(prom.query_last(query_cpu_used))
+
+    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+        users='|'.join(users),
+        filter=prom.get_filter())
+    stats_mem_asked = metrics_to_user(prom.query_last(query_mem_asked))
+    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+        users='|'.join(users),
+        filter=prom.get_filter())
+    stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
+    return(stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max)
 
 
 @login_required
 @staff
 def compute(request):
     context = {}
-
-    query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account{{ {filter} }}) by (user))'.format(
-        filter=prom.get_filter())
-    stats_cpu = prom.query_last(query_cpu)
-    cpu_users = []
-    for line in stats_cpu:
-        cpu_users.append(line['metric']['user'])
-    stats_cpu_asked = metrics_to_user(stats_cpu)
-
-    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
-        users='|'.join(cpu_users),
-        filter=prom.get_filter())
-    stats_cpu_used = metrics_to_user(prom.query_last(query_cpu_used))
-
-    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
-        users='|'.join(cpu_users),
-        filter=prom.get_filter())
-    stats_mem_asked = metrics_to_user(prom.query_last(query_mem_asked))
-    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
-        users='|'.join(cpu_users),
-        filter=prom.get_filter())
-    stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
+    stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=None)
 
     context['cpu_users'] = []
-    for line in stats_cpu:
-        user = line['metric']['user']
-
+    for user in stats_cpu_asked.keys():
         try:
-            reasonable_mem = int(stats_cpu_asked[user]) * settings.NORMAL_MEM_BY_CORE * 1.1
-            if int(stats_mem_asked[user]) < reasonable_mem:
-                # The user is probably using full nodes, so its normal some memory is not used
-                check_only_cpu = True
-            else:
-                check_only_cpu = False
-            context['cpu_users'].append({
+            reasonable_mem = stats_cpu_asked[user] * settings.NORMAL_MEM_BY_CORE * 1.1
+
+            stats = {
                 'user': user,
                 'cpu_asked': stats_cpu_asked[user],
                 'cpu_used': stats_cpu_used[user],
-                'cpu_ratio': float(stats_cpu_used[user]) / float(stats_cpu_asked[user]),
+                'cpu_ratio': stats_cpu_used[user] / stats_cpu_asked[user],
                 'mem_asked': stats_mem_asked[user],
                 'mem_max': stats_mem_max[user],
-                'mem_ratio': int(stats_mem_max[user]) / int(stats_mem_asked[user]),
-                'check_only_cpu': check_only_cpu,
-            })
+                'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
+            }
+            waste_badges = []
+            if stats_mem_asked[user] > reasonable_mem:
+                if stats['mem_ratio'] < 0.1:
+                    waste_badges.append(('danger', 'Memory'))
+                elif stats['mem_ratio'] < 0.5:
+                    waste_badges.append(('warning', 'Memory'))
+                if stats['cpu_ratio'] < 0.75:
+                    waste_badges.append(('danger', 'Cores'))
+                elif stats['cpu_ratio'] < 0.9:
+                    waste_badges.append(('warning', 'Cores'))
+
+            stats['waste_badges'] = waste_badges
+            context['cpu_users'].append(stats)
         except KeyError:
             pass
 
@@ -108,20 +126,60 @@ def gpucompute(request):
         filter=prom.get_filter())
     stats_gpu_used = metrics_to_user(prom.query_last(query_gpu_used))
 
+    # grab the cores, memory for each user
+    users = list(stats_gpu_asked.keys())
+    stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=users)
+
     context['gpu_users'] = []
     for line in stats_gpu:
-        user = line['metric']['user']
-        if user not in stats_gpu_used:
-            # User is not using any GPU
-            stats_gpu_used[user] = 0
+        try:
+            user = line['metric']['user']
+            if user not in stats_gpu_used:
+                # User is not using any GPU
+                stats_gpu_used[user] = 0
 
-        context['gpu_users'].append({
-            'user': user,
-            'gpu_asked': stats_gpu_asked[user],
-            'gpu_util': stats_gpu_util[user],
-            'gpu_used': stats_gpu_used[user],
-            'gpu_ratio': float(stats_gpu_util[user]) / float(stats_gpu_asked[user]),
-        })
+            reasonable_mem = stats_gpu_asked[user] * settings.NORMAL_MEM_BY_GPU * 1.1
+            reasonable_cores = stats_gpu_asked[user] * settings.NORMAL_CORES_BY_GPU * 1.1
+
+            stats = {
+                'user': user,
+                'gpu_asked': stats_gpu_asked[user],
+                'gpu_util': stats_gpu_util[user],
+                'gpu_used': stats_gpu_used[user],
+                'gpu_ratio': stats_gpu_util[user] / stats_gpu_asked[user],
+                'cpu_asked': stats_cpu_asked[user],
+                'cpu_used': stats_cpu_used[user],
+                'cpu_ratio': stats_cpu_used[user] / stats_cpu_asked[user],
+                'mem_asked': stats_mem_asked[user],
+                'mem_max': stats_mem_max[user],
+                'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
+                'reasonable_mem': stats_mem_asked[user] < reasonable_mem,
+                'reasonable_cores': stats_cpu_asked[user] < reasonable_cores,
+            }
+            waste_badges = []
+            if stats_mem_asked[user] > reasonable_mem:
+                # Using more memory than the fair share per GPU
+                if stats['mem_ratio'] < 0.1:
+                    waste_badges.append(('danger', 'Memory'))
+                elif stats['mem_ratio'] < 0.5:
+                    waste_badges.append(('warning', 'Memory'))
+            if stats_cpu_asked[user] > reasonable_cores:
+                # Using more cores than the fair share per GPU
+                if stats['cpu_ratio'] < 0.75:
+                    waste_badges.append(('danger', 'Cores'))
+                elif stats['cpu_ratio'] < 0.9:
+                    waste_badges.append(('warning', 'Cores'))
+            if stats['gpu_used'] == float(0):
+                waste_badges.append(('danger', 'GPU ares totally unused'))
+            elif stats['gpu_ratio'] < 0.1:
+                waste_badges.append(('danger', 'GPU'))
+            elif stats['gpu_ratio'] < 0.2:
+                waste_badges.append(('warning', 'GPU'))
+
+            stats['waste_badges'] = waste_badges
+            context['gpu_users'].append(stats)
+        except KeyError:
+            pass
     return render(request, 'top/gpucompute.html', context)
 
 
@@ -166,9 +224,9 @@ def largemem(request):
         try:
             job_id = str(job.id_job)
 
-            mem_ratio = float(stats_mem_max[job_id]) / float(stats_mem_asked[job_id])
-            cpu_ratio = float(stats_cpu_used[job_id]) / float(stats_cpu_asked[job_id])
-            context['jobs'].append({
+            mem_ratio = stats_mem_max[job_id] / stats_mem_asked[job_id]
+            cpu_ratio = stats_cpu_used[job_id] / stats_cpu_asked[job_id]
+            stats = {
                 'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
                 'time_start_dt': job.time_start_dt,
@@ -179,14 +237,21 @@ def largemem(request):
                 'mem_ratio': mem_ratio,
                 'cpu_ratio': cpu_ratio,
                 'min_ratio': min(mem_ratio, cpu_ratio),
-            })
+            }
+            waste_badges = []
+            if stats['mem_ratio'] < 0.1:
+                waste_badges.append(('danger', 'Memory'))
+            elif stats['mem_ratio'] < 0.5:
+                waste_badges.append(('warning', 'Memory'))
+            if stats['cpu_ratio'] < 0.75:
+                waste_badges.append(('danger', 'Cores'))
+            elif stats['cpu_ratio'] < 0.9:
+                waste_badges.append(('warning', 'Cores'))
+
+            stats['waste_badges'] = waste_badges
+            context['jobs'].append(stats)
         except IndexError:
-            context['jobs'].append({
-                'user': uid_to_username(job.id_user),
-                'job_id': job.id_job,
-                'mem_asked': 'error',
-                'mem_max': 'error',
-            })
+            pass
 
     # put the worst jobs first
     context['jobs'].sort(key=lambda x: x['min_ratio'], reverse=False)

@@ -34,59 +34,35 @@
     </tr>
   </thead>
   <tbody>
-{% for cpu_user in cpu_users %}
+{% for user in cpu_users %}
     <tr>
-      <td><a href="/secure/jobstats/{{cpu_user.user}}">{{cpu_user.user}}</a></td>
-      <td>{{cpu_user.cpu_asked}}</td>
+      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}</a></td>
+      <td>{{user.cpu_asked | floatformat}}</td>
       <td>
-{% if cpu_user.cpu_ratio < 0.75 %}
-<span class="badge badge-danger">{{cpu_user.cpu_used | floatformat:-2}}</span>
-{% elif cpu_user.cpu_ratio < 0.90 %}
-<span class="badge badge-warning">{{cpu_user.cpu_used | floatformat:-2}}</span>
+{% if user.cpu_ratio < 0.75 %}
+<span class="badge badge-danger">{{user.cpu_used | floatformat:-2}}</span>
+{% elif user.cpu_ratio < 0.90 %}
+<span class="badge badge-warning">{{user.cpu_used | floatformat:-2}}</span>
 {% else %}
-{{cpu_user.cpu_used | floatformat:-2}}
+{{user.cpu_used | floatformat:-2}}
 {% endif %}
       </td>
-      <td>{{cpu_user.mem_asked | filesizeformat}}</td>
+      <td>{{user.mem_asked | filesizeformat}}</td>
       <td>
-{% if cpu_user.mem_ratio < 0.1 %}
-<span class="badge badge-danger">{{cpu_user.mem_max | filesizeformat}}</span>
-{% elif cpu_user.mem_ratio < 0.50 %}
-<span class="badge badge-warning">{{cpu_user.mem_max | filesizeformat}}</span>
+{% if user.mem_ratio < 0.1 %}
+<span class="badge badge-danger">{{user.mem_max | filesizeformat}}</span>
+{% elif user.mem_ratio < 0.50 %}
+<span class="badge badge-warning">{{user.mem_max | filesizeformat}}</span>
 {% else %}
-{{cpu_user.mem_max | filesizeformat}}
+{{user.mem_max | filesizeformat}}
 {% endif %}
       </td>
       <td>
-        {% if cpu_user.check_only_cpu %}
-          {% if cpu_user.cpu_ratio < 0.75 %}
-            <span class="badge badge-danger">Cores</span>
-          {% elif cpu_user.cpu_ratio < 0.90 %}
-            <span class="badge badge-warning">Cores</span>
-          {% else %}
-            <span class="badge badge-success">OK</span>
-          {% endif %}
-        {% else %}
-          {% if cpu_user.mem_ratio < 0.10 or cpu_user.cpu_ratio < 0.75 %}
-            {% if cpu_user.mem_ratio < 0.10 and cpu_user.cpu_ratio > 0.75 %}
-            <span class="badge badge-danger">Memory</span>
-            {% elif cpu_user.mem_ratio > 0.10 and cpu_user.cpu_ratio < 0.75%}
-            <span class="badge badge-danger">Cores</span>
-            {% else %}
-            <span class="badge badge-danger">Cores & Memory</span>
-            {% endif %}
-          {% elif cpu_user.mem_ratio < 0.50 or cpu_user.cpu_ratio < 0.90 %}
-            {% if cpu_user.mem_ratio < 0.50 and cpu_user.cpu_ratio > 0.90 %}
-            <span class="badge badge-warning">Memory</span>
-            {% elif cpu_user.mem_ratio > 0.50 and cpu_user.cpu_ratio < 0.90%}
-            <span class="badge badge-warning">Cores</span>
-            {% else %}
-            <span class="badge badge-warning">Cores & Memory</span>
-            {% endif %}
-          {% else %}
-          <span class="badge badge-success">OK</span>
-          {% endif %}
-        {% endif %}
+        {% for badge in user.waste_badges %}
+        <span class="badge badge-{{badge.0}}">{{badge.1}}</span>
+        {% empty %}
+        <span class="badge badge-success">OK</span>
+        {% endfor %}
       </td>
     </tr>
 {% endfor %}

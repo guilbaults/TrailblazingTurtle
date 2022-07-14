@@ -17,6 +17,21 @@
   <dd>{% translate "Sum of % of utilization, 2 GPUs used at 50% count as 1" %} <br />
     {% translate "Legend" %}: <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 20%</span>
   </dd>
+  <dt>{% translate "Allocated Cores" %}</dt>
+  <dd>{% translate "Number of allocated cores" %} <br />
+{% translate "Sadly CPUs metrics will be mixed if a users is also running pure CPU job at this time" %}</dd>
+  <dt>{% translate "Used cores" %}</dt>
+  <dd>{% translate "Sum of % of cores cycle used" %} <br />
+    <span class="badge badge-danger">Under 75%</span><span class="badge badge-warning">Under 90%</span><span class="badge badge-success">Above 90%</span>
+  </dd>
+  <dt>{% translate "Allocated memory" %}</dt>
+  <dd>{% translate "Amount of memory allocated to the jobs" %}</dd>
+  <dt>{% translate "Max memory" %}</dt>
+  <dd>{% translate "Maximum amount of memory used within the jobs" %} <br />
+    <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 50%</span><span class="badge badge-success">Above 50%</span>
+  </dd>
+  <dt>{% translate "Wasting" %}</dt>
+  <dd>{% translate "Show the wasted resource." %}</dd>
 </dl>
 
 <table class="table table-striped">
@@ -26,30 +41,62 @@
       <th scope="col">{% translate "Allocated GPUs" %}</th>
       <th scope="col">{% translate "Used GPUs" %}</th>
       <th scope="col">{% translate "Fully used GPUs equivalent" %}</th>
+      <th scope="col">{% translate "Allocated cores" %}</th>
+      <th scope="col">{% translate "Used cores" %}</th>
+      <th scope="col">{% translate "Allocated memory" %}</th>
+      <th scope="col">{% translate "Max memory" %}</th>
+      <th scope="col">{% translate "Wasting" %}</th>
     </tr>
   </thead>
   <tbody>
-{% for gpu_user in gpu_users %}
+{% for user in gpu_users %}
     <tr>
-      <td><a href="/secure/jobstats/{{gpu_user.user}}">{{gpu_user.user}}</a></td>
-      <td>{{gpu_user.gpu_asked}}</td>
+      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}</a></td>
+      <td>{{user.gpu_asked | floatformat}}</td>
       <td>
-{% if gpu_user.gpu_used == 0 %}
-<span class="badge badge-danger">{{gpu_user.gpu_used}}</span>
-{% elif gpu_user.gpu_used > gpu_user.gpu_asked %}
-<span class="badge badge-warning">{{gpu_user.gpu_used}}</span>
+{% if user.gpu_used == 0 %}
+<span class="badge badge-danger">{{user.gpu_used}}</span>
+{% elif user.gpu_used > user.gpu_asked %}
+<span class="badge badge-warning">{{user.gpu_used}}</span>
 {% else %}
-{{gpu_user.gpu_used}}
+{{user.gpu_used}}
 {% endif %}
       </td>
       <td>
-{% if gpu_user.gpu_ratio < 0.1 %}
-<span class="badge badge-danger">{{gpu_user.gpu_util | floatformat:-1}}</span>
-{% elif gpu_user.gpu_ratio < 0.2 %}
-<span class="badge badge-warning">{{gpu_user.gpu_util | floatformat:-1}}</span>
+{% if user.gpu_ratio < 0.1 %}
+<span class="badge badge-danger">{{user.gpu_util | floatformat:-1}}</span>
+{% elif user.gpu_ratio < 0.2 %}
+<span class="badge badge-warning">{{user.gpu_util | floatformat:-1}}</span>
 {% else %}
-{{gpu_user.gpu_util | floatformat:-1}}
+{{user.gpu_util | floatformat:-1}}
 {% endif %}
+      </td>
+      <td>{{user.cpu_asked}}</td>
+      <td>
+{% if user.cpu_ratio < 0.75 %}
+<span class="badge badge-danger">{{user.cpu_used | floatformat:-2}}</span>
+{% elif user.cpu_ratio < 0.90 %}
+<span class="badge badge-warning">{{user.cpu_used | floatformat:-2}}</span>
+{% else %}
+{{user.cpu_used | floatformat:-2}}
+{% endif %}
+      </td>
+      <td>{{user.mem_asked | filesizeformat}}</td>
+      <td>
+{% if user.mem_ratio < 0.1 %}
+<span class="badge badge-danger">{{user.mem_max | filesizeformat}}</span>
+{% elif user.mem_ratio < 0.50 %}
+<span class="badge badge-warning">{{user.mem_max | filesizeformat}}</span>
+{% else %}
+{{user.mem_max | filesizeformat}}
+{% endif %}
+      </td>
+      <td>
+{% for badge in user.waste_badges %}
+<span class="badge badge-{{badge.0}}">{{badge.1}}</span>
+{% empty %}
+<span class="badge badge-success">OK</span>
+{% endfor %}
       </td>
     </tr>
 {% endfor %}

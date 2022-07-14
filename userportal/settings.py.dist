@@ -264,6 +264,8 @@ CLOUD_GPU_COST_PER_HOUR = 5.672 / 4 * USD_TO_CAD  # g5.12xlarge = 48 cores, 4 GP
 
 # Used to set reasonable thresholds for the mem usage in the "top compute" page
 NORMAL_MEM_BY_CORE = 256/64 * 1024 * 1024 * 1024  # 256GB for 64 cores
+NORMAL_MEM_BY_GPU = 512 / 4 * 1024 * 1024 * 1024  # 512GB for 48 cores
+NORMAL_CORES_BY_GPU = 48 / 4  # 48 cores for 4 GPUs
 
 # Used to find the current quotas in prometheus
 QUOTA_TYPES = {

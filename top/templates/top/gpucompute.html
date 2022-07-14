@@ -14,7 +14,7 @@
     {% translate "Legend" %}: <span class="badge badge-danger">If all GPUs are unused</span><span class="badge badge-warning">If some GPUs are unused</span>
   </dd>
   <dt>{% translate "Fully used GPUs equivalent" %}</dt>
-  <dd>{% translate "Sum of % of utilization, 2 GPUs used at 50% count as 1" %} <br />
+  <dd>{% translate "Used GPUs is the sum of % of the reported utilization, so 2 GPUs running at 50% will be reported as 1" %} <br />
     {% translate "Legend" %}: <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 20%</span>
   </dd>
   <dt>{% translate "Allocated Cores" %}</dt>
@@ -31,7 +31,7 @@
     <span class="badge badge-danger">Under 10%</span><span class="badge badge-warning">Under 50%</span><span class="badge badge-success">Above 50%</span>
   </dd>
   <dt>{% translate "Wasting" %}</dt>
-  <dd>{% translate "Show the wasted resource." %}</dd>
+  <dd>{% translate "Show the wasted resource" %}</dd>
 </dl>
 
 <table class="table table-striped">

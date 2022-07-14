@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import time
 from datetime import datetime, timedelta
+from django.utils.translation import gettext as _
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -86,13 +87,13 @@ def compute(request):
             waste_badges = []
             if stats_mem_asked[user] > reasonable_mem:
                 if stats['mem_ratio'] < 0.1:
-                    waste_badges.append(('danger', 'Memory'))
+                    waste_badges.append(('danger', _('Memory')))
                 elif stats['mem_ratio'] < 0.5:
-                    waste_badges.append(('warning', 'Memory'))
+                    waste_badges.append(('warning', _('Memory')))
                 if stats['cpu_ratio'] < 0.75:
-                    waste_badges.append(('danger', 'Cores'))
+                    waste_badges.append(('danger', _('Cores')))
                 elif stats['cpu_ratio'] < 0.9:
-                    waste_badges.append(('warning', 'Cores'))
+                    waste_badges.append(('warning', _('Cores')))
 
             stats['waste_badges'] = waste_badges
             context['cpu_users'].append(stats)
@@ -160,21 +161,21 @@ def gpucompute(request):
             if stats_mem_asked[user] > reasonable_mem:
                 # Using more memory than the fair share per GPU
                 if stats['mem_ratio'] < 0.1:
-                    waste_badges.append(('danger', 'Memory'))
+                    waste_badges.append(('danger', _('Memory')))
                 elif stats['mem_ratio'] < 0.5:
-                    waste_badges.append(('warning', 'Memory'))
+                    waste_badges.append(('warning', _('Memory')))
             if stats_cpu_asked[user] > reasonable_cores:
                 # Using more cores than the fair share per GPU
                 if stats['cpu_ratio'] < 0.75:
-                    waste_badges.append(('danger', 'Cores'))
+                    waste_badges.append(('danger', _('Cores')))
                 elif stats['cpu_ratio'] < 0.9:
-                    waste_badges.append(('warning', 'Cores'))
+                    waste_badges.append(('warning', _('Cores')))
             if stats['gpu_used'] == float(0):
-                waste_badges.append(('danger', 'GPU ares totally unused'))
+                waste_badges.append(('danger', _('GPU ares totally unused')))
             elif stats['gpu_ratio'] < 0.1:
-                waste_badges.append(('danger', 'GPU'))
+                waste_badges.append(('danger', _('GPUs')))
             elif stats['gpu_ratio'] < 0.2:
-                waste_badges.append(('warning', 'GPU'))
+                waste_badges.append(('warning', _('GPUs')))
 
             stats['waste_badges'] = waste_badges
             context['gpu_users'].append(stats)
@@ -240,13 +241,13 @@ def largemem(request):
             }
             waste_badges = []
             if stats['mem_ratio'] < 0.1:
-                waste_badges.append(('danger', 'Memory'))
+                waste_badges.append(('danger', _('Memory')))
             elif stats['mem_ratio'] < 0.5:
-                waste_badges.append(('warning', 'Memory'))
+                waste_badges.append(('warning', _('Memory')))
             if stats['cpu_ratio'] < 0.75:
-                waste_badges.append(('danger', 'Cores'))
+                waste_badges.append(('danger', _('Cores')))
             elif stats['cpu_ratio'] < 0.9:
-                waste_badges.append(('warning', 'Cores'))
+                waste_badges.append(('warning', _('Cores')))
 
             stats['waste_badges'] = waste_badges
             context['jobs'].append(stats)
@@ -292,7 +293,7 @@ def graph_lustre_mdt(request, fs):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' IOPS'
+            'ticksuffix': _('IOPS')
         }
     }
     return JsonResponse(data)
@@ -329,7 +330,7 @@ def graph_lustre_ost(request, fs):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': ' MiB/s'
+            'ticksuffix': _('MiB/s')
         }
     }
     return JsonResponse(data)

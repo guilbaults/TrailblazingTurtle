@@ -86,14 +86,21 @@ def compute(request):
             }
             waste_badges = []
             if stats_mem_asked[user] > reasonable_mem:
+                # If the user ask for more memory than whats available per core on a standard node
                 if stats['mem_ratio'] < 0.1:
                     waste_badges.append(('danger', _('Memory')))
                 elif stats['mem_ratio'] < 0.5:
                     waste_badges.append(('warning', _('Memory')))
-                if stats['cpu_ratio'] < 0.75:
-                    waste_badges.append(('danger', _('Cores')))
-                elif stats['cpu_ratio'] < 0.9:
-                    waste_badges.append(('warning', _('Cores')))
+            else:
+                # The user might be wasting memory, but this is fine since its probably cpu bound and fully use the node regardless
+                # No other users could use the left-over memory in most cases since all cores are presumed to be used
+                # The next check will ensure that all cores are used
+                pass
+
+            if stats['cpu_ratio'] < 0.75:
+                waste_badges.append(('danger', _('Cores')))
+            elif stats['cpu_ratio'] < 0.9:
+                waste_badges.append(('warning', _('Cores')))
 
             stats['waste_badges'] = waste_badges
             context['cpu_users'].append(stats)

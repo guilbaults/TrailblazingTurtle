@@ -13,6 +13,13 @@ The portal is composed of multiple independant modules:
 * Quotas
 * Top (only for staff)
 
+## Design
+Jobs and filesystems metrics are stored in Prometheus, multiple exporters are used to get this data, most are optional. 
+
+The Django portal will also access various MySQL databases to gather some informations. Timeseries are stored with Prometheus for better performance. Compatible alternative to Prometheus like Thanos, VictoriaMetrics and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate some stats for the portal.
+
+![Architecture diagram](docs/userportal.png)
+
 ## UI modules
 
 This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
@@ -94,18 +101,12 @@ Optional:
 
 ### Usersummary
 The usersummary page can be used for a quick diagnostic of a user to see their current quotas and last jobs.
+
 <a href="docs/usersummary.png"><img src="docs/usersummary.png" alt="Quotas and jobs of a user" width="100"/></a>
 
 #### Requirements
 * Access to the database of Slurm
 * slurm-job-exporter
-
-## Design
-Jobs and filesystems metrics are stored in Prometheus, multiple exporters are essentials to get this data.
-
-The Django portal will also access various MySQL databases to gather some informations. Timeseries are stored with Prometheus for better performance. Compatible alternative to Prometheus like Thanos, VictoriaMetrics and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate stats for the portal.
-
-![Architecture diagram](docs/userportal.png)
 
 ## Data sources
 Some features will not be available if the exporter required to gather the stats is not configured.

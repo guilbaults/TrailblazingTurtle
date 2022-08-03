@@ -1,12 +1,24 @@
-# Userportal
-This portal is intended to give users a view of their cluster use, including job level performance.
+# Trailblazing Turtle
+🐢🚀
+
+This web portal is intended to give HPC users a view of the overall use of the HPC cluster and their own use.
+The openstack users are able to see their own use without having to install a monitoring agent in their VM.
+Staff members can also see the use of any users to help them optimize their use of HPC and openstack clusters.
+
+The portal is composed of multiple independant modules:
+
+* Jobstats
+* Accountstats
+* Cloudstats
+* Quotas
+* Top (only for staff)
 
 ## UI modules
 
-This portal is made to be modular, some modules can be disabled by the user if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
+This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
 
 ### Jobstats
-Each user can see their current uses on the cluster and a few hours in the past.
+Each user can see their current uses on the cluster and a few hours in the past. The stats for each job are also available. Information about CPU, GPU, memory, filesystem, infiniband, power, etc. is also available per job.
 
 <a href="docs/user.png"><img src="docs/user.png" alt="Stats per user" width="100"/></a>
 <a href="docs/job.png"><img src="docs/job.png" alt="Stats per job" width="100"/></a>
@@ -23,7 +35,7 @@ Optional:
 * jobscript collector (show the submitted jobscript)
 
 ### Accountstats
-The users can also see the aggregated use of the users in the same group.
+The users can also see the aggregated use of the users in the same group. This also show the current priority of this account in slurm and a few months of history on how much the account used.
 
 <a href="docs/accountstats.png"><img src="docs/accountstats.png" alt="Stats per account" width="100"/></a>
 
@@ -38,7 +50,7 @@ Optional:
 * slurm-exporter (show priority information)
 
 ### Cloudstats
-The stats of VM running on Openstack can be viewed. This is using the stats of libvirtd, no agent need to be installed in the VM.
+The stats of VM running on Openstack can be viewed. This is using the stats of libvirtd, no agent need to be installed in the VM. There is a overall stats page available for staff. The page per project and per VM is also available for the users.
 
 <a href="docs/cloudstats.png"><img src="docs/cloudstats.png" alt="Overall use" width="100"/></a>
 <a href="docs/cloudstats_rpoject.png"><img src="docs/cloudstats_project.png" alt="Use within a project" width="100"/></a>
@@ -51,11 +63,11 @@ The stats of VM running on Openstack can be viewed. This is using the stats of l
 ### Quotas
 Each user can see their current storage allocations and who within their group are using the group quota.
 
-![HSM](docs/quota.png)
+<a href="docs/quota.png"><img src="docs/quota.png" alt="Quotas" width="100"/></a>
 
 Info about HSM state (Tape) are also available.
 
-![HSM](docs/hsm.png)
+<a href="docs/hsm.png"><img src="docs/hsm.png" alt="HSM" width="100"/></a>
 
 #### Requirements
 * Read-only access to the databases of Robinhood
@@ -64,7 +76,7 @@ Info about HSM state (Tape) are also available.
 These pages are only available to staff and are meant to visualize poor cluster utilization:
 
 * Largest compute users, CPU cores and GPUs
-* Jobs on large memory nodes
+* Jobs on large memory nodes (ranked by worst to best)
 * Top users on Lustre
 
 <a href="docs/top_compute.png"><img src="docs/top_compute.png" alt="Top compute user (CPU)" width="100"/></a>
@@ -80,7 +92,8 @@ Optional:
 
 * lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
 
-### usersummary
+### Usersummary
+The usersummary page can be used for a quick diagnostic of a user to see their current quotas and last jobs.
 <a href="docs/usersummary.png"><img src="docs/usersummary.png" alt="Quotas and jobs of a user" width="100"/></a>
 
 #### Requirements

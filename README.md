@@ -40,6 +40,10 @@ Optional:
 ### Cloudstats
 The stats of VM running on Openstack can be viewed. This is using the stats of libvirtd, no agent need to be installed in the VM.
 
+<a href="docs/cloudstats.png"><img src="docs/cloudstats.png" alt="Overall use" width="100"/></a>
+<a href="docs/cloudstats_rpoject.png"><img src="docs/cloudstats_project.png" alt="Use within a project" width="100"/></a>
+<a href="docs/cloudstats_vm.png"><img src="docs/cloudstats_vm.png" alt="Use within a VM" width="100"/></a>
+
 #### Requirements
 
 * libvirtd_exporter
@@ -77,10 +81,11 @@ Optional:
 * lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
 
 ### usersummary
-todo
+<a href="docs/usersummary.png"><img src="docs/usersummary.png" alt="Quotas and jobs of a user" width="100"/></a>
 
 #### Requirements
-todo
+* Access to the database of Slurm
+* slurm-job-exporter
 
 ## Design
 Jobs and filesystems metrics are stored in Prometheus, multiple exporters are essentials to get this data.
@@ -190,7 +195,7 @@ There is a minimal config example in the example directory. This example only en
 Copy the 2 following files and edit them to your needs.
 The first file is the config file for the django application, databases connections, the name of the enabled exporters and other settings are defined here.
 
-nThe second file need to be modified so site specific information like where the allocations are stored can be used. The functions provided are meant to be examples, you can use them or create your own. Our production functions are located in `userportal/common.py`, some leftover are included in the comments of the `example/common.py` file. The functions to modify are indicated in the file with the comment `# IMPLEMENTATION`.
+The second file need to be modified so site specific information like where the allocations are stored can be used. The functions provided are meant to be examples, you can use them or create your own. Our production functions are located in `userportal/common.py`, some leftover are included in the comments of the `example/common.py` file. The functions to modify are indicated in the file with the comment `# IMPLEMENTATION`.
 
 ```
 cp example/settings.py.dist example/settings.py

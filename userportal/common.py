@@ -3,7 +3,7 @@ from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
 from ccldap.models import LdapAllocation, LdapUser
-from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline
+from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
 import yaml
 from django.conf import settings
 
@@ -67,51 +67,56 @@ def staff(func):
 
 
 def compute_allocations_by_user(username):
-    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
-    return convert_ldap_to_allocation(allocations)
+    """
+    return the compute allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - cpu: the number of cpu allocated to the user (optional)
+    - gpu: the number of gpu allocated to the user (optional)
+    """
+    return cc_compute_allocations_by_user(username)
 
 
-def compute_allocation_by_account(account):
-    allocations = LdapAllocation.objects.filter(name=account, status='active').all()
-    return convert_ldap_to_allocation(allocations)
-
-
-def compute_default_allocation_by_user(username):
-    """return the default allocations account names for a user"""
-    allocs = []
-    for alloc in LdapAllocation.objects.filter(members=username, status='active').all():
-        if alloc.name.startswith('def-'):
-            allocs.append(alloc.name)
-    return allocs
+def compute_allocations_by_account(account):
+    """
+    return the compute allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - cpu: the number of cpu allocated to the user (optional)
+    - gpu: the number of gpu allocated to the user (optional)
+    """
+    return cc_compute_allocations_by_account(account)
 
 
 def compute_allocations_by_slurm_account(account):
-    """takes a slurm account name and return the number of cpu or gpu allocated to that account"""
+    """
+    takes a slurm account name and return the number of cpu or gpu allocated to that account
+
+    Returns:
+        int: the number of cpu or gpu allocated to that account
+    """
     account_name = account.rstrip('_gpu').rstrip('_cpu')
-    allocations = compute_allocation_by_account(account_name)
-    if account.endswith('_gpu'):
-        for alloc in allocations:
-            if 'gpu' in alloc:
-                return alloc['gpu']
+    allocs = compute_allocations_by_account(account_name)
+    for alloc in allocs:
+        if alloc['name'] == account:
+            return alloc
     else:
-        for alloc in allocations:
-            if 'cpu' in alloc:
-                return alloc['cpu']
-    return None
+        return None
 
 
-def storage_project_allocations_by_user(username):
-    """return the storage allocation for a user"""
-    return storage_allocations_project(username)
-
-
-def storage_nearline_allocations_by_user(username):
-    """return the nearline allocation for a user"""
-    return storage_allocations_nearline(username)
+def storage_allocations(username):
+    """
+    return the storage allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - type: the type of the allocation (home, scratch, project or nearline as an example)
+    - quota_bytes: the size of the allocation in bytes
+    - quota_inodes: the inodes quota of the allocation
+    """
+    return cc_storage_allocations(username)
 
 
 def cloud_projects_by_user(username):
-    """return the cloud allocation for a user"""
+    """
+    Takes a username and returns a list of projects name that the user is a member of
+    """
     # open the yaml file with the allocations
     with open(settings.CLOUD_ALLOCATIONS_FILE, 'r') as f:
         data = yaml.safe_load(f)

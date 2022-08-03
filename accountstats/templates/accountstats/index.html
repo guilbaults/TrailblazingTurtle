@@ -7,50 +7,38 @@
 {% block content %}
 <h1>{% translate "Your accounts" %}</h1>
 {% if compute_allocations %}
-<h2>{% translate "Projects with allocation"%}</h2>
+<h2>{% translate "Allocations"%}</h2>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
-            <th scope="col">{% translate "Type" %}</th>
             <th scope="col">{% translate "Name" %}</th>
+            <th scope="col">{% translate "Type" %}</th>
+            <th scope="col">{% translate "Quantity" %}</th>
         </tr>
     </thead>
     <tbody>
 {% for allocation in compute_allocations %}
         <tr>
-            {% if allocation.cpu %}
+            <td><a href="{{ allocation.name }}">{{ allocation.name }}</a></td>
+            {% if 'cpu' in allocation %}
             <td>{% translate "CPU" %}</td>
-            <td><a href="{{ allocation.name }}_cpu">{{ allocation.name }}_cpu</a></td>
-            {% endif %}
-            {% if allocation.gpu %}
+                {% if allocation.cpu is None %}
+                <td></td>
+                {% else %}
+                <td>{{ allocation.cpu }}</td>
+                {% endif %}
+
+            {% elif 'gpu' in allocation %}
             <td>{% translate "GPU" %}</td>
-            <td><a href="{{ allocation.name }}_gpu">{{ allocation.name }}_gpu</a></td>
+                {% if allocation.gpu is None %}
+                <td></td>
+                {% else %}
+                <td>{{ allocation.gpu }}</td>
+                {% endif %}
             {% endif %}
         </tr>
 {% endfor %}
     </tbody>
   </table>
 {% endif %}
-
-<h2>{% translate "Default projects" %}</h2>
-<table class="table table-striped">
-    <thead class="thead-dark">
-        <tr>
-            <th scope="col">Type</th>
-            <th scope="col">Name</th>
-        </tr>
-    </thead>
-    <tbody>
-{% for allocation in default_allocations %}
-    <tr>
-        <td>{% translate "CPU" %}</td>
-        <td><a href="{{ allocation }}_cpu">{{ allocation }}_cpu</a></td>
-    </tr>
-    <tr>
-        <td>{% translate "GPU" %}</td>
-        <td><a href="{{ allocation }}_gpu">{{ allocation }}_gpu</a></td>
-    </tr>
-{% endfor %}
-    </tbody>
-  </table>
 {% endblock content %}

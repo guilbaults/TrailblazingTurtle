@@ -2,8 +2,6 @@ import functools
 from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
-#from ccldap.models import LdapAllocation, LdapUser
-#from ccldap.common import convert_ldap_to_allocation, storage_allocations_project, storage_allocations_nearline
 from django.conf import settings
 
 # for example purposes, use local uid resolver instead of ldap
@@ -70,82 +68,62 @@ def staff(func):
 
 
 def compute_allocations_by_user(username):
-    allocations = LdapAllocation.objects.filter(members=username, status='active').all()
-    return convert_ldap_to_allocation(allocations)
+    """
+    return the compute allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - cpu: the number of cpu allocated to the user (optional)
+    - gpu: the number of gpu allocated to the user (optional)
+    """
+    return [{'name': 'test_alloc', 'cpu': 1, }]
 
 
-def compute_allocation_by_account(account):
-    allocations = LdapAllocation.objects.filter(name=account, status='active').all()
-    return convert_ldap_to_allocation(allocations)
-
-
-def compute_default_allocation_by_user(username):
-    """return the default allocations account names for a user"""
-    # IMPLEMENTATION search in LDAP or other sources to check if the user is in the allocation
-    return []
-    #allocs = []
-    #for alloc in LdapAllocation.objects.filter(members=username, status='active').all():
-    #    if alloc.name.startswith('def-'):
-    #        allocs.append(alloc.name)
-    #return allocs
+def compute_allocations_by_account(account):
+    """
+    return the compute allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - cpu: the number of cpu allocated to the user (optional)
+    - gpu: the number of gpu allocated to the user (optional)
+    """
+    return [{'name': 'test_alloc', 'cpu': 1, }]
 
 
 def compute_allocations_by_slurm_account(account):
-    """takes a slurm account name and return the number of cpu or gpu allocated to that account"""
-    account_name = account.rstrip('_gpu').rstrip('_cpu')
-    allocations = compute_allocation_by_account(account_name)
-    if account.endswith('_gpu'):
-        for alloc in allocations:
-            if 'gpu' in alloc:
-                return alloc['gpu']
-    else:
-        for alloc in allocations:
-            if 'cpu' in alloc:
-                return alloc['cpu']
-    return None
+    """
+    takes a slurm account name and return the number of cpu or gpu allocated to that account
+
+    Returns:
+        int: the number of cpu or gpu allocated to that account
+    """
+    return 42
 
 
-def storage_project_allocations_by_user(username):
-    """return the storage allocation for a user"""
-    return storage_allocations_project(username)
-
-
-def storage_nearline_allocations_by_user(username):
-    """return the nearline allocation for a user"""
-    return storage_allocations_nearline(username)
+def storage_allocations(username):
+    """
+    return the storage allocations for a user as a list of dictionaries with the following keys:
+    - name: the name of the allocation
+    - type: the type of the allocation (home, scratch, project or nearline as an example)
+    - quota_bytes: the size of the allocation in bytes
+    - quota_inodes: the inodes quota of the allocation
+    """
+    return [{'name': 'test_alloc', 'type': 'home', 'quota_bytes': 1000000000000, 'quota_inodes': 1000000}]
 
 
 def cloud_projects_by_user(username):
     """return the cloud allocation for a user"""
     # IMPLEMENTATION search in LDAP or other sources to get the allocations for the user
     return []
-    # open the yaml file with the allocations
-    #with open(settings.CLOUD_ALLOCATIONS_FILE, 'r') as f:
-    #    data = yaml.safe_load(f)
-    # get the list of projects
-    #returned_projects = []
-    #projects = data['projects']
-    #for key in projects.keys():
-    #    if username in projects[key]['members']:
-    #        returned_projects.append(key)
-
-    #return returned_projects
 
 
 def username_to_uid(username):
     """return the uid of a username"""
     # IMPLEMENTATION search in LDAP, use local resolver as an example
-    #return 3015160
     return int(pwd.getpwnam(username).pw_uid)
-    #return LdapUser.objects.filter(username=username).get().uid
 
 
 def uid_to_username(uid):
     """return the username of a uid"""
     # IMPLEMENTATION search in LDAP, use local resolver as an example
-    #return "sigui4"
     return pwd.getpwuid(uid).pw_name
-    #return LdapUser.objects.filter(uid=uid).get().username
 
 
 def request_to_username(request):

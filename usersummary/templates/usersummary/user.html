@@ -10,57 +10,33 @@
 <table class="table">
   <thead class="thead-dark">
     <tr>
-      <th scope="col">{% translate "Filesystem" %}</th>
+      <th scope="col">{% translate "Type" %}</th>
+      <th scope="col">{% translate "Name" %}</th>
       <th scope="col">{% translate "Inodes" %}</th>
       <th scope="col">{% translate "Size" %}</th>
     </tr>
   </thead>
   <tbody>
+    {% translate 'less than 50' as less_than_50 %}
+    {% translate 'less than 4MB' as less_than_4MB %}
+    {% for alloc in allocs %}
     <tr>
-      <th scope="row">/home</th>
-      {% translate 'less than 50' as less_than_50 %}
-      {% translate 'less than 4MB' as less_than_4MB %}
-      <th scope="row">{{ home.inodes | intword | default_if_none:less_than_50 }} on {{ home.inodes_quota | intword }} {% translate "inodes" %}
-        {% if home.inodes > home.inodes_quota%}
+      <td>{{alloc.type}}</td>
+      <td>{{alloc.name}}</td>
+      <td>{{ alloc.inodes | intword | default_if_none:less_than_50 }} on {{ alloc.quota_inodes | intword }} {% translate "inodes" %}
+        {% if alloc.inodes > alloc.quota_inodes %}
         <br /><span class="text-danger">{% translate "Over quota" %}</span>
         {% endif %}
         <br />
-        <div id="graph_home_inodes"></div>
-      </th>
-      <th scope="row">{{ home.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ home.bytes_quota | filesizeformat }}
-        {% if home.bytes > home.bytes_quota%}
-        <br /><span class="text-danger">{% translate "Over quota" %}</span>
-        {% endif %}<br />
-        <div id="graph_home_bytes"></th>
-    </tr>
-    <tr>
-      <th scope="row">/scratch</th>
-      <th scope="row">{{ scratch.inodes | intword | default_if_none:less_than_50 }} on {{ scratch.inodes_quota | intword }} {% translate "inodes" %}
-        {% if scratch.inodes > scratch.inodes_quota%}
+        <div id="graph_alloc_inodes_{{ alloc.type }}_{{ alloc.name }}"></div>
+      </td>
+      <td>{{ alloc.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ alloc.quota_bytes | filesizeformat }} {% translate "bytes" %}
+        {% if alloc.bytes > alloc.quota_bytes %}
         <br /><span class="text-danger">{% translate "Over quota" %}</span>
         {% endif %}
         <br />
-        <div id="graph_scratch_inodes"></th>
-      <th scope="row">{{ scratch.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ scratch.bytes_quota | filesizeformat }}
-        {% if scratch.bytes > scratch.project_storage_bytes%}
-        <br /><span class="text-danger">{% translate "Over quota" %}</span>
-        {% endif %}<br />
-        <div id="graph_scratch_bytes"></th>
-    </tr>
-    {% for project in alloc_projects %}
-    <tr>
-      <th scope="row">/project/{{ project.name }}</th>
-      <th scope="row">{{ project.inodes | intword | default_if_none:less_than_50 }} on {{ project.inodes_quota | intword }} {% translate "inodes" %}
-        {% if project.inodes > project.inodes_quota%}
-        <br /><span class="text-danger">{% translate "Over quota" %}</span>
-        {% endif %}
-        <br />
-        <div id="graph_project_inodes_{{ project.name }}"></th>
-      <th scope="row">{{ project.bytes | filesizeformat | default_if_none:less_than_4MB }} on {{ project.project_storage_bytes | filesizeformat }}
-        {% if project.bytes > project.project_storage_bytes%}
-        <br /><span class="text-danger">{% translate "Over quota" %}</span>
-        {% endif %}<br />
-        <div id="graph_project_bytes_{{ project.name }}"></th>
+        <div id="graph_alloc_bytes_{{ alloc.type }}_{{ alloc.name }}"></div>
+      </td>
     </tr>
     {% endfor %}
   </tbody>
@@ -101,14 +77,9 @@
 {% endif %}
 <script>
   {% if 'lfs_quota' in settings.EXPORTER_INSTALLED %}
-    loadGraph('graph_home_inodes', 'graph/home/inodes.json');
-    loadGraph('graph_home_bytes', 'graph/home/bytes.json');
-    loadGraph('graph_scratch_inodes', 'graph/scratch/inodes.json');
-    loadGraph('graph_scratch_bytes', 'graph/scratch/bytes.json');
-
-    {% for project in alloc_projects %}
-      loadGraph('graph_project_inodes_{{ project.name }}', 'graph/project/inodes.json?project_name={{ project.name }}');
-      loadGraph('graph_project_bytes_{{ project.name }}', 'graph/project/bytes.json?project_name={{ project.name }}');
+    {% for alloc in allocs %}
+      loadGraph('graph_alloc_inodes_{{ alloc.type }}_{{ alloc.name }}', 'graph/storage/{{ alloc.type }}/{{ alloc.name }}/inodes.json');
+      loadGraph('graph_alloc_bytes_{{ alloc.type }}_{{ alloc.name }}', 'graph/storage/{{ alloc.type }}/{{ alloc.name }}/bytes.json');
     {% endfor %}
 
   {% endif %}

@@ -4,7 +4,8 @@ from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from userportal.common import account_or_staff, Prometheus
-from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account, compute_default_allocation_by_user
+from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account
+
 from django.core.paginator import Paginator
 from slurm.models import JobTable, AssocTable
 
@@ -19,7 +20,6 @@ def index(request):
     context = {}
     username = request.META['username']
     context['compute_allocations'] = compute_allocations_by_user(username)
-    context['default_allocations'] = compute_default_allocation_by_user(username)
     return render(request, 'accountstats/index.html', context)
 
 
@@ -28,12 +28,12 @@ def index(request):
 def account(request, account):
     context = {}
     allocation = compute_allocations_by_slurm_account(account)
-    if account.endswith('_gpu'):
+    if 'gpu' in allocation:
         context['gpu'] = True
-        context['gpu_count'] = allocation
-    else:
+        context['gpu_count'] = allocation['gpu']
+    if 'cpu' in allocation:
         context['gpu'] = False
-        context['cpu_count'] = allocation
+        context['cpu_count'] = allocation['cpu']
 
     # jobtable is not indexed by account, so we need to get assocs for this account, that one is indexed
     assocs = []
@@ -425,6 +425,7 @@ def graph_gpu_priority(request, account):
     return graph_cpu_or_gpu_priority(request, account, 'gpu')
 
 
+# auth done in functions above
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data = {'lines': []}
     if gpu_or_cpu == 'gpu':
@@ -448,12 +449,17 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         allocated['name'] = 'Allocated cores'
     data['lines'].append(allocated)
 
+    allocation = compute_allocations_by_slurm_account(account)
+    if 'gpu' in allocation:
+        alloc = allocation['gpu']
+    if 'cpu' in allocation:
+        alloc = allocation['cpu']
     if(account.startswith('def-') is False):
         data['lines'].append({
             'x': x,
-            'y': [compute_allocations_by_slurm_account(account)] * len(x),
+            'y': [alloc] * len(x),
             'type': 'scatter',
-            'name': 'RAC allocation',
+            'name': 'Allocation',
             'yaxis': 'y1',
         })
 

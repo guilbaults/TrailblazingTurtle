@@ -3,18 +3,25 @@ import configparser
 import os
 import time
 
-# This is script is taking the submited script once it start on a compute
-# node and send it to the userportal so it can be stored in a database
+# This is script is taking the submited script on the slurmctld server
+# and send it to the userportal so it can be stored in a database
 
 
 def send_job(jobid):
-    with open('/var/spool/slurmd/job{}/slurm_script'.format(jobid),
-              'r') as f:
-        content = f.read()[:script_length]
+    try:
+        with open('/var/spool/slurmctld/hash.{mod}/job.{jobid}/script'.format(mod=jobid % 10, jobid=jobid),
+                  'r') as f:
+            content = f.read()[:script_length].strip('\x00')
+            requests.post('{}/api/jobscripts/'.format(host),
+                          json={'id_job': int(jobid), 'submit_script': content},
+                          headers={'Authorization': 'Token ' + token})
 
-    requests.post('{}/api/jobscripts/'.format(host),
-                  json={'id_job': int(jobid), 'submit_script': content},
-                  headers={'Authorization': 'Token ' + token})
+    except UnicodeDecodeError:
+        # Ignore problems with wrond file encoding
+        pass
+    except FileNotFoundError:
+        # The script disappeared before we could read it
+        pass
 
 
 config = configparser.ConfigParser()
@@ -26,15 +33,16 @@ script_length = int(config['api']['script_length'])
 jobs = set()
 
 while True:
-    listing = os.listdir('/var/spool/slurmd/')
     updated_jobs = set()
-    for job in filter(lambda x: 'job' in x, listing):
-        jobid = int(job[3:])
-        updated_jobs.add(jobid)
+    for mod in range(10):
+        listing = os.listdir('/var/spool/slurmctld/hash.{mod}'.format(mod=mod))
+        for job in filter(lambda x: 'job' in x, listing):
+            jobid = int(job[4:])
+            updated_jobs.add(jobid)
 
-        if jobid not in jobs:
-            # This is a new job
-            send_job(jobid)
+            if jobid not in jobs:
+                # This is a new job
+                send_job(jobid)
 
     jobs = updated_jobs
     time.sleep(5)

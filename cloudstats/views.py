@@ -15,7 +15,7 @@ def index(request):
     context = {}
     context['projects'] = cloud_projects_by_user(request_to_username(request))
 
-    if request.META['is_staff']:
+    if request.user.is_staff:
         context['all_projects'] = []
         query_projects = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
             filter=prom.get_filter(),

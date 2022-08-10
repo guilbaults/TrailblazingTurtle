@@ -29,10 +29,15 @@
       </button>
       <ul class="navbar-nav px-3">
         {% if user.is_authenticated %}
+          <li class="nav-item text-nowrap">
+            <a class="nav-link">{{ user.get_full_name }} ({{user.username}})</a>
+          </li>
+        {% comment %}
         <li class="nav-item text-nowrap">
           <a class="nav-link" href="/Shibboleth.sso/Logout">{% translate "Logout" %}</a>
         </li>
-{% endif %}
+        {% endcomment %}
+        {% endif %}
       </ul>
     </nav>
 
@@ -87,7 +92,7 @@
                 </a>
               </li>
               {% endif %}
-              {% if request.META.is_staff and 'top' in settings.INSTALLED_APPS %}
+              {% if request.user.is_staff and 'top' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="/secure/top/">
                   <span data-feather="award"></span>

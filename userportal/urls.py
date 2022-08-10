@@ -19,11 +19,11 @@ from django.contrib import admin
 from django.views.decorators.http import last_modified
 from django.utils import timezone
 from django.views.i18n import JavaScriptCatalog
-import debug_toolbar
 from rest_framework import routers
 from django.conf import settings
 if 'jobstats' in settings.INSTALLED_APPS:
     from jobstats.views import JobScriptViewSet
+import djangosaml2
 
 router = routers.DefaultRouter()
 
@@ -38,11 +38,18 @@ urlpatterns = [
     path('jsi18n/',
          last_modified(lambda req, **kw: last_modified_date)(JavaScriptCatalog.as_view()),
          name='javascript-catalog'),
-    path('__debug__/', include(debug_toolbar.urls)),
     path('admin/', admin.site.urls),
     path('api/', include((router.urls, 'app_name'))),
     path('api-auth/', include('rest_framework.urls')),
+    path('saml2/', include('djangosaml2.urls')),
 ]
+
+if settings.DEBUG:
+    import debug_toolbar
+    urlpatterns += [
+        path('__debug__/', include(debug_toolbar.urls)),
+        path('test/', djangosaml2.views.EchoAttributesView.as_view()),
+    ]
 
 if 'jobstats' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))

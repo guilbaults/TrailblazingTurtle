@@ -12,10 +12,10 @@ def user_or_staff(func):
     """Decorator to allow access only to staff members or to the user"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['username'] == kwargs['username']:
+        if request.user.get_username() == kwargs['username']:
             # own info
             return func(request, *args, **kwargs)
-        elif request.META['is_staff']:
+        elif request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -27,13 +27,13 @@ def account_or_staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         alloc_name = kwargs['account'].split('_')[0]
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
 
         try:
             LdapAllocation.objects.filter(
                 name=alloc_name,
-                members=request.META['username'],
+                members=request.user.get_username(),
                 status='active').get()
         except LdapAllocation.DoesNotExist:
             # This user is not in the allocation
@@ -46,7 +46,7 @@ def openstackproject_or_staff(func):
     """Decorator to allow access if its the user is inside the project allocation or a staff member"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             # TODO search in LDAP
@@ -59,7 +59,7 @@ def staff(func):
     """Decorator to allow access only to staff members"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()

@@ -141,5 +141,8 @@ cython_debug/
 userportal/settings.py
 example/settings.py
 slurm_prolog/api_config.ini
+private.key
+public.cert
+idp_metadata.xml
 
 .DS_Store

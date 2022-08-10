@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
+from os import path
+import saml2
+import saml2.saml
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -43,6 +46,8 @@ INSTALLED_APPS = [
     'slurm',
     'ccldap',
 
+    'djangosaml2',
+
     'jobstats',
     'accountstats',
     # 'cloudstats',
@@ -51,14 +56,17 @@ INSTALLED_APPS = [
     'usersummary',
 
     # system modules
-    'debug_toolbar',
     'rest_framework',
     'rest_framework.authtoken',
     'bootstrap_pagination',
 ]
 
-MIDDLEWARE = [
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+MIDDLEWARE = []
+if DEBUG:
+    INSTALLED_APPS += ['debug_toolbar']
+    MIDDLEWARE = ['debug_toolbar.middleware.DebugToolbarMiddleware']
+
+MIDDLEWARE += [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -66,9 +74,9 @@ MIDDLEWARE = [
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.auth.middleware.RemoteUserMiddleware',
-    'userportal.middleware.ControlledUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'djangosaml2.middleware.SamlSessionMiddleware',
 ]
 
 ROOT_URLCONF = 'userportal.urls'
@@ -200,8 +208,9 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '/var/www/userportal-static/'
 
 AUTHENTICATION_BACKENDS = [
-    'django.contrib.auth.backends.RemoteUserBackend',
+    'userportal.authentication.staffRemoteUserBackend',
     'django.contrib.auth.backends.ModelBackend',
+    'userportal.authentication.staffSaml2Backend',
 ]
 
 LOGIN_REDIRECT_URL = '/'
@@ -323,3 +332,67 @@ REST_FRAMEWORK = {
 }
 
 CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'
+
+# SAML2 settings
+SAML_SESSION_COOKIE_NAME = 'saml_session'
+SESSION_COOKIE_SECURE = True
+LOGIN_URL = '/saml2/login/'
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SAML_CREATE_UNKNOWN_USER = True
+
+SAML_CONFIG = {
+    'debug': 1,
+    'xmlsec_binary': '/usr/bin/xmlsec1',
+    'entityid': 'http://simon.dev/saml2/metadata/',
+
+    'allow_unknown_attributes': True,
+
+    'service': {
+        'sp' : {
+            'name': 'Test Userportal',
+            'name_id_format': saml2.saml.NAMEID_FORMAT_PERSISTENT,
+            'name_id_format_allow_create': True,
+
+            'endpoints': {
+                'assertion_consumer_service': [
+                    ('http://localhost:8000/saml2/acs/',
+                    saml2.BINDING_HTTP_POST),
+                ],
+            },
+
+            'signing_algorithm':  saml2.xmldsig.SIG_RSA_SHA256,
+            'digest_algorithm':  saml2.xmldsig.DIGEST_SHA256,
+
+            'required_attributes': [
+            'surName',
+            'givenName',
+            'uid',
+            'eduPersonAffiliation',
+            'eduPersonPrincipalName',
+            'displayName',
+            ],
+
+            # When set to true, the SP will consume unsolicited SAML
+            # Responses, i.e. SAML Responses for which it has not sent
+            # a respective SAML Authentication Request.
+            'allow_unsolicited': False,
+            },
+        },
+
+    'metadata': {
+        #'remote': [{"url": "https://idp.alliancecan.ca/idp/shibboleth"},],
+        #'remote': [{"url": "https://idp-alliance.mit.c3.ca/idp/shibboleth"},],
+        #'remote': [{"url": "https://samltest.id/saml/idp"},],
+        'local': ['idp_metadata.xml'], # need to remove the POST SingleSignOnService from shibboleth metadata, only redirect seems to work
+        },
+
+    # Signing
+    'key_file': path.join(BASE_DIR, 'private.key'),  # private part
+    'cert_file': path.join(BASE_DIR, 'public.cert'),  # public part
+
+    # Encryption
+    'encryption_keypairs': [{
+        'key_file': path.join(BASE_DIR, 'private.key'),  # private part
+        'cert_file': path.join(BASE_DIR, 'public.cert'),  # public part
+    }],
+}

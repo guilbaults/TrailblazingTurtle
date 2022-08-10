@@ -233,6 +233,8 @@ RPMs required for production
 * `openldap-devel`
 * `gcc`
 * `mariadb-devel`
+* `xmlsec1`
+* `xmlsec1-openssl`
 
 A file in the python env need to be patched, check the diff in `ldapdb.patch`
 
@@ -241,6 +243,15 @@ Static files are handled by Apache and need to be collected since python will no
 ```
 python manage.py collectstatic
 ```
+
+## SAML2
+
+```
+openssl req -nodes -new -x509 -newkey rsa:2048 -days 3650 -keyout private.key -out public.cert
+```
+
+Download the metadata file from the IDP as metadata.xml
+Our shibboleth only seems to work with Redirect binding, so we remove manually the POST binding for SingleSignOnService.
 
 ## API
 An API is available to modify resources in the database. This is used by the jobscript collector. A local superuser need to be created:

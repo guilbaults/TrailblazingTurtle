@@ -18,7 +18,7 @@ prom = Prometheus(settings.PROMETHEUS)
 @login_required
 def index(request):
     context = {}
-    username = request.META['username']
+    username = request.user.get_username()
     context['compute_allocations'] = compute_allocations_by_user(username)
     return render(request, 'accountstats/index.html', context)
 

@@ -34,7 +34,7 @@
   <dd>{% translate "Show the wasted resource" %}</dd>
 </dl>
 
-<table class="table table-striped">
+<table class="table table-striped" id="gpucompute">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
@@ -81,15 +81,8 @@
 {{user.cpu_used | floatformat:-2}}
 {% endif %}
       </td>
-      <td>{{user.mem_asked | filesizeformat}}</td>
-      <td>
-{% if user.mem_ratio < 0.1 %}
-<span class="badge badge-danger">{{user.mem_max | filesizeformat}}</span>
-{% elif user.mem_ratio < 0.50 %}
-<span class="badge badge-warning">{{user.mem_max | filesizeformat}}</span>
-{% else %}
-{{user.mem_max | filesizeformat}}
-{% endif %}
+      <td>{{user.mem_asked | floatformat:0 }}</td>
+      <td>{{user.mem_max | floatformat:0}}
       </td>
       <td>
 {% for badge in user.waste_badges %}
@@ -102,5 +95,49 @@
 {% endfor %}
     </tbody>
 </table>
+
+<script>
+  $(document).ready(function () {
+    $('#gpucompute').DataTable({
+      "paging": false,
+      columns: [
+        { },
+        { },
+        { },
+        { },
+        { },
+        { },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              return filesize(data);
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              ratio = data/row[6];
+              if (ratio < 0.1) {
+                return '<span class="badge badge-danger">' + filesize(data) + '</span>';
+              }
+              else if (ratio < 0.5) {
+                return '<span class="badge badge-warning">' + filesize(data) + '</span>';
+              }
+              else {
+                return filesize(data);
+              }
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { },
+      ]
+    });
+  });
+</script>
 
 {% endblock content %}

@@ -25,7 +25,7 @@
   <dd>{% translate "Show the wasted resource" %}</dd>
 </dl>
 
-<table class="table table-striped">
+<table class="table table-striped" id="largemem">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
@@ -43,7 +43,7 @@
     <tr>
       <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}</a></td>
       <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
+      <td>{{job.time_start_dt | date:"U"}}</td>
       <td>{{job.cpu_asked | floatformat}}</td>
       <td>
 {% if job.cpu_ratio < 0.75 %}
@@ -54,16 +54,8 @@
 <span class="badge badge-success">{{job.cpu_used | floatformat:-2}}</span>
 {% endif %}
       </td>
-      <td>{{job.mem_asked | filesizeformat}}</td>
-      <td>
-{% if job.mem_ratio < 0.10 %}
-<span class="badge badge-danger">{{job.mem_max | filesizeformat}}</span>
-{% elif job.mem_ratio < 0.50 %}
-<span class="badge badge-warning">{{job.mem_max | filesizeformat}}</span>
-{% else %}
-<span class="badge badge-success">{{job.mem_max | filesizeformat}}</span>
-{% endif %}
-      </td>
+      <td>{{job.mem_asked | floatformat:0 }}</td>
+      <td>{{job.mem_max | floatformat:0 }}</td>
       <td>
         {% for badge in job.waste_badges %}
         <span class="badge badge-{{badge.0}}">{{badge.1}}</span>
@@ -73,5 +65,58 @@
       </td>
     </tr>
 {% endfor %}
+
+<script>
+  $(document).ready(function () {
+    luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
+    function parse_time(data, type) {
+      if (type == 'display' || type === 'filter'){
+        return DateTime.fromSeconds(parseInt(data)).toLocaleString(DateTime.DATETIME_MED);
+      }
+      else{
+        return data;
+      }
+    }
+
+    $('#largemem').DataTable({
+      "paging": false,
+      columns: [
+        { },
+        { },
+        { render: parse_time },
+        { },
+        { },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              return filesize(data);
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              ratio = data/row[5];
+              if (ratio < 0.1) {
+                return '<span class="badge badge-danger">' + filesize(data) + '</span>';
+              }
+              else if (ratio < 0.5) {
+                return '<span class="badge badge-warning">' + filesize(data) + '</span>';
+              }
+              else {
+                return filesize(data);
+              }
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { },
+      ]
+    });
+  });
+</script>
 
 {% endblock content %}

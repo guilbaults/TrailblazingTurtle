@@ -22,7 +22,7 @@
   <dt>{% translate "Wasting" %}</dt>
   <dd>{% translate "Show the wasted resource. The normal amount of memory per cores is taken into account to remove the memory flag when a user seems to use full nodes" %}</dd>
 </dl>
-<table class="table table-striped">
+<table class="table table-striped" id="compute">
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
@@ -40,23 +40,15 @@
       <td>{{user.cpu_asked | floatformat}}</td>
       <td>
 {% if user.cpu_ratio < 0.75 %}
-<span class="badge badge-danger">{{user.cpu_used | floatformat:-2}}</span>
+<span class="badge badge-danger">{{user.cpu_used | floatformat:-1}}</span>
 {% elif user.cpu_ratio < 0.90 %}
-<span class="badge badge-warning">{{user.cpu_used | floatformat:-2}}</span>
+<span class="badge badge-warning">{{user.cpu_used | floatformat:-1}}</span>
 {% else %}
-{{user.cpu_used | floatformat:-2}}
+{{user.cpu_used | floatformat:-1}}
 {% endif %}
       </td>
-      <td>{{user.mem_asked | filesizeformat}}</td>
-      <td>
-{% if user.mem_ratio < 0.1 %}
-<span class="badge badge-danger">{{user.mem_max | filesizeformat}}</span>
-{% elif user.mem_ratio < 0.50 %}
-<span class="badge badge-warning">{{user.mem_max | filesizeformat}}</span>
-{% else %}
-{{user.mem_max | filesizeformat}}
-{% endif %}
-      </td>
+      <td>{{user.mem_asked | floatformat:0 }}</td>
+      <td>{{user.mem_max | floatformat:0 }}</td>
       <td>
         {% for badge in user.waste_badges %}
         <span class="badge badge-{{badge.0}}">{{badge.1}}</span>
@@ -68,5 +60,46 @@
 {% endfor %}
   </tbody>
 </table>
+
+<script>
+  $(document).ready(function () {
+    $('#compute').DataTable({
+      "paging": false,
+      columns: [
+        { },
+        { },
+        { },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              return filesize(data);
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { render: function(data, type, row){
+            if ( type === 'display' || type === 'filter' ) {
+              ratio = data/row[3];
+              if (ratio < 0.1) {
+                return '<span class="badge badge-danger">' + filesize(data) + '</span>';
+              }
+              else if (ratio < 0.5) {
+                return '<span class="badge badge-warning">' + filesize(data) + '</span>';
+              }
+              else {
+                return filesize(data);
+              }
+            }
+            else {
+              return data;
+            }
+          }
+        },
+        { },
+      ]
+    });
+  });
+</script>
 
 {% endblock content %}

@@ -28,12 +28,13 @@ def index(request):
 def account(request, account):
     context = {}
     allocation = compute_allocations_by_slurm_account(account)
-    if 'gpu' in allocation:
-        context['gpu'] = True
-        context['gpu_count'] = allocation['gpu']
-    if 'cpu' in allocation:
-        context['gpu'] = False
-        context['cpu_count'] = allocation['cpu']
+    if allocation is not None:
+        if 'gpu' in allocation:
+            context['gpu'] = True
+            context['gpu_count'] = allocation['gpu']
+        if 'cpu' in allocation:
+            context['gpu'] = False
+            context['cpu_count'] = allocation['cpu']
 
     # jobtable is not indexed by account, so we need to get assocs for this account, that one is indexed
     assocs = []
@@ -450,10 +451,13 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data['lines'].append(allocated)
 
     allocation = compute_allocations_by_slurm_account(account)
-    if 'gpu' in allocation:
-        alloc = allocation['gpu']
-    if 'cpu' in allocation:
-        alloc = allocation['cpu']
+    if allocation is not None:
+        if 'gpu' in allocation:
+            alloc = allocation['gpu']
+        if 'cpu' in allocation:
+            alloc = allocation['cpu']
+    else:
+        alloc = 0
     if(account.startswith('def-') is False):
         data['lines'].append({
             'x': x,

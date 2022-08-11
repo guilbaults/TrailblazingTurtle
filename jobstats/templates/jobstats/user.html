@@ -52,7 +52,7 @@
 
 <h1>{% translate "Your jobs" %}</h1>
 
-<select select data-placeholder="Filter by job status..." multiple class="chosen-select" id="select-status">
+<select select data-placeholder="{% translate "Filter by job status" %}" multiple class="chosen-select" id="select-status">
   <option value="Pending">Pending</option>
   <option value="Running">Running</option>
   <option value="Suspended">Suspended</option>
@@ -153,8 +153,12 @@ $(document).ready(function() {
       },
       { data: null,
         render: function ( data, type, row, meta){
-          if (data.time_start && data.time_end){
-            return humanizeDuration(DateTime.fromISO(data.time_end).diff(DateTime.fromISO(data.time_start)).toMillis(), { language: '{{LANGUAGE_CODE}}'});
+          if (data.time_start){
+            if(data.time_end){
+              return humanizeDuration(DateTime.fromISO(data.time_end).diff(DateTime.fromISO(data.time_start)).toMillis(), { language: '{{LANGUAGE_CODE}}'});
+            } else {
+              return humanizeDuration(DateTime.now().diff(DateTime.fromISO(data.time_start)).toMillis(), { language: '{{LANGUAGE_CODE}}', round: true});
+            }
           }
           else{
             return '-';

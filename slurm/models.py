@@ -167,6 +167,20 @@ class EventTable(models.Model):
 
 
 class JobTable(models.Model):
+    class StatesJob(models.IntegerChoices):
+        PENDING = 0
+        RUNNING = 1
+        SUSPENDED = 2
+        COMPLETE = 3
+        CANCELED = 4
+        FAILED = 5
+        TIMEOUT = 6
+        NODE_FAIL = 7
+        PREEMPTED = 8
+        BOOT_FAIL = 9
+        END = 10
+        OOM = 11
+
     job_db_inx = models.BigAutoField(primary_key=True)
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -201,7 +215,7 @@ class JobTable(models.Model):
     node_inx = models.TextField(blank=True, null=True)
     partition = models.TextField()
     priority = models.PositiveIntegerField()
-    state = models.PositiveIntegerField()
+    state = models.PositiveIntegerField(choices=StatesJob.choices)
     timelimit = models.PositiveIntegerField()
     time_submit = models.PositiveBigIntegerField()
     time_eligible = models.PositiveBigIntegerField()

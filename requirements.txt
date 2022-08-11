@@ -13,6 +13,7 @@ django-ldapdb==1.5.1
 django-settings-export==1.2.1
 djangorestframework==3.12.4
 djangorestframework-api-key==2.0.0
+djangorestframework-datatables==0.7.0
 djangosaml2==1.5.1
 elementpath==2.4.0
 flake8==3.9.0

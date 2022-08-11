@@ -22,7 +22,7 @@ from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers
 from django.conf import settings
 if 'jobstats' in settings.INSTALLED_APPS:
-    from jobstats.views import JobScriptViewSet
+    from jobstats.views import JobScriptViewSet, JobsViewSet
 import djangosaml2
 
 router = routers.DefaultRouter()
@@ -31,6 +31,7 @@ last_modified_date = timezone.now()
 
 if 'jobstats' in settings.INSTALLED_APPS:
     router.register(r'jobscripts', JobScriptViewSet)
+    router.register(r'jobs', JobsViewSet, basename='jobs')
 
 urlpatterns = [
     path('', include('pages.urls')),

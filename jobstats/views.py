@@ -9,9 +9,8 @@ from django.utils.translation import gettext as _
 from rest_framework import viewsets
 from rest_framework import permissions
 from jobstats.models import JobScript
-from jobstats.serializers import JobScriptSerializer
+from jobstats.serializers import JobSerializer, JobScriptSerializer
 import statistics
-from django.core.paginator import Paginator
 
 GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
@@ -44,12 +43,6 @@ def index(request):
 def user(request, username):
     uid = username_to_uid(username)
     context = {'username': username}
-    jobs = JobTable.objects.filter(id_user=uid).order_by('-time_submit')
-    paginator = Paginator(jobs, 100)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context['jobs'] = page_obj
 
     running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
     context['total_cores'] = 0
@@ -1116,3 +1109,30 @@ class JobScriptViewSet(viewsets.ModelViewSet):
     queryset = JobScript.objects.all().order_by('-last_modified')
     serializer_class = JobScriptSerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class JobsViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = JobSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = JobTable.objects.all().order_by('-time_start')
+
+        if self.request.query_params.get('status'):
+            status = self.request.query_params.get('status').split(',')
+            status_ints = []
+            for item in status:
+                for i in JobTable.state.field.get_choices():
+                    if item == i[1]:
+                        status_ints.append(i[0])
+            queryset = queryset.filter(state__in=status_ints)
+
+        if user.is_staff:
+            username = self.request.query_params.get('username')
+            if username is not None:
+                # Admin user can see all jobs of a specific user
+                queryset = queryset.filter(id_user=username_to_uid(username))
+            return queryset
+        else:
+            return queryset.filter(id_user=username_to_uid(user.get_username()))

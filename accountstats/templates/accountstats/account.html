@@ -1,12 +1,11 @@
 {% extends 'base.html' %}
 {% load humanize %}
 {% load i18n %}
-{% load bootstrap_pagination %}
 
-{% block title %}{% translate "Your account use" %}{% endblock title %}
+{% block title %}{% translate "Account use of" %} {{ account }}{% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your account use" %}</h1>
+<h1>{% translate "Account use of" %} {{ account }}</h1>
 {% if gpu %}
 <p>{{gpu_count}} {% translate "GPUs were allocated" %}</p>
 {% else %}
@@ -52,9 +51,24 @@
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
 
-<h2>{% translate "Jobs running with your account" %}</h2>
+<h2>{% translate "Jobs running with this account" %}</h2>
 
-<table class="table table-striped">
+<select select data-placeholder="{% translate "Filter by job status" %}" multiple class="chosen-select" id="select-status">
+  <option value="Pending">Pending</option>
+  <option value="Running">Running</option>
+  <option value="Suspended">Suspended</option>
+  <option value="Complete">Complete</option>
+  <option value="Canceled">Canceled</option>
+  <option value="Failed">Failed</option>
+  <option value="Timeout">Timeout</option>
+  <option value="Node Fail">Node Fail</option>
+  <option value="Preempted">Preempted</option>
+  <option value="Boot Fail">Boot Fail</option>
+  <option value="End">End</option>
+  <option value="OOM">OOM</option>
+</select>
+
+<table id="jobs" class="table table-striped table-bordered" style="width:100%" data-server-side="true" data-ajax="/api/jobs/?format=datatables&account={{account}}">
   <thead class="thead-dark">
     <tr>
         <th scope="col">{% translate "Username" %}</th>
@@ -68,24 +82,7 @@
         <th scope="col">{% translate "Used time" %}</th>
     </tr>
   </thead>
-  <tbody>
-{% for job in jobs %}
-    <tr>
-        <th scope="row"><a href="/secure/jobstats/{{job.username}}">{{job.username}}</a></a></th>
-        <th scope="row"><a href="/secure/jobstats/{{job.username}}/{{job.id_job}}">{{job.id_job}}</a></th>
-        <td><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></td>
-        <td>{{job.job_name}}</td>
-        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
-        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
-        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
-        <td>{{job.timelimit_display | default_if_none:'' }}</td>
-        <td>{{job.used_time_display | default_if_none:'' }}</td>
-    </tr>
-{% endfor %}
-  </tbody>
 </table>
-
-{% bootstrap_paginate jobs range=10 extra_pagination_classes="justify-content-center" %}
 
 <script>
 {% if gpu %}
@@ -111,6 +108,91 @@ loadGraph('graph_mem_wasted', 'graph/mem_wasted.json');
 loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
 loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
 
+$(document).ready(function() {
+  luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
+  function parse_time(data, type) {
+    if (data == null) {
+      return '-';
+    }
+    return DateTime.fromISO(data).toLocaleString(DateTime.DATETIME_MED);
+  }
+
+  function state_to_badge(state){
+    switch (state) {
+      case 'Pending':
+        return 'info';
+      case 'Running':
+        return 'primary';
+      case 'Suspended':
+        return 'warning';
+      case 'Complete':
+        return 'success';
+      case 'Preempted':
+        return 'warning';
+      case 'End':
+        return 'success';
+      default:
+        return 'danger';
+    }
+  }
+
+  $('#jobs').DataTable({
+    order: [[ 3, "desc" ]],
+    stateSave: true,
+    columns: [
+      { data: 'username', 
+        orderable: false,
+        searchable: false,
+      },
+      { data: 'id_job',
+        render: function ( data, type, row ) {
+          return '<a href="/secure/jobstats/' + row['username'] + '/' + data + '">' + data + '</a>';
+        }
+      },
+      { data: 'get_state_display',
+        orderable: false,
+        searchable: false,
+        render: function ( data, type ) {
+          return '<span class="badge badge-' + state_to_badge(data) + '">' + data + '</span>';
+        }
+      },
+      { data: 'job_name' },
+      { data: 'time_submit',
+        render: parse_time,
+      },
+      { data: 'time_start',
+        render: parse_time, },
+      { data: 'time_end',
+        render: parse_time, },
+      { data: 'timelimit',
+        orderable: false,
+        searchable: false,
+        render: function ( data, type ) {
+          return humanizeDuration(data * 60 * 1000, { language: '{{LANGUAGE_CODE}}'});
+        }
+      },
+      { data: null,
+        render: function ( data, type, row, meta){
+          if (data.time_start){
+            if(data.time_end){
+              return humanizeDuration(DateTime.fromISO(data.time_end).diff(DateTime.fromISO(data.time_start)).toMillis(), { language: '{{LANGUAGE_CODE}}'});
+            } else {
+              return humanizeDuration(DateTime.now().diff(DateTime.fromISO(data.time_start)).toMillis(), { language: '{{LANGUAGE_CODE}}', round: true});
+            }
+          }
+          else{
+            return '-';
+          }
+        }
+      },
+    ],
+  });
+
+  $(".chosen-select").chosen({width:"100%"})
+  $('#select-status').on('change', function() {
+    $('#jobs').DataTable().ajax.url( '/api/jobs/?format=datatables&account={{account}}&status=' + $(this).val().join(',') ).load();
+  }).trigger('change');
+});
 </script>
 
 {% endblock content %}

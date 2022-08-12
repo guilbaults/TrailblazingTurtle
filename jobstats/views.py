@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
-from slurm.models import JobTable
-from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username
+from slurm.models import JobTable, AssocTable
+from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -1128,6 +1128,29 @@ class JobsViewSet(viewsets.ReadOnlyModelViewSet):
                         status_ints.append(i[0])
             queryset = queryset.filter(state__in=status_ints)
 
+        if self.request.query_params.get('account'):
+            account = self.request.query_params.get('account')
+            # jobtable is not indexed by account, so we need to get assocs for this account, that one is indexed
+            assocs = []
+            for assoc in AssocTable.objects.filter(acct=account):
+                assocs.append(assoc.id_assoc)
+            queryset = queryset.filter(id_assoc__in=assocs)
+
+            if user.is_staff is False:
+                alloc_per_user = compute_allocations_by_user(user.get_username())
+                for alloc in alloc_per_user:
+                    if alloc['name'] == account:
+                        # The user is a member of the account
+                        queryset = queryset.filter(id_assoc__in=assocs)
+                        break
+                else:
+                    # The user is not a member of the account, block access
+                    queryset = JobTable.objects.none()
+
+            else:
+                # The user is a staff member
+                queryset = queryset.filter(id_assoc__in=assocs)
+
         if user.is_staff:
             username = self.request.query_params.get('username')
             if username is not None:
@@ -1135,4 +1158,9 @@ class JobsViewSet(viewsets.ReadOnlyModelViewSet):
                 queryset = queryset.filter(id_user=username_to_uid(username))
             return queryset
         else:
-            return queryset.filter(id_user=username_to_uid(user.get_username()))
+            # Normal user can only see his own jobs and jobs of his accounts
+            if self.request.query_params.get('account'):
+                # Was previously filtered by account, so we can just return the queryset
+                return queryset
+            else:
+                return queryset.filter(id_user=username_to_uid(user.get_username()))

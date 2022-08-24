@@ -41,8 +41,16 @@
   <tbody>
 {% for job in jobs %}
     <tr>
-      <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}</a></td>
-      <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a></td>
+      <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}
+        {% if job.user_flag %}
+        <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
+        {% endif %}</a>
+      </td>
+      <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a>
+        {% if job.job_flag %}
+        <span class="badge badge-primary"><span data-feather="alert-circle" title="Job has a note"></span></span>
+        {% endif %}</a>
+      </td>
       <td>{{job.time_start_dt | date:"U"}}</td>
       <td>{{job.cpu_asked | floatformat}}</td>
       <td>

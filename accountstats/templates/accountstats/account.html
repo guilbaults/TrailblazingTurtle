@@ -5,6 +5,11 @@
 {% block title %}{% translate "Account use of" %} {{ account }}{% endblock title %}
 
 {% block content %}
+{% include "notes_header.html" %}
+{% if user.is_staff%}
+<p><a class="btn btn-primary" href="/secure/notes/new?account={{account}}">Create a new note</a></p>
+{% endif %}
+
 <h1>{% translate "Account use of" %} {{ account }}</h1>
 {% if gpu %}
 <p>{{gpu_count}} {% translate "GPUs were allocated" %}</p>
@@ -83,6 +88,8 @@
     </tr>
   </thead>
 </table>
+
+{% include "notes.js" %}
 
 <script>
 {% if gpu %}

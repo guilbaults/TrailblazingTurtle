@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from userportal.common import staff, Prometheus, uid_to_username
 from slurm.models import JobTable
+from notes.models import Note
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 import time
@@ -70,8 +71,16 @@ def compute(request):
     context = {}
     stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=None)
 
+    users = stats_cpu_asked.keys()
+
+    # get notes
+    notes = Note.objects.filter(username__in=users).filter(deleted_at=None)
+    note_per_user = set()
+    for note in notes:
+        note_per_user.add(note.username)
+
     context['cpu_users'] = []
-    for user in stats_cpu_asked.keys():
+    for user in users:
         try:
             reasonable_mem = stats_cpu_asked[user] * settings.NORMAL_MEM_BY_CORE * 1.1
 
@@ -83,6 +92,7 @@ def compute(request):
                 'mem_asked': stats_mem_asked[user],
                 'mem_max': stats_mem_max[user],
                 'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
+                'note_flag': user in note_per_user,
             }
             waste_badges = []
             if stats_mem_asked[user] > reasonable_mem:
@@ -138,6 +148,12 @@ def gpucompute(request):
     users = list(stats_gpu_asked.keys())
     stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=users)
 
+    # get notes
+    notes = Note.objects.filter(username__in=users).filter(deleted_at=None)
+    note_per_user = set()
+    for note in notes:
+        note_per_user.add(note.username)
+
     context['gpu_users'] = []
     for line in stats_gpu:
         try:
@@ -163,6 +179,7 @@ def gpucompute(request):
                 'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
                 'reasonable_mem': stats_mem_asked[user] < reasonable_mem,
                 'reasonable_cores': stats_cpu_asked[user] < reasonable_cores,
+                'note_flag': user in note_per_user,
             }
             waste_badges = []
             if stats_mem_asked[user] > reasonable_mem:
@@ -261,8 +278,34 @@ def largemem(request):
         except IndexError:
             pass
 
-    # put the worst jobs first
-    context['jobs'].sort(key=lambda x: x['min_ratio'], reverse=False)
+    # gather all usernames
+    users = set()
+    for job in jobs_running:
+        users.add(uid_to_username(job.id_user))
+
+    # get notes per user
+    notes = Note.objects.filter(username__in=users).filter(deleted_at=None)
+    note_per_user = set()
+    for note in notes:
+        note_per_user.add(note.username)
+
+    # gather all jobid
+    jobids = set()
+    for job in jobs_running:
+        jobids.add(job.id_job)
+
+    notes = Note.objects.filter(job_id__in=jobids).filter(deleted_at=None)
+    note_per_jobid = set()
+    for note in notes:
+        note_per_jobid.add(note.job_id)
+
+    # if user has a note, add a flag to the user
+    for job in context['jobs']:
+        if job['user'] in note_per_user:
+            job['user_flag'] = True
+        if job['job_id'] in note_per_jobid:
+            job['job_flag'] = True
+
     return render(request, 'top/largemem.html', context)
 
 

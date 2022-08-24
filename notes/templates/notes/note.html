@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "All notes" %}{% endblock title %}
+
+{% block content %}
+{% if note.created_at %}
+<h2>{% translate "View / Edit note" %}</h2>
+<p>Created by {{ note.created_by.first_name }} {{ note.created_by.last_name }} ({{ note.created_by }}) at <span class="utc_date">{{ note.created_at | date:"c" }}</span></p>
+{% if note.modified_at%}
+<p>Modified at <span class="utc_date">{{ note.modified_at | date:"c" }}</span></p>
+{% endif %}
+{% else %}
+<h2>{% translate "New note" %}</h2>
+{% endif %}
+
+{% for error in errors %}
+<div class="alert alert-danger">{{ error }}</div>
+{% endfor %}
+
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="title">{% translate "Title" %}</label>
+        <input type="text" class="form-control" name="title" placeholder="{% translate "Title" %}" required value="{{note.title}}">
+    </div>
+    <div class="form-group">
+        <label for="content">{% translate "Content" %}</label>
+        <textarea class="form-control" name="notes" rows="10" required>{{note.notes}}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="ticket_id">{% translate "External ticket ID" %}</label>
+        <input type="text" class="form-control" name="ticket_id" placeholder="{% translate "Optional" %}" value="{{note.ticket_id | default_if_none:''}}">
+    </div>
+    <div class="form-group">
+        <label for="job_id">{% translate "Job ID" %}</label>
+        <input type="text" class="form-control" name="job_id" placeholder="{% translate "Optional" %}" value="{{note.job_id | default_if_none:''}}">
+    </div>
+    <div class="form-group">
+        <label for="username">{% translate "Username" %}</label>
+        <input type="text" class="form-control" name="username" placeholder="{% translate "Optional" %}" value="{{note.username | default_if_none:''}}">
+    </div>
+    <div class="form-group">
+        <label for="account">{% translate "Account" %}</label>
+        <input type="text" class="form-control" name="account" placeholder="{% translate "Optional" %}" value="{{note.account | default_if_none:''}}">
+    </div>
+    {% if note.created_at %}
+    <button type="submit" class="btn btn-primary" name="send" value="update">{% translate "Update note" %}</button>
+    <button type="submit" class="btn btn-danger" name="send" value="delete">{% translate "Delete note" %}</button>
+    {% else %}
+    <button type="submit" class="btn btn-primary" name="send" value="new">{% translate "New note" %}</button>
+    {% endif %}
+    
+</form>
+
+{% include "notes.js" %}
+
+{% endblock content %}

@@ -51,7 +51,11 @@
   <tbody>
 {% for user in gpu_users %}
     <tr>
-      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}</a></td>
+      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}
+        {% if user.note_flag %}
+        <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
+        {% endif %}</a>
+      </td>
       <td>{{user.gpu_asked | floatformat}}</td>
       <td>
 {% if user.gpu_used == 0 %}

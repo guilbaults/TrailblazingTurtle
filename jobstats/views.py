@@ -10,6 +10,7 @@ from rest_framework import viewsets
 from rest_framework import permissions
 from jobstats.models import JobScript
 from jobstats.serializers import JobSerializer, JobScriptSerializer
+from notes.models import Note
 import statistics
 
 GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
@@ -77,6 +78,9 @@ def user(request, username):
     except ValueError:
         context['gpu_used'] = 'N/A'
 
+    if request.user.is_staff:
+        context['notes'] = Note.objects.filter(username=username).filter(deleted_at=None).order_by('-modified_at')
+
     return render(request, 'jobstats/user.html', context)
 
 
@@ -84,7 +88,7 @@ def user(request, username):
 @user_or_staff
 def job(request, username, job_id):
     uid = username_to_uid(username)
-    context = {'job_id': job_id}
+    context = {'job_id': job_id, 'username': username}
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
@@ -166,6 +170,9 @@ def job(request, username, job_id):
             context['step'] = '15m'
         else:
             context['step'] = '1h'
+
+    if request.user.is_staff:
+        context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
 
     return render(request, 'jobstats/job.html', context)
 

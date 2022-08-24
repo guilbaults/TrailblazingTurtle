@@ -1,0 +1,23 @@
+{% load i18n %}
+
+{% if user.is_staff %}
+<h1>{% translate "Internal notes" %}</h1>
+
+{% for note in notes %}
+  <div class="alert alert-primary" role="alert">
+    <div class="container">
+      <div class="row">
+        <div class="col">
+          <a href="{{ note.get_absolute_url }}"><h2 class="alert-heading">{{ note.title }}</h2></a>
+        </div>
+        <div class="col-3">
+          Modified at: <span class="utc_date">{{ note.modified_at | date:"c" }}</span>
+        </div>
+      </div>
+    </div>
+    <p>{{ note.notes }}</p>
+  </div>
+{% empty %}
+  <p>No notes found.</p>
+{% endfor %}
+{% endif %}

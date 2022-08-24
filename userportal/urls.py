@@ -21,15 +21,16 @@ from django.utils import timezone
 from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers
 from django.conf import settings
-if 'jobstats' in settings.INSTALLED_APPS:
-    from jobstats.views import JobScriptViewSet, JobsViewSet
+from notes.views import NoteViewSet
 import djangosaml2
 
 router = routers.DefaultRouter()
 
+router.register(r'notes', NoteViewSet)
 last_modified_date = timezone.now()
 
 if 'jobstats' in settings.INSTALLED_APPS:
+    from jobstats.views import JobScriptViewSet, JobsViewSet
     router.register(r'jobscripts', JobScriptViewSet)
     router.register(r'jobs', JobsViewSet, basename='jobs')
 
@@ -43,6 +44,8 @@ urlpatterns = [
     path('api/', include((router.urls, 'app_name'))),
     path('api-auth/', include('rest_framework.urls')),
     path('saml2/', include('djangosaml2.urls')),
+
+    path('secure/notes/', include('notes.urls')),
 ]
 
 if settings.DEBUG:

@@ -109,6 +109,14 @@
                 </a>
               </li>
               {% endif %}
+              {% if request.user.is_staff %}
+              <li class="nav-item">
+                <a class="nav-link" href="/secure/notes/">
+                  <span data-feather="edit"></span>
+                  {% translate "Notes" %}<span class="sr-only"></span>
+                </a>
+              </li>
+              {% endif %}
             </ul>
           </div>
         </nav>

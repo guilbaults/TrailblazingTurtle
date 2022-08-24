@@ -6,6 +6,11 @@
 {% block title %}{% translate "Details on job" %} {{job_id}} {% endblock title %}
 
 {% block content %}
+{% include "notes_header.html" %}
+{% if user.is_staff%}
+<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">Create a new note</a></p>
+{% endif %}
+
 <h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
 <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
 <div class="progress">
@@ -260,6 +265,8 @@
       <div id="graph_power"></div>
     {% endif %}
   {% endif %}
+
+  {% include "notes.js" %}
 
   <script>
   loadGraph('graph_cpu', 'graph/cpu.json?step={{step}}');

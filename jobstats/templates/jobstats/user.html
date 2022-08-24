@@ -6,6 +6,12 @@
 {% block title %}{% translate "Your jobs" %}{% endblock title %}
 
 {% block content %}
+
+{% include "notes_header.html" %}
+{% if user.is_staff%}
+<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}">Create a new note</a></p>
+{% endif %}
+
 <h1>{% translate "Your current use" %}</h1>
 
 <table class="table table-striped">
@@ -81,6 +87,8 @@
     </tr>
   </thead>
 </table>
+
+{% include "notes.js" %}
 
 <script>
 loadGraph('graph_cpu', 'graph/cpu.json');

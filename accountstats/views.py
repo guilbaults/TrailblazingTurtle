@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from userportal.common import account_or_staff, Prometheus
 from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account
+from notes.models import Note
 
 
 LONG_PERIOD = timedelta(days=60)
@@ -34,6 +35,9 @@ def account(request, account):
             context['gpu'] = False
             context['cpu_count'] = allocation['cpu']
     context['account'] = account
+
+    if request.user.is_staff:
+        context['notes'] = Note.objects.filter(account=account).filter(deleted_at=None).order_by('-modified_at')
 
     return render(request, 'accountstats/account.html', context)
 

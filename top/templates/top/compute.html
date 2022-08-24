@@ -36,7 +36,11 @@
   <tbody>
 {% for user in cpu_users %}
     <tr>
-      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}</a></td>
+      <td><a href="/secure/jobstats/{{user.user}}">{{user.user}}
+        {% if user.note_flag %}
+        <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
+        {% endif %}</a>
+      </td>
       <td>{{user.cpu_asked | floatformat}}</td>
       <td>
 {% if user.cpu_ratio < 0.75 %}

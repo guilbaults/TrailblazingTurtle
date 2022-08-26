@@ -8,7 +8,7 @@
 {% block content %}
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">Create a new note</a></p>
+<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
 <h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
@@ -21,6 +21,36 @@
   {% endif%}
 </div>
 
+{% if loaded_modules %}
+<h3>{% translate "Loaded modules" %}</h3>
+  <ul class="list-group d-inline-block">
+    {% for module in loaded_modules %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">{{module.name}}<span class="badge badge-primary badge-pill">{{module.version}}</span></li>
+    {% endfor %}
+  </ul>
+{% endif %}
+
+{% if comments %}
+<h3>{% translate "Job analysis" %}</h3>
+<ul class="list-group">
+  {% for comment in comments %}
+  {% if comment.line_number %}
+    {% if comment.url%}
+      <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: <a href="{{comment.url}}">{{comment.comment}}</a></li>
+    {% else %}
+      <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: {{comment.comment}}</li>
+    {% endif %}
+  {% else %}
+  {% if comment.url%}
+      <li class="list-group-item {{comment.display_severity}}"><a href="{{comment.url}}">{{comment.comment}}</a></li>
+    {% else %}
+      <li class="list-group-item {{comment.display_severity}}">{{comment.comment}}</li>
+    {% endif %}
+  {% endif %}
+  {% endfor %}
+</ul>
+{% endif %}
+
 {% if job_script %}
 <p>
   <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_script" aria-expanded="false" aria-controls="collapse_job_script">
@@ -29,9 +59,7 @@
 </p>
 <div class="collapse" id="collapse_job_script">
   <div class="card card-body">
-    <pre>
-{{job_script.submit_script}}
-    </pre>
+    <pre><code class="language-bash">{{job_script.submit_script}}</code></pre>
   </div>
 </div>
 {% else %}
@@ -41,7 +69,6 @@
   </button>
 </p>
 {% endif %}
-
 <h2>{% translate "Scheduler info" %}</h2>
 <table class="table table-striped">
   <thead class="thead-dark">
@@ -292,6 +319,10 @@
   {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_power', 'graph/power.json?step={{step}}');
   {% endif %}
+
+  hljs.highlightAll();
+
+  hljs.initLineNumbersOnLoad();
   </script>
   <script src="{% static 'jobstats/job.js' %}"></script>
 {% endif %}

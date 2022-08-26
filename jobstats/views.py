@@ -176,7 +176,7 @@ def job(request, username, job_id):
         context['job_script'] = JobScript.objects.get(id_job=job_id)
         try:
             modules = find_loaded_modules(context['job_script'].submit_script)
-            context['loaded_modules'] = sorted(modules, key=lambda x: x.name)
+            context['loaded_modules'] = modules
             comments += analyze_jobscript(context['job_script'].submit_script, context['loaded_modules'], job)
         except ValueError:
             context['loaded_modules'] = None  # Could not parse jobscript to find loaded modules

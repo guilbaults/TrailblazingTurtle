@@ -40,12 +40,17 @@ class Module(object):
 
 def find_loaded_modules(jobscript):
     try:
-        modules = set()
+        modules_str = []
         for line in jobscript.split('\n'):
             match = re.search(r'^\s*module load\s+(.*)$', line)
             if match:
                 for module_str in match.group(1).split():
-                    modules.add(Module(module_str))
+                    if module_str not in modules_str:
+                        # only add unique modules, in order they are loaded
+                        modules_str.append(module_str)
+        modules = []
+        for module_str in modules_str:
+            modules.append(Module(module_str))
         return modules
     except: # noqa
         raise ValueError('Could not parse jobscript to find loaded modules')

@@ -7,7 +7,7 @@
 {% block content %}
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-<p><a class="btn btn-primary" href="/secure/notes/new?account={{account}}">Create a new note</a></p>
+<p><a class="btn btn-primary" href="/secure/notes/new?account={{account}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
 <h1>{% translate "Account use of" %} {{ account }}</h1>

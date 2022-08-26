@@ -12,6 +12,8 @@ from jobstats.models import JobScript
 from jobstats.serializers import JobSerializer, JobScriptSerializer
 from notes.models import Note
 import statistics
+from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
+from jobstats.analyze_job import Comment
 
 GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
@@ -92,15 +94,10 @@ def job(request, username, job_id):
     try:
         job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
     except JobTable.DoesNotExist:
-        return HttpResponseNotFound('<h1>Job not found</h1>')
+        return HttpResponseNotFound('Job not found')
     context['job'] = job
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
-
-    try:
-        context['job_script'] = JobScript.objects.filter(id_job=job_id).get()
-    except JobScript.DoesNotExist:
-        context['job_script'] = None
 
     if 'slurm_exporter' in settings.EXPORTER_INSTALLED:
         try:
@@ -117,7 +114,7 @@ def job(request, username, job_id):
                 stats_priority = prom.query_last(query_priority)
                 context['priority'] = stats_priority[0]['value'][1]
         except ValueError:
-            context['priority'] = 'N/A'
+            context['priority'] = None
 
     if job.time_start_dt() is None:
         return render(request, 'jobstats/job.html', context)
@@ -127,14 +124,14 @@ def job(request, username, job_id):
         stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
         context['cpu_used'] = statistics.mean(stats_cpu[1])
     except ValueError:
-        context['cpu_used'] = 'N/A'
+        context['cpu_used'] = None
 
     try:
         query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}", {}}})'.format(job_id, prom.get_filter())
         stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
         context['mem_used'] = max(stats_mem[1])
     except ValueError:
-        context['mem_used'] = 'N/A'
+        context['mem_used'] = None
 
     if job.gpu_count() > 0:
         try:
@@ -142,14 +139,14 @@ def job(request, username, job_id):
             stats_gpu_util = prom.query_prometheus(query_gpu_util, job.time_start_dt(), job.time_end_dt())
             context['gpu_used'] = statistics.mean(stats_gpu_util[1])
         except ValueError:
-            context['gpu_used'] = 'N/A'
+            context['gpu_used'] = None
 
         try:
             query_gpu_mem = 'sum(slurm_job_memory_usage_gpu{{slurmjobid="{}", {}}})/(1024*1024*1024)'.format(job_id, prom.get_filter())
             stats_gpu_mem = prom.query_prometheus(query_gpu_mem, job.time_start_dt(), job.time_end_dt())
             context['gpu_mem'] = max(stats_gpu_mem[1]) / GPU_MEMORY[job.gpu_type()] * 100
         except ValueError:
-            context['gpu_mem'] = 'N/A'
+            context['gpu_mem'] = None
 
         try:
             query_gpu_power = 'sum(slurm_job_power_gpu{{slurmjobid="{}", {}}})/(1000)'.format(job_id, prom.get_filter())
@@ -157,7 +154,7 @@ def job(request, username, job_id):
             used_power = statistics.mean(stats_gpu_power[1]) - GPU_IDLE_POWER[job.gpu_type()]
             context['gpu_power'] = used_power / GPU_FULL_POWER[job.gpu_type()] * 100
         except ValueError:
-            context['gpu_power'] = 'N/A'
+            context['gpu_power'] = None
 
     # Adjust the precision of the graphs.
     if job.used_time() is not None:
@@ -173,6 +170,65 @@ def job(request, username, job_id):
 
     if request.user.is_staff:
         context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
+
+    comments = []
+    try:
+        context['job_script'] = JobScript.objects.get(id_job=job_id)
+        try:
+            modules = find_loaded_modules(context['job_script'].submit_script)
+            context['loaded_modules'] = sorted(modules, key=lambda x: x.name)
+            comments += analyze_jobscript(context['job_script'].submit_script, context['loaded_modules'], job)
+        except ValueError:
+            context['loaded_modules'] = None  # Could not parse jobscript to find loaded modules
+    except JobScript.DoesNotExist:
+        context['job_script'] = None
+
+    if context['cpu_used'] is not None:
+        if context['cpu_used'] < 1 and context['tres_req']['total_cores'] > 1:
+            comments += [Comment(
+                _('Less than 1 core was used on average but {} were asked for, this look like a serial job').format(context['tres_req']['total_cores']),
+                'critical',
+                'https://docs.alliancecan.ca/wiki/Running_jobs#Serial_job')]
+
+        if (context['tres_req']['total_cores'] / 2) > context['cpu_used']:
+            comments += [Comment(
+                _('Less than half the CPU compute cycle were used').format(context['tres_req']['total_cores']),
+                'critical')]
+
+    if context['mem_used'] is not None:
+        if context['total_mem'] / 10 > context['mem_used']:
+            comments += [Comment(
+                _('Less than 10% of the asked memory was used, please adjust the amount of memory requested'),
+                'critical')]
+
+    if job.state == JobTable.StatesJob.COMPLETE:
+        if job.timelimit < 60:  # in minutes
+            comments += [Comment(
+                _('Less than 1 hour was asked, please packages your short jobs with GLOST or GNU parallel if you want to run 100+ short jobs'),
+                'critical',
+                'https://docs.alliancecan.ca/wiki/GLOST')]
+        elif job.used_time() < 3600:
+            comments += [Comment(
+                _('Less than 1 hour was used, please packages your short jobs with GLOST or GNU parallel if you want to run 100+ short jobs'),
+                'warning',
+                'https://docs.alliancecan.ca/wiki/GLOST')]
+
+    if job.state == JobTable.StatesJob.OOM:
+        comments += [Comment(
+            _('Out of memory, increase memory asked and retry this job'),
+            'critical')]
+
+    if job.state == JobTable.StatesJob.NODE_FAIL:
+        comments += [Comment(
+            _('Node failure, this is a temporary issue and probably not caused by the job'),
+            'critical')]
+
+    if len(job.nodes()) > 1:
+        comments += [Comment(
+            _('This job is using multiple nodes'),
+            'info')]
+
+    context['comments'] = sorted(comments, key=lambda x: x.line_number)
 
     return render(request, 'jobstats/job.html', context)
 

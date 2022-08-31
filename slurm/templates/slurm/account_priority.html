@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Account priority" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Account priority" %}</h1>
+<h2>{% translate "Account priority when jobs started" %}</h2>
+<form>
+  <p>{% translate "Filter by account" %}: <select select data-placeholder="" class="chosen-select" id="select-account" name="account">
+    <option value="{{ account }}">{{ account }}</option>
+  </select></p>
+  <p>{% translate "Start time:" %} <input type="text" name="start" placeholder="{% translate "Start time" %}"  id="datepicker_start" value="{{ start | date:'Y-m-d' }}"></p></p>
+  <p>{% translate "End time:" %} <input type="text" name="end" placeholder="{% translate "End time" %}"  id="datepicker_end" value="{{ end | date:'Y-m-d' }}"></p></p>
+  <p><input type="submit" value="{% translate "Search" %}"></p>
+</form>
+<p>{% translate "This table shows the account priority when jobs started for each partition. If the partition have a median under 1, this mean jobs probably are \"too easy\" to start and too much resources are in this partition" %}</p>
+<table class="table table-striped" id="partitions_stats_table">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">{% translate "Partition" %}</th>
+            <th scope="col">{% translate "Count" %}</th>
+            <th scope="col">{% translate "Median" %}</th>
+            <th scope="col">{% translate "Mean" %}</th>
+            <th scope="col">{% translate "Max" %}</th>
+            <th scope="col">{% translate "Min" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<script>
+function round(data, type) {
+    if(type === 'display'){
+        if(data){
+            return parseFloat(data).toFixed(2);
+        }
+    }
+    return data;
+}
+
+$(document).ready(function () {
+    $( "#datepicker_start" ).datepicker({
+      dateFormat: 'yy-mm-dd',
+    });
+    $( "#datepicker_end" ).datepicker({
+      dateFormat: 'yy-mm-dd',
+    });
+
+    $.getJSON('../account_list.json', function(data) {
+      $.each(data.accounts, function(key, val) {
+        $('#select-account').append('<option value="' + val + '">' + val + '</option>');
+      });
+      $('#select-account').chosen();
+    });
+
+    $('#partitions_stats_table').DataTable({
+        paging: false,
+        {% if account %}
+        ajax: 'account_priority.json?account={{ account }}&start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+        {% else %}
+        ajax: 'account_priority.json?start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+        {% endif %}
+        columns: [
+        { data: 'name' },
+        { data: 'count' },
+        { data: 'median',
+          render: round,},
+        { data: 'mean',
+          render: round,},
+        { data: 'max',
+          render: round,},
+        { data: 'min',
+          render: round,},
+        ],
+        processing: true,
+        language: { processing: "Loading <span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>" },
+    });
+});
+</script>
+
+{% endblock content %}

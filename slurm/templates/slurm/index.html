@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Slurm" %}{% endblock title %}
+
+{% block content %}
+<ul>
+  <li><a href="account_priority">{% translate "Account priority" %}</a></li>
+  <li><a href="job_length">{% translate "Job length" %}</a></li>
+</ul>
+{% endblock content %}
+

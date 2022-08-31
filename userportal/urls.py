@@ -46,6 +46,7 @@ urlpatterns = [
     path('saml2/', include('djangosaml2.urls')),
 
     path('secure/notes/', include('notes.urls')),
+    path('secure/slurm/', include('slurm.urls')),
 ]
 
 if settings.DEBUG:

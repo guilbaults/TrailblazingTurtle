@@ -25,7 +25,7 @@ def convert_ldap_to_allocation(ldap_object):
                     'name': alloc.name + '_gpu',
                     'gpu': None,
                 })
-    return(computes)
+    return computes
 
 
 def cc_storage_allocations(username):

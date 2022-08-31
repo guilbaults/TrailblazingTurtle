@@ -227,7 +227,6 @@ This will start the server on port 8000 and remove the requirement to authentica
 
 RPMs required for production
 
-* `shibboleth`
 * `python36-virtualenv` 
 * `python3-mod_wsgi`
 * `openldap-devel`
@@ -251,7 +250,7 @@ openssl req -nodes -new -x509 -newkey rsa:2048 -days 3650 -keyout private.key -o
 ```
 
 Download the metadata file from the IDP as metadata.xml
-Our shibboleth only seems to work with Redirect binding, so we remove manually the POST binding for SingleSignOnService.
+Our Shibboleth IDP only seems to work with Redirect binding, so we remove manually the POST binding for SingleSignOnService.
 
 ## API
 An API is available to modify resources in the database. This is used by the jobscript collector. A local superuser need to be created:
@@ -299,17 +298,6 @@ python manage.py migrate
     Require all granted
   </Directory>
 
-  <Location "/secure">
-    Require shib-session
-    AuthType shibboleth
-    ShibRequestSetting requireSession 1
-  </Location>
-
-  <Location "/Shibboleth.sso">
-    Require all granted
-    SetHandler shib
-  </Location>
-
   ## Logging
   ErrorLog "/var/log/httpd/userportal.int.ets1.calculquebec.ca_error_ssl.log"
   ServerSignature Off
@@ -323,7 +311,6 @@ python manage.py migrate
   WSGIDaemonProcess userportal python-home=/var/www/userportal-env python-path=/var/www/userportal/
   WSGIProcessGroup userportal
   WSGIScriptAlias / "/var/www/userportal/userportal/wsgi.py"
-  ## Shibboleth
 </VirtualHost>
 ```
 

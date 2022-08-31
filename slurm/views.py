@@ -1,5 +1,6 @@
 from userportal.common import staff, Prometheus
 from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from slurm.models import JobTable, AssocTable
 import time
@@ -33,11 +34,13 @@ def get_start_end(request):
     return start, end
 
 
+@login_required
 @staff
 def index(request):
     return render(request, 'slurm/index.html')
 
 
+@login_required
 @staff
 def account_priority(request):
     context = {}
@@ -50,6 +53,7 @@ def account_priority(request):
     return render(request, 'slurm/account_priority.html', context)
 
 
+@login_required
 @staff
 def account_priority_json(request):
     account = request.GET.get('account', None)
@@ -108,6 +112,7 @@ def account_priority_json(request):
     return JsonResponse({'data': partitions_stats})
 
 
+@login_required
 @staff
 def job_length(request):
     context = {}
@@ -120,6 +125,7 @@ def job_length(request):
     return render(request, 'slurm/job_length.html', context)
 
 
+@login_required
 @staff
 def job_length_json(request):
     account = request.GET.get('account', None)
@@ -158,6 +164,7 @@ def job_length_json(request):
     return JsonResponse({'data': stats_per_partition})
 
 
+@login_required
 @staff
 def job_timeout_json(request):
     account = request.GET.get('account', None)
@@ -196,6 +203,7 @@ def job_timeout_json(request):
     return JsonResponse({'data': data})
 
 
+@login_required
 @staff
 def account_list(request):
     accounts = AssocTable.objects.filter(deleted=False).values('acct').distinct()

@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Slurm partitions" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Slurm partitions" %}</h1>
+<form>
+    <p>{% translate "Filter by account" %}: <select select data-placeholder="" class="chosen-select" id="select-account" name="account">
+        <option value="{{ account }}">{{ account }}</option>
+    </select></p>
+    <p>{% translate "Start time:" %} <input type="text" name="start" placeholder="{% translate "Start time" %}"  id="datepicker_start" value="{{ start | date:'Y-m-d' }}"></p></p>
+    <p>{% translate "End time:" %} <input type="text" name="end" placeholder="{% translate "End time" %}"  id="datepicker_end" value="{{ end | date:'Y-m-d' }}"></p></p>
+    <p><input type="submit" value="{% translate "Search" %}"></p>
+</form>
+<h2>{% translate "Job length prediction" %}</h2>
+<p>{% translate "This table show how good the users are at estimating their job length by partition. The % represent how much of the predicted time the user actually used, so if the user request 24 hours and only use 12, this is reported as 50%" %}</p>
+<table class="table table-striped" id="partitions_stats_table">
+    <thead class="thead-dark">
+        <tr>
+            <th scope="col">{% translate "Partition" %}</th>
+            <th scope="col">{% translate "Count" %}</th>
+            <th scope="col">{% translate "Median" %}</th>
+            <th scope="col">{% translate "Mean" %}</th>
+            <th scope="col">{% translate "Max" %}</th>
+            <th scope="col">{% translate "Min" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+</table>
+
+<h2>{% translate "Job completed or timed out" %}</h2>
+<p>{% translate "This table show if user underestimated the length of their job by partition" %}</p>
+<table class="table table-striped" id="timeouts_stats_table">
+  <thead class="thead-dark">
+      <tr>
+          <th scope="col">{% translate "Partition" %}</th>
+          <th scope="col">{% translate "Completed" %}</th>
+          <th scope="col">{% translate "Timeout" %}</th>
+          <th scope="col">{% translate "Ratio" %}</th>
+      </tr>
+  </thead>
+  <tbody>
+  </tbody>
+</table>
+
+<script>
+function round(data, type) {
+    if(type === 'display'){
+        if(data){
+            return parseFloat(data).toFixed(2);
+        }
+    }
+    return data;
+}
+
+function percent(data, type) {
+    if(type === 'display'){
+        if(data){
+            return parseFloat(data*100).toFixed(2) + '%';
+        }
+    }
+    return data;
+}
+
+$(document).ready(function () {
+  $( "#datepicker_start" ).datepicker({
+    dateFormat: 'yy-mm-dd',
+  });
+  $( "#datepicker_end" ).datepicker({
+    dateFormat: 'yy-mm-dd',
+  });
+
+  $.getJSON('../account_list.json', function(data) {
+    $.each(data.accounts, function(key, val) {
+      $('#select-account').append('<option value="' + val + '">' + val + '</option>');
+    });
+    $('#select-account').chosen();
+  });
+
+  $('#partitions_stats_table').DataTable({
+    paging: false,
+    {% if account %}
+    ajax: 'length.json?account={{ account }}&start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+    {% else %}
+    ajax: 'length.json?start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+    {% endif %}
+    columns: [
+      { data: 'name' },
+      { data: 'count' },
+      { data: 'median',
+        render: percent,},
+      { data: 'mean',
+        render: percent,},
+      { data: 'max',
+        render: percent,},
+      { data: 'min',
+        render: percent,},
+    ],
+    processing: true,
+    language: { processing: "Loading <span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>" },
+  });
+
+  $('#timeouts_stats_table').DataTable({
+    paging: false,
+    {% if account %}
+    ajax: 'timeout.json?account={{ account }}&start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+    {% else %}
+    ajax: 'timeout.json?start={{ start | date:'Y-m-d' }}&end={{ end | date:'Y-m-d' }}',
+    {% endif %}
+    columns: [
+      { data: 'name' },
+      { data: 'completed'},
+      { data: 'timeout'},
+      { data: 'ratio',
+        render: percent,},
+    ],
+    processing: true,
+    language: { processing: "Loading <span class='spinner-border spinner-border-sm' role='status' aria-hidden='true'></span>" },
+  });
+});
+</script>
+
+{% endblock content %}

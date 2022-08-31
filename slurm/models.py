@@ -196,7 +196,7 @@ class JobTable(models.Model):
     exit_code = models.PositiveIntegerField()
     flags = models.PositiveIntegerField()
     job_name = models.TextField()
-    id_assoc = models.PositiveIntegerField()
+    id_assoc = models.ForeignKey(AssocTable, on_delete=models.PROTECT, db_column='id_assoc')
     id_array_job = models.PositiveIntegerField()
     id_array_task = models.PositiveIntegerField()
     id_block = models.TextField(blank=True, null=True)

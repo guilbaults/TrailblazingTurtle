@@ -62,7 +62,7 @@ def stats_for_users(users=None):
         users='|'.join(users),
         filter=prom.get_filter())
     stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
-    return(stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max)
+    return (stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max)
 
 
 @login_required

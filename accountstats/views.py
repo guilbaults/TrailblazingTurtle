@@ -449,7 +449,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
             alloc = allocation['cpu']
     else:
         alloc = 0
-    if(account.startswith('def-') is False):
+    if account.startswith('def-') is False:
         data['lines'].append({
             'x': x,
             'y': [alloc] * len(x),

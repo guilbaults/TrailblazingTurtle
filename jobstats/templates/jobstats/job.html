@@ -8,103 +8,135 @@
 {% block content %}
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">{% translate "Create a new note" %}</a></p>
+  <p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
-<h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
-<p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
-<div class="progress">
-  {% if job.time_start != 0 and job.time_end == 0 %}
-  <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
-  {% else %}
-  <div class="progress-bar bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
-  {% endif%}
-</div>
+{% if multiple_jobs %}
+  <h2>{% translate "Jobs" %}</h2>
+  <table id="jobs" class="table table-striped table-bordered" style="width:100%">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job ID" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "Submit time" %}</th>
+        <th scope="col">{% translate "Queue time" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for job in jobs %}
+      <tr>
+        <td><a href="/secure/jobstats/{{username}}/{{job.id_job}}">{{job.id_job}}</a></td>
+        <td>{{job.job_name}}</td>
+        <td>{{job.time_submit_dt | date:"c"}}</td>
+        <td>{{job.time_in_queue_dt}}</td>
+        <td>{{job.time_start_dt | date:"c"}}</td>
+        <td>{{job.time_end_dt | date:"c"}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-{% if loaded_modules %}
-<h3>{% translate "Loaded modules" %}</h3>
-  <ul class="list-group d-inline-block">
-    {% for module in loaded_modules %}
-    <li class="list-group-item d-flex justify-content-between align-items-center">{{module.name}}<span class="badge badge-primary badge-pill">{{module.version}}</span></li>
-    {% endfor %}
-  </ul>
-{% endif %}
-
-{% if comments %}
-<h3>{% translate "Job analysis" %}</h3>
-<ul class="list-group">
-  {% for comment in comments %}
-  {% if comment.line_number %}
-    {% if comment.url%}
-      <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: <a href="{{comment.url}}">{{comment.comment}}</a></li>
-    {% else %}
-      <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: {{comment.comment}}</li>
-    {% endif %}
-  {% else %}
-  {% if comment.url%}
-      <li class="list-group-item {{comment.display_severity}}"><a href="{{comment.url}}">{{comment.comment}}</a></li>
-    {% else %}
-      <li class="list-group-item {{comment.display_severity}}">{{comment.comment}}</li>
-    {% endif %}
-  {% endif %}
-  {% endfor %}
-</ul>
-{% endif %}
-
-{% if job_script %}
-<p>
-  <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_script" aria-expanded="false" aria-controls="collapse_job_script">
-    {% translate "Show submited job script" %}
-  </button>
-</p>
-<div class="collapse" id="collapse_job_script">
-  <div class="card card-body">
-    <pre><code class="language-bash">{{job_script.submit_script}}</code></pre>
-  </div>
-</div>
 {% else %}
-<p>
-  <button class="btn btn-secondary" type="button">
-    {% translate "Submited job script is not available" %}
-  </button>
-</p>
-{% endif %}
-<h2>{% translate "Scheduler info" %}</h2>
-<table class="table table-striped">
-  <thead class="thead-dark">
-    <tr>
-      <th scope="col">{% translate "Account" %}</th>
-      <th scope="col">{% translate "Submit time" %}</th>
-      <th scope="col">{% translate "Queue time" %}</th>
-      <th scope="col">{% translate "Start time" %}</th>
-      <th scope="col">{% translate "End time" %}</th>
-      <th scope="col">
-        {% if job.time_start_dt %}
-        <span data-toggle="tooltip" data-placement="top" title="{% translate "LevelFS at job start" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
-        {% else %}
-        <span data-toggle="tooltip" data-placement="top" title="{% translate "Current LevelFS" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
-        {% endif %}
-      </th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        {% if 'accountstats' in settings.INSTALLED_APPS %}
-          <a href="/secure/accountstats/{{ job.account }}">{{job.account}}</a>
-        {% else %}
-          {{job.account}}
-        {% endif %}
-      </td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
-      <td>{{job.time_in_queue_dt | naturaltime}}</td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
-      <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
-      <td>{{priority}}</td>
-    </tr>
-  </tbody>
-</table>
 
+  <h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
+  <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
+  <div class="progress">
+    {% if job.time_start != 0 and job.time_end == 0 %}
+    <div class="progress-bar progress-bar-striped progress-bar-animated bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
+    {% else %}
+    <div class="progress-bar bg-{{job.status_badge}}" role="progressbar" aria-valuenow="{{job.wallclock_progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{job.wallclock_progress}}%"></div>
+    {% endif%}
+  </div>
+
+  {% if loaded_modules %}
+    <h3>{% translate "Loaded modules" %}</h3>
+    <ul class="list-group d-inline-block">
+      {% for module in loaded_modules %}
+      <li class="list-group-item d-flex justify-content-between align-items-center">{{module.name}}<span class="badge badge-primary badge-pill">{{module.version}}</span></li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if comments %}
+    <h3>{% translate "Job analysis" %}</h3>
+    <ul class="list-group">
+      {% for comment in comments %}
+      {% if comment.line_number %}
+        {% if comment.url%}
+          <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: <a href="{{comment.url}}">{{comment.comment}}</a></li>
+        {% else %}
+          <li class="list-group-item {{comment.display_severity}}">{% translate "Line" %} {{comment.line_number}}: {{comment.comment}}</li>
+        {% endif %}
+      {% else %}
+      {% if comment.url%}
+          <li class="list-group-item {{comment.display_severity}}"><a href="{{comment.url}}">{{comment.comment}}</a></li>
+        {% else %}
+          <li class="list-group-item {{comment.display_severity}}">{{comment.comment}}</li>
+        {% endif %}
+      {% endif %}
+      {% endfor %}
+    </ul>
+  {% endif %}
+
+  {% if job_script %}
+    <p>
+      <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_script" aria-expanded="false" aria-controls="collapse_job_script">
+        {% translate "Show submited job script" %}
+      </button>
+    </p>
+    <div class="collapse" id="collapse_job_script">
+      <div class="card card-body">
+        <pre><code class="language-bash">{{job_script.submit_script}}</code></pre>
+      </div>
+    </div>
+  {% else %}
+    <p>
+      <button class="btn btn-secondary" type="button">
+        {% translate "Submited job script is not available" %}
+      </button>
+    </p>
+  {% endif %}
+
+  <h2>{% translate "Scheduler info" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Account" %}</th>
+        <th scope="col">{% translate "Submit time" %}</th>
+        <th scope="col">{% translate "Queue time" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+        <th scope="col">
+          {% if job.time_start_dt %}
+          <span data-toggle="tooltip" data-placement="top" title="{% translate "LevelFS at job start" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
+          {% else %}
+          <span data-toggle="tooltip" data-placement="top" title="{% translate "Current LevelFS" %}">{% translate "Priority" %} <span data-feather="info"></span></span>
+          {% endif %}
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          {% if 'accountstats' in settings.INSTALLED_APPS %}
+            <a href="/secure/accountstats/{{ job.account }}">{{job.account}}</a>
+          {% else %}
+            {{job.account}}
+          {% endif %}
+        </td>
+        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
+        <td>{{job.time_in_queue_dt | naturaltime}}</td>
+        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
+        <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
+        <td>{{priority}}</td>
+      </tr>
+    </tbody>
+  </table>
+{% endif %}
+
+{% if multiple_jobs is False %}
 <h2>{% translate "Resources" %}</h2>
 <table class="table table-striped">
   <thead class="thead-dark">
@@ -135,13 +167,13 @@
       <td>{{total_mem | filesizeformat}} </td>
       <td>{{mem_used | filesizeformat}}</td>
     </tr>
-{% if job.gpu_count > 0 %}
+    {% if gpu_count > 0 %}
     <tr>
       <td>{% translate "GPUs per node" %}</td>
-      <td>{{job.gpu_count}}x {{job.gpu_type}}</td>
+      <td>{{gpu_count}}x {{job.gpu_type}}</td>
       <td>{% translate "Cycles" %}: {{gpu_used | floatformat:-2 }}%, {% translate "Memory" %}: {{gpu_mem | floatformat:-2 }}%, {% translate "Power" %}: {{gpu_power | floatformat:-2 }}%</td>
     </tr>
-{% endif %}
+    {% endif %}
 
   {% if job.time_start_dt %}
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
@@ -212,6 +244,7 @@
   {% endif %}
   </tbody>
 </table>
+{% endif %}
 
 {% if job.time_start_dt %}
   <h2>{% translate "Resources used (details)" %}</h2>
@@ -247,7 +280,7 @@
   <div id="graph_lustre_mdt"></div>
   <div id="graph_lustre_ost"></div>
 
-  {% if job.gpu_count > 0 %}
+  {% if gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>
     <h4>{% translate "GPU Compute cycle used" %}</h4>
     <dl>
@@ -276,7 +309,7 @@
     <div id="graph_gpu_nvlink"></div>
   {% endif %}
 
-  {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+  {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}
     <h2>{% translate "Whole node resources" %}</h2>
     <p>{% translate "Those stats are not accurate when the node is shared with multiple users" %}</p>
     <h3>{% translate "Infiniband" %}</h3>
@@ -301,7 +334,7 @@
   loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
   loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
 
-  {% if job.gpu_count > 0 %}
+  {% if gpu_count > 0 %}
     loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json?step={{step}}');
     loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json?step={{step}}');
     loadGraph('graph_gpu_memory', 'graph/gpu_memory.json?step={{step}}');
@@ -309,21 +342,51 @@
     loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json?step={{step}}');
     loadGraph('graph_gpu_nvlink', 'graph/gpu_nvlink.json?step={{step}}');
   {% endif %}
-  {% if 'node_exporter' in settings.EXPORTER_INSTALLED %}
+
+  {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}
     loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json?step={{step}}');
     loadGraph('graph_disk_iops', 'graph/disk_iops.json?step={{step}}');
     loadGraph('graph_disk_bdw', 'graph/disk_bdw.json?step={{step}}');
     loadGraph('graph_disk_used', 'graph/disk_used.json?step={{step}}');
   {% endif %}
 
-  {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
+  {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False%}
     loadGraph('graph_power', 'graph/power.json?step={{step}}');
   {% endif %}
 
   hljs.highlightAll();
 
   hljs.initLineNumbersOnLoad();
+
+  {% if multiple_jobs %}
+  $(document).ready(function() {
+    luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
+    function parse_time(data, type) {
+      if (data == null) {
+        return '-';
+      }
+      if (type == 'display') {
+        return DateTime.fromISO(data).toLocaleString(DateTime.DATETIME_MED);
+      }
+      return data;
+    }
+
+    $('#jobs').DataTable({
+      columns: [
+        {},
+        {},
+        {render: parse_time},
+        {},
+        {render: parse_time},
+        {render: parse_time},
+      ]
+    });
+
+  });
+  {% endif %}
   </script>
+  {% if multiple_jobs is False %}
   <script src="{% static 'jobstats/job.js' %}"></script>
+  {% endif %}
 {% endif %}
 {% endblock content %}

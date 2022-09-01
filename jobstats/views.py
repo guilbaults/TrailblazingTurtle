@@ -14,6 +14,7 @@ from notes.models import Note
 import statistics
 from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
+from django.http import Http404
 
 GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
 GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
@@ -86,16 +87,109 @@ def user(request, username):
     return render(request, 'jobstats/user.html', context)
 
 
+def jobid_str_to_list(jobid_str):
+    # split range of jobids in format 100-105,107,109,110-120 to a list of jobids
+    jobs_blocks = jobid_str.split(',')
+    jobs = []
+    for block in jobs_blocks:
+        if '-' in block:
+            start, end = block.split('-')
+            jobs += range(int(start), int(end) + 1)
+        else:
+            jobs.append(int(block))
+    return jobs
+
+
+def get_start_end_jobs(jobs):
+    start = None
+    end = None
+
+    for job in jobs:
+        if start is None or job.time_start_dt() < start:
+            start = job.time_start_dt()
+        if end is None or job.time_end_dt() > end:
+            end = job.time_end_dt()
+
+    return start, end
+
+
+def get_job_ids(jobs):
+    return [job.id_job for job in jobs]
+
+
+def get_job_ids_regex(jobs):
+    return '|'.join([str(job.id_job) for job in jobs])
+
+
+def get_step(start, end=None):
+    if end is None:
+        end = datetime.now()
+    if start is None:
+        start = datetime.now()
+    delta = end - start
+    if delta.total_seconds() < 3600 * 24:
+        # less than one day
+        return '30s'
+    elif delta.total_seconds() < 3600 * 24 * 7:
+        # less than a week
+        return '15m'
+    else:
+        return '1h'
+
+
+def context_job_info(username, job_id):
+    context = {'job_id': job_id, 'username': username}
+    uid = username_to_uid(username)
+    context['uid'] = uid
+    jobs = JobTable.objects.filter(id_user=uid).filter(id_job__in=jobid_str_to_list(job_id)).all()
+    if len(jobs) == 0:
+        raise Http404()
+    elif len(jobs) > 1:
+        context['multiple_jobs'] = True
+        start, end = get_start_end_jobs(jobs)
+        if end is None:
+            end = datetime.now()
+
+        # Create a fake job with the start and end times of the first and last job
+        context['job'] = JobTable(
+            id_job=job_id,
+            id_user=uid,
+            time_start=start.timestamp(),
+            time_end=end.timestamp(),
+        )
+
+        context['step'] = get_step(start, end)
+        context['jobs'] = jobs
+        context['id_regex'] = get_job_ids_regex(context['jobs'])
+        context['gpu_count'] = 0
+        for job in jobs:
+            context['gpu_count'] += job.gpu_count()
+    else:
+        context['job'] = jobs[0]
+        context['multiple_jobs'] = False
+        context['id_regex'] = str(context['job'].id_job)
+        context['step'] = get_step(context['job'].time_start_dt(), context['job'].time_end_dt())
+        context['gpu_count'] = context['job'].gpu_count()
+    return context
+
+
 @login_required
 @user_or_staff
 def job(request, username, job_id):
-    uid = username_to_uid(username)
-    context = {'job_id': job_id, 'username': username}
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
-    context['job'] = job
+    context = context_job_info(username, job_id)
+
+    if context['multiple_jobs']:
+        return render(request, 'jobstats/job.html', context)
+
+    # continue with single job
+    job = context['job']
+
+    # Adjust the precision of the graphs.
+    context['step'] = get_step(job.time_start_dt(), job.time_end_dt())
+
+    if request.user.is_staff:
+        context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
+
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
 
@@ -115,6 +209,8 @@ def job(request, username, job_id):
                 context['priority'] = stats_priority[0]['value'][1]
         except ValueError:
             context['priority'] = None
+        except IndexError:
+            context['priority'] = None
 
     if job.time_start_dt() is None:
         return render(request, 'jobstats/job.html', context)
@@ -133,7 +229,7 @@ def job(request, username, job_id):
     except ValueError:
         context['mem_used'] = None
 
-    if job.gpu_count() > 0:
+    if context['gpu_count'] > 0:
         try:
             query_gpu_util = 'sum(slurm_job_utilization_gpu{{slurmjobid="{}", {}}})'.format(job_id, prom.get_filter())
             stats_gpu_util = prom.query_prometheus(query_gpu_util, job.time_start_dt(), job.time_end_dt())
@@ -155,21 +251,6 @@ def job(request, username, job_id):
             context['gpu_power'] = used_power / GPU_FULL_POWER[job.gpu_type()] * 100
         except ValueError:
             context['gpu_power'] = None
-
-    # Adjust the precision of the graphs.
-    if job.used_time() is not None:
-        seconds = job.used_time()
-        if seconds < 24 * 60 * 60:
-            # Less than a day
-            context['step'] = '30s'
-        elif seconds < 7 * 24 * 60 * 60:
-            # Less than a week
-            context['step'] = '15m'
-        else:
-            context['step'] = '1h'
-
-    if request.user.is_staff:
-        context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
 
     comments = []
     try:
@@ -236,14 +317,14 @@ def job(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_cpu(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
-    query = 'rate(slurm_job_core_usage_total{{slurmjobid="{}", {}}}[2m]) / 1000000000'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=request.GET.get('step'))
+    query = 'rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[2m]) / 1000000000'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     data = {'lines': []}
     for line in stats:
@@ -251,20 +332,41 @@ def graph_cpu(request, username, job_id):
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        if context['multiple_jobs']:
+            name = '{} {} core {}'.format(line['metric']['slurmjobid'], compute_name, core_num)
+        else:
+            name = 'core {}'.format(core_num)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} core {}'.format(compute_name, core_num)
+            'name': name,
         })
 
     data['layout'] = {
         'yaxis': {
-            'range': [0, job.parse_tres_req()['total_cores']],
             'title': _('Cores'),
         }
     }
+
+    if context['multiple_jobs']:
+        query_count = 'count(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}})'.format(context['id_regex'], prom.get_filter())
+        line = prom.query_prometheus(
+            query_count,
+            context['job'].time_start_dt(),
+            context['job'].time_end_dt(),
+            step=sanitize_step(request))
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
+        y = line[1]
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': _('Allocated cores'),
+        })
+    else:
+        data['layout']['yaxis']['range'] = [0, context['job'].parse_tres_req()['total_cores']],
 
     return JsonResponse(data)
 
@@ -352,11 +454,7 @@ def graph_mem_user(request, username):
 @login_required
 @user_or_staff
 def graph_mem(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
     data = {'lines': []}
 
@@ -374,20 +472,45 @@ def graph_mem(request, username, job_id):
     ]
 
     for stat in stat_types:
-        query = '{}{{slurmjobid="{}", {}}}/(1024*1024*1024)'.format(stat[0], job_id, prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        query = '{}{{slurmjobid=~"{}", {}}}/(1024*1024*1024)'.format(stat[0], context['id_regex'], prom.get_filter())
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['job'].time_start_dt(),
+            context['job'].time_end_dt(),
+            step=sanitize_step(request))
         for line in stats:
             compute_name = line['metric']['instance'].split(':')[0]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
+            if context['multiple_jobs']:
+                name = '{} {} {}'.format(line['metric']['slurmjobid'], stat[1], compute_name)
+            else:
+                name = '{} {}'.format(stat[1], compute_name)
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(stat[1], compute_name)
+                'name': name
             })
         if stat[0] == 'slurm_job_memory_limit':
             maximum = max(max(map(lambda x: x['y'], stats)))
+
+    if context['multiple_jobs']:
+        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
+        line = prom.query_prometheus(
+            query_count,
+            context['job'].time_start_dt(),
+            context['job'].time_end_dt(),
+            step=sanitize_step(request))
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
+        y = line[1]
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': _('Allocated memory'),
+        })
+        maximum = max(y)
 
     data['layout'] = {
         'yaxis': {
@@ -403,17 +526,17 @@ def graph_mem(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_mdt(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
-    query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid="{job_id}", {filter}}}[{step}])) by (operation, fs) !=0'.format(
-        job_id=job_id,
+    query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid=~"{job_id}", {filter}}}[{step}])) by (operation, fs, jobid) !=0'.format(
+        job_id=context['id_regex'],
         step=sanitize_step(request, minimum="3m"),
         filter=prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum="3m"))
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum="3m"))
 
     data = {'lines': []}
     for line in stats:
@@ -421,12 +544,16 @@ def graph_lustre_mdt(request, username, job_id):
         fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        if context['multiple_jobs']:
+            name = '{} {} {}'.format(line['metric']['jobid'], operation, fs)
+        else:
+            name = '{} {}'.format(operation, fs)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(operation, fs)
+            'name': name,
         })
 
     data['layout'] = {
@@ -467,20 +594,20 @@ def graph_lustre_mdt_user(request, username):
 @login_required
 @user_or_staff
 def graph_lustre_ost(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid="{job_id}",target=~".*-OST.*", {filter}}}[{step}])) by (fs)) / (1024*1024)'.format(
+        query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}])) by (fs, jobid)) / (1024*1024)'.format(
             i=i,
-            job_id=job_id,
+            job_id=context['id_regex'],
             step=sanitize_step(request, minimum="3m"),
             filter=prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum="3m"))
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['job'].time_start_dt(),
+            context['job'].time_end_dt(),
+            step=sanitize_step(request, minimum="3m"))
 
         for line in stats:
             fs = line['metric']['fs']
@@ -489,12 +616,16 @@ def graph_lustre_ost(request, username, job_id):
             else:
                 y = [-x for x in line['y']]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            if context['multiple_jobs']:
+                name = '{} {} {}'.format(line['metric']['jobid'], i, fs)
+            else:
+                name = '{} {}'.format(i, fs)
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
                 'fill': 'tozeroy',
-                'name': '{} {}'.format(i, fs)
+                'name': name,
             })
 
     data['layout'] = {
@@ -541,11 +672,7 @@ def graph_lustre_ost_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_utilization(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
     data = {'lines': []}
 
@@ -559,19 +686,27 @@ def graph_gpu_utilization(request, username, job_id):
     ]
 
     for q in queries:
-        query = '{}{{slurmjobid="{}", {}}}'.format(q[0], job_id, prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+        query = '{}{{slurmjobid=~"{}", {}}}'.format(q[0], context['id_regex'], prom.get_filter())
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['job'].time_start_dt(),
+            context['job'].time_end_dt(),
+            step=sanitize_step(request))
 
         for line in stats:
             gpu_num = int(line['metric']['gpu'])
             compute_name = line['metric']['instance'].split(':')[0]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
+            if context['multiple_jobs']:
+                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_num, compute_name)
+            else:
+                name = '{} GPU {} {}'.format(q[1], gpu_num, compute_name)
             data['lines'].append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} GPU {} {}'.format(q[1], gpu_num, compute_name)
+                'name': name,
             })
     data['layout'] = {
         'yaxis': {
@@ -618,14 +753,14 @@ def graph_gpu_utilization_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_memory_utilization(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
-    query = 'slurm_job_utilization_gpu_memory{{slurmjobid="{}", {}}}'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query = 'slurm_job_utilization_gpu_memory{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     data = {'lines': []}
     for line in stats:
@@ -633,11 +768,15 @@ def graph_gpu_memory_utilization(request, username, job_id):
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        if context['multiple_jobs']:
+            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+        else:
+            name = 'GPU {} {}'.format(gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': '{} GPU {}'.format(compute_name, gpu_num)
+            'name': name,
         })
     data['layout'] = {
         'yaxis': {
@@ -652,14 +791,14 @@ def graph_gpu_memory_utilization(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_memory(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
-    query = 'slurm_job_memory_usage_gpu{{slurmjobid="{}", {}}} /(1024*1024*1024)'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query = 'slurm_job_memory_usage_gpu{{slurmjobid=~"{}", {}}} /(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     data = {'lines': []}
     for line in stats:
@@ -668,11 +807,15 @@ def graph_gpu_memory(request, username, job_id):
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        if context['multiple_jobs']:
+            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_type, gpu_num, compute_name)
+        else:
+            name = '{} {} GPU {}'.format(gpu_type, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': '{} GPU {}'.format(compute_name, gpu_num)
+            'name': name,
         })
     data['layout'] = {
         'yaxis': {
@@ -687,14 +830,14 @@ def graph_gpu_memory(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_power(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
-    query = 'slurm_job_power_gpu{{slurmjobid="{}", {}}}/1000'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query = 'slurm_job_power_gpu{{slurmjobid=~"{}", {}}}/1000'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     data = {'lines': []}
     for line in stats:
@@ -703,11 +846,15 @@ def graph_gpu_power(request, username, job_id):
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        if context['multiple_jobs']:
+            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_type, gpu_num, compute_name)
+        else:
+            name = '{} {} GPU {}'.format(gpu_type, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': '{} GPU {}'.format(compute_name, gpu_num)
+            'name': name,
         })
 
     data['lines'].append({
@@ -776,15 +923,15 @@ def graph_gpu_power_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_pcie(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid=~"{}", {}}}[5m])'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
@@ -795,11 +942,15 @@ def graph_gpu_pcie(request, username, job_id):
         else:
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        if context['multiple_jobs']:
+            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+        else:
+            name = '{} {} GPU {}'.format(direction, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
+            'name': name,
         })
 
     data['layout'] = {
@@ -814,15 +965,15 @@ def graph_gpu_pcie(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_nvlink(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(job_id, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(context['id_regex'], prom.get_filter())
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request))
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
@@ -833,11 +984,15 @@ def graph_gpu_nvlink(request, username, job_id):
         else:
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        if context['multiple_jobs']:
+            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+        else:
+            name = '{} {} GPU {}'.format(direction, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': '{} GPU{} {}'.format(compute_name, gpu_num, direction)
+            'name': name,
         })
 
     data['layout'] = {

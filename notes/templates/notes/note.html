@@ -21,6 +21,7 @@
 
 <form action="" method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ referer }}">
     <div class="form-group">
         <label for="title">{% translate "Title" %}</label>
         <input type="text" class="form-control" name="title" placeholder="{% translate "Title" %}" required value="{{note.title}}">

@@ -19,6 +19,11 @@ def index(request):
     return render(request, 'notes/index.html', context)
 
 
+def redirect_success(request):
+    next = request.POST.get('next', '/')
+    return redirect(next)
+
+
 @login_required
 @staff_member_required
 def note(request, note_id=None):
@@ -26,6 +31,7 @@ def note(request, note_id=None):
     try:
         if request.method == 'GET':
             context['note'] = Note.objects.get(id=note_id)
+            context['referer'] = request.META.get('HTTP_REFERER')
             return render(request, 'notes/note.html', context)
 
         elif request.method == 'POST':
@@ -33,7 +39,7 @@ def note(request, note_id=None):
                 context['note'] = Note.objects.get(id=note_id)
                 context['note'].deleted_at = datetime.datetime.now()
                 context['note'].save()
-                return redirect('../')
+                return redirect_success(request)
 
             if request.POST['job_id'] == '':
                 job_id = None
@@ -59,21 +65,18 @@ def note(request, note_id=None):
                 context['note'].title = request.POST['title']
                 context['note'].notes = request.POST['notes']
                 context['note'].ticket_id = ticket_id
-                context['note'].username = request.POST['username']
                 context['note'].account = account
                 context['note'].job_id = job_id
                 context['note'].username = username
                 try:
                     context['note'].full_clean()
                     context['note'].save()
-                    print('Note updated')
                 except ValidationError as err:
                     # Do something when validation is not passing
-                    print('test')
                     context['errors'] = err.messages
                     context['note'] = old_note
                     return render(request, 'notes/note.html', context)
-                return render(request, 'notes/note.html', context)
+                return redirect_success(request)
             else:
                 # New note
                 note = Note.objects.create(
@@ -86,7 +89,7 @@ def note(request, note_id=None):
                     created_by=request.user
                 )
                 note.save()
-                return redirect('../' + str(note.id))
+                return redirect_success(request)
 
     except Note.DoesNotExist:
         return HttpResponseNotFound(_('Note not found'))
@@ -97,6 +100,7 @@ def note(request, note_id=None):
 def new(request):
     context = {}
     if request.method == 'GET':
+        context['referer'] = request.META.get('HTTP_REFERER')
         context['note'] = {}
         if 'username' in request.GET:
             context['note']['username'] = request.GET['username']

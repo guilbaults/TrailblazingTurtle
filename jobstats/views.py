@@ -344,12 +344,6 @@ def graph_cpu(request, username, job_id):
             'name': name,
         })
 
-    data['layout'] = {
-        'yaxis': {
-            'title': _('Cores'),
-        }
-    }
-
     if context['multiple_jobs']:
         query_count = 'count(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}})'.format(context['id_regex'], prom.get_filter())
         line = prom.query_prometheus(
@@ -366,7 +360,12 @@ def graph_cpu(request, username, job_id):
             'name': _('Allocated cores'),
         })
     else:
-        data['layout']['yaxis']['range'] = [0, context['job'].parse_tres_req()['total_cores']],
+        data['layout'] = {
+            'yaxis': {
+                'title': _('Cores'),
+                'range': [0, context['job'].parse_tres_req()['total_cores']],
+            }
+        }
 
     return JsonResponse(data)
 

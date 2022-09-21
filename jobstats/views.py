@@ -342,6 +342,7 @@ def graph_cpu(request, username, job_id):
             'type': 'scatter',
             'stackgroup': 'one',
             'name': name,
+            'hovertemplate': '%{y:.1f}',
         })
 
     if context['multiple_jobs']:
@@ -358,6 +359,7 @@ def graph_cpu(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': _('Allocated cores'),
+            'hovertemplate': '%{y:.1f}',
         })
     else:
         data['layout'] = {
@@ -381,7 +383,8 @@ def graph_cpu_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
             'y': stats_used[1],
             'type': 'scatter',
-            'name': _('Used')
+            'name': _('Used'),
+            'hovertemplate': '%{y:.1f}',
         })
 
         query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}", {}}}))'.format(username, prom.get_filter())
@@ -390,7 +393,8 @@ def graph_cpu_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
             'y': stats_alloc[1],
             'type': 'scatter',
-            'name': _('Allocated')
+            'name': _('Allocated'),
+            'hovertemplate': '%{y:.1f}',
         })
     except ValueError:
         return JsonResponse(data)
@@ -416,7 +420,8 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
             'y': stats_alloc[1],
             'type': 'scatter',
-            'name': _('Allocated')
+            'name': _('Allocated'),
+            'hovertemplate': '%{y:.1f}',
         })
 
         query_max = 'sum(slurm_job_memory_max{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
@@ -425,7 +430,8 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
             'y': stats_max[1],
             'type': 'scatter',
-            'name': _('Max used')
+            'name': _('Max used'),
+            'hovertemplate': '%{y:.1f}',
         })
 
         query_used = 'sum(slurm_job_memory_usage{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
@@ -434,7 +440,8 @@ def graph_mem_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
             'y': stats_used[1],
             'type': 'scatter',
-            'name': _('Used')
+            'name': _('Used'),
+            'hovertemplate': '%{y:.1f}',
         })
     except ValueError:
         return JsonResponse(data)
@@ -489,7 +496,8 @@ def graph_mem(request, username, job_id):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': name
+                'name': name,
+                'hovertemplate': '%{y:.1f}',
             })
         if stat[0] == 'slurm_job_memory_limit':
             maximum = max(max(map(lambda x: x['y'], stats)))
@@ -508,6 +516,7 @@ def graph_mem(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': _('Allocated memory'),
+            'hovertemplate': '%{y:.1f}',
         })
         maximum = max(y)
 
@@ -553,6 +562,7 @@ def graph_lustre_mdt(request, username, job_id):
             'type': 'scatter',
             'stackgroup': 'one',
             'name': name,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -579,7 +589,8 @@ def graph_lustre_mdt_user(request, username):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(operation, fs)
+            'name': '{} {}'.format(operation, fs),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -625,6 +636,7 @@ def graph_lustre_ost(request, username, job_id):
                 'type': 'scatter',
                 'fill': 'tozeroy',
                 'name': name,
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -656,7 +668,8 @@ def graph_lustre_ost_user(request, username):
                 'y': y,
                 'type': 'scatter',
                 'fill': 'tozeroy',
-                'name': '{} {}'.format(i, fs)
+                'name': '{} {}'.format(i, fs),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -706,6 +719,7 @@ def graph_gpu_utilization(request, username, job_id):
                 'y': y,
                 'type': 'scatter',
                 'name': name,
+                'hovertemplate': '%{y:.1f}%',
             })
     data['layout'] = {
         'yaxis': {
@@ -728,7 +742,8 @@ def graph_gpu_utilization_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
-        'name': _('Allocated')
+        'name': _('Allocated'),
+        'hovertemplate': '%{y:.1f}',
     })
 
     query_used = 'sum(slurm_job_utilization_gpu{{user="{}", {}}})/100'.format(username, prom.get_filter())
@@ -737,7 +752,8 @@ def graph_gpu_utilization_user(request, username):
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
-        'name': _('Used')
+        'name': _('Used'),
+        'hovertemplate': '%{y:.1f}',
     })
 
     data['layout'] = {
@@ -776,6 +792,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': name,
+            'hovertemplate': '%{y:.1f}%',
         })
     data['layout'] = {
         'yaxis': {
@@ -815,6 +832,7 @@ def graph_gpu_memory(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': name,
+            'hovertemplate': '%{y:.1f} GiB',
         })
     data['layout'] = {
         'yaxis': {
@@ -854,6 +872,7 @@ def graph_gpu_power(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': name,
+            'hovertemplate': '%{y:.1f} W',
         })
 
     data['lines'].append({
@@ -861,6 +880,7 @@ def graph_gpu_power(request, username, job_id):
         'y': [GPU_IDLE_POWER[gpu_type] for x in y],
         'type': 'scatter',
         'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+        'hovertemplate': '%{y:.1f} W',
     })
 
     data['layout'] = {
@@ -888,7 +908,8 @@ def graph_gpu_power_user(request, username):
             'x': x,
             'y': [GPU_FULL_POWER[gpu_type] * z for z in y],
             'type': 'scatter',
-            'name': '{} {}'.format(_('Allocated'), GPU_SHORT_NAME[gpu_type])
+            'name': '{} {}'.format(_('Allocated'), GPU_SHORT_NAME[gpu_type]),
+            'hovertemplate': '%{y:.1f} W',
         })
 
         data['lines'].append({
@@ -896,6 +917,7 @@ def graph_gpu_power_user(request, username):
             'y': [GPU_IDLE_POWER[gpu_type] * z for z in y],
             'type': 'scatter',
             'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+            'hovertemplate': '%{y:.1f} W',
         })
 
     query_used = 'sum(slurm_job_power_gpu{{user="{}", {}}}) by (gpu_type) / 1000'.format(username, prom.get_filter())
@@ -906,7 +928,8 @@ def graph_gpu_power_user(request, username):
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
-            'name': '{} {}'.format(_('Used'), GPU_SHORT_NAME[gpu_type])
+            'name': '{} {}'.format(_('Used'), GPU_SHORT_NAME[gpu_type]),
+            'hovertemplate': '%{y:.1f} W',
         })
 
     data['layout'] = {
@@ -950,6 +973,7 @@ def graph_gpu_pcie(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': name,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -992,6 +1016,7 @@ def graph_gpu_nvlink(request, username, job_id):
             'y': y,
             'type': 'scatter',
             'name': name,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -1030,7 +1055,8 @@ def graph_infiniband_bdw(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Received {}'.format(compute_name)
+            'name': 'Received {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{instances}", {filter}}}[{step}]) * 8 /(1000*1000*1000)'.format(
@@ -1046,7 +1072,8 @@ def graph_infiniband_bdw(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Transmitted {}'.format(compute_name)
+            'name': 'Transmitted {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -1085,7 +1112,8 @@ def graph_disk_iops(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Read {}'.format(compute_name)
+            'name': 'Read {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f} IOPS',
         })
 
     query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme0n1|sda", {}}}[{}])'.format(instances, prom.get_filter(), step)
@@ -1100,7 +1128,8 @@ def graph_disk_iops(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Write {}'.format(compute_name)
+            'name': 'Write {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f} IOPS',
         })
 
     data['layout'] = {
@@ -1141,7 +1170,8 @@ def graph_disk_bdw(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Read {}'.format(compute_name)
+            'name': 'Read {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}",device=~"nvme0n1|sda", {filter}}}[{step}])'.format(
@@ -1159,7 +1189,8 @@ def graph_disk_bdw(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Write {}'.format(compute_name)
+            'name': 'Write {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -1199,7 +1230,8 @@ def graph_disk_used(request, username, job_id):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': compute_name
+            'name': compute_name,
+            'hovertemplate': '%{y:.1f} GB',
         })
 
     data['layout'] = {
@@ -1258,7 +1290,8 @@ def graph_power(request, username, job_id):
             'y': line['y'],
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': compute_name
+            'name': compute_name,
+            'hovertemplate': '%{y:.1f} W',
         })
 
     data['layout'] = {

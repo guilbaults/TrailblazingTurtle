@@ -78,7 +78,8 @@ def project_graph_cpu(request, project):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': name
+            'name': name,
+            'hovertemplate': '%{y:.1f}',
         })
 
     # Get the number of running cores
@@ -94,6 +95,7 @@ def project_graph_cpu(request, project):
             'y': y,
             'type': 'scatter',
             'name': _('Running'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -119,7 +121,8 @@ def projects_graph_cpu(request):
             'y': line['y'],
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['project_name']
+            'name': line['metric']['project_name'],
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_running = 'sum(count(libvirtd_domain_vcpu_time{{ {filter} }})) by (project_name)'.format(
@@ -131,6 +134,7 @@ def projects_graph_cpu(request):
             'y': line['y'],
             'type': 'scatter',
             'name': _('Running'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -160,7 +164,8 @@ def instance_graph_cpu(request, project, uuid):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(_('Core'), line['metric']['vcpu'])
+            'name': '{} {}'.format(_('Core'), line['metric']['vcpu']),
+            'hovertemplate': '%{y:.1f}',
         })
 
     # Get the number of running cores
@@ -176,7 +181,8 @@ def instance_graph_cpu(request, project, uuid):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': 'Running'
+            'name': 'Running',
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -216,7 +222,8 @@ def project_graph_memory(request, project):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(_('Used'), name)
+            'name': '{} {}'.format(_('Used'), name),
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}})/1024/1024'.format(
@@ -231,6 +238,7 @@ def project_graph_memory(request, project):
             'y': y,
             'type': 'scatter',
             'name': _('Running'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -262,6 +270,7 @@ def instance_graph_memory(request, project, uuid):
             'y': y,
             'type': 'scatter',
             'name': _('Used'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
@@ -277,6 +286,7 @@ def instance_graph_memory(request, project, uuid):
             'y': y,
             'type': 'scatter',
             'name': _('Running'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -303,7 +313,8 @@ def projects_graph_mem(request):
             'y': line['y'],
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['project_name']
+            'name': line['metric']['project_name'],
+            'hovertemplate': '%{y:.1f}',
         })
 
     query_running = 'sum((libvirtd_domain_balloon_current{{ {filter} }})/1024/1024)'.format(
@@ -315,6 +326,7 @@ def projects_graph_mem(request):
             'y': line['y'],
             'type': 'scatter',
             'name': _('Running'),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -360,7 +372,8 @@ def project_graph_disk_bandwidth(request, project):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, name)
+                'name': '{} {}'.format(direction, name),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -398,7 +411,8 @@ def instance_graph_disk_bandwidth(request, project, uuid):
                 'y': y,
                 'type': 'scatter',
                 'fill': 'tozeroy',
-                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device'])
+                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device']),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -444,7 +458,8 @@ def project_graph_disk_iops(request, project):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, name)
+                'name': '{} {}'.format(direction, name),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -480,7 +495,8 @@ def instance_graph_disk_iops(request, project, uuid):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device'])
+                'name': '{} {} {}'.format(direction, _('device'), line['metric']['device']),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -525,7 +541,8 @@ def project_graph_network_bandwidth(request, project):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, name)
+                'name': '{} {}'.format(direction, name),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -563,7 +580,8 @@ def instance_graph_network_bandwidth(request, project, uuid):
                 'y': y,
                 'type': 'scatter',
                 'fill': 'tozeroy',
-                'name': direction
+                'name': direction,
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {

@@ -58,7 +58,8 @@ def graph_cpu_allocated(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': user
+            'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -81,7 +82,8 @@ def graph_cpu_used(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': user
+            'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -103,7 +105,8 @@ def graph_cpu_wasted(request, account):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': user
+            'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -126,7 +129,8 @@ def graph_mem_allocated(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': user
+            'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -156,6 +160,7 @@ def graph_mem_used(request, account):
             'type': 'scatter',
             'stackgroup': 'one',
             'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -183,7 +188,8 @@ def graph_mem_wasted(request, account):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': user
+            'name': user,
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -212,7 +218,8 @@ def graph_lustre_mdt(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(user, fs)
+            'name': '{} {}'.format(user, fs),
+            'hovertemplate': '%{y:.1f}',
         })
 
     data['layout'] = {
@@ -244,7 +251,8 @@ def graph_lustre_ost(request, account):
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {} {}'.format(i, fs, user)
+                'name': '{} {} {}'.format(i, fs, user),
+                'hovertemplate': '%{y:.1f}',
             })
 
     data['layout'] = {
@@ -271,7 +279,8 @@ def graph_gpu_allocated(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -293,7 +302,8 @@ def graph_gpu_used(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -314,7 +324,8 @@ def graph_gpu_wasted(request, account):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {'showlegend': True}
 
@@ -337,7 +348,8 @@ def graph_gpu_power_allocated(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {
         'yaxis': {
@@ -365,7 +377,8 @@ def graph_gpu_power_used(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {
         'yaxis': {
@@ -393,7 +406,8 @@ def graph_gpu_power_wasted(request, account):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['user']
+            'name': line['metric']['user'],
+            'hovertemplate': '%{y:.1f}',
         })
     data['layout'] = {
         'yaxis': {
@@ -456,6 +470,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
             'type': 'scatter',
             'name': 'Allocation',
             'yaxis': 'y1',
+            'hovertemplate': '%{y:.1f}',
         })
 
     if gpu_or_cpu == 'gpu':
@@ -489,6 +504,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         'type': 'scatter',
         'name': 'Priority',
         'yaxis': 'y2',
+        'hovertemplate': '%{y:.1f}',
     })
 
     if gpu_or_cpu == 'gpu':

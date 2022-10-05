@@ -8,7 +8,7 @@ class LdapUser(ldapdb.models.Model):
     Class for representing an LDAP user entry.
     """
     # LDAP meta-data
-    base_dn = 'ou=People,dc=computecanada,dc=local'
+    base_dn = 'ou=People,dc=computecanada,dc=ca'
     object_classes = ['PosixAccount']
 
     # posixAccount
@@ -32,7 +32,7 @@ class LdapCCAccount(ldapdb.models.Model):
     Pseudo users does not have a ccAccount, only a posixAccount.
     """
     # LDAP meta-data
-    base_dn = 'ou=People,dc=computecanada,dc=local'
+    base_dn = 'ou=People,dc=computecanada,dc=ca'
     object_classes = ['ccAccount']
 
     # posixAccount
@@ -55,7 +55,7 @@ class LdapCCAccount(ldapdb.models.Model):
 
 
 class LdapAllocation(ldapdb.models.Model):
-    base_dn = 'dc=computecanada,dc=local'
+    base_dn = 'dc=computecanada,dc=ca'
     object_classes = ['ccAllocation']
 
     name = fields.CharField(db_column='cn', primary_key=True)

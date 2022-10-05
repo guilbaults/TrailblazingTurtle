@@ -1328,15 +1328,15 @@ def value_cost(request, username, job_id):
         kwh = sum(kwhs)
         response['kwh'] = kwh
         if settings.ELECTRIC_CAR_RANGE_KM_PER_KWH:
-            response['electric_car_range_km'] = kwh * settings.ELECTRIC_CAR_RANGE_KM_PER_KWH
+            response['electric_car_range_km'] = kwh * float(settings.ELECTRIC_CAR_RANGE_KM_PER_KWH)
         if settings.ELECTRICITY_COST_PER_KWH:
-            response['electricity_cost_dollar'] = kwh * settings.ELECTRICITY_COST_PER_KWH
+            response['electricity_cost_dollar'] = kwh * float(settings.ELECTRICITY_COST_PER_KWH)
         if settings.COOLING_COST_PER_KWH:
-            response['cooling_cost_dollar'] = kwh * settings.COOLING_COST_PER_KWH
+            response['cooling_cost_dollar'] = kwh * float(settings.COOLING_COST_PER_KWH)
         if settings.CO2_KG_PER_MWH:
-            response['co2_emissions_kg'] = kwh / 1000 * settings.CO2_KG_PER_MWH
+            response['co2_emissions_kg'] = kwh / 1000 * float(settings.CO2_KG_PER_MWH)
         if settings.AMORTIZATION_YEARS:
-            response['amortization_years'] = settings.AMORTIZATION_YEARS
+            response['amortization_years'] = float(settings.AMORTIZATION_YEARS)
 
     if job.gpu_count() > 0:
         # Cost for a GPU job

@@ -13,9 +13,9 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
-from os import path
 import saml2
 import saml2.saml
+import logging.config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -42,18 +42,20 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'djangosaml2',
+
     'pages',
     'slurm',
-    'ccldap',
-
-    'djangosaml2',
+    'notes',
 
     'jobstats',
     'accountstats',
-    # 'cloudstats',
+    'cloudstats',
     # 'quotas',
     'top',
     'usersummary',
+
+    'ccldap',
 
     # system modules
     'rest_framework',
@@ -115,12 +117,9 @@ DATABASES = {
         'NAME': 'userportaldev',
         'USER': 'userportaldev',
         'PASSWORD': 'changeme',
-        'HOST': 'proxysql101',
-        'PORT': '6033',
+        'HOST': 'dbserver',
+        'PORT': '3128',
         'OPTIONS': {
-            'ssl': {
-                'ca': '/home/sigui4/proxysql-ca.pem',
-            },
         }
     },
     'slurm': {
@@ -128,27 +127,16 @@ DATABASES = {
         'NAME': 'slurmdb',
         'USER': 'slurm-stats',
         'PASSWORD': 'changeme',
-        'HOST': 'proxysql101',
-        'PORT': '6033',
+        'HOST': 'dbserver',
+        'PORT': '3128',
         'OPTIONS': {
-            'ssl': {
-                'ca': '/home/sigui4/proxysql-ca.pem',
-            },
-        }
+        },
     },
     'ldap': {
         'ENGINE': 'ldapdb.backends.ldap',
         'NAME': 'ldaps://lproxy01',
-        'USER': 'cn=ldapuser,dc=computecanada,dc=local',
+        'USER': 'cn=ldapuser,dc=computecanada,dc=ca',
         'PASSWORD': 'changeme',
-    },
-    'rbh-lustre03': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'rbh-lustre03',
-        'USER': 'rbh-lustre03-ro',
-        'PASSWORD': 'changeme',
-        'HOST': 'dbhost2',
-        'PORT': '3306',
     },
 }
 
@@ -256,7 +244,7 @@ DTNS = {
 
 # value used in the next variables, not showned in the UI, can be removed
 HARDWARE_OVERHEAD = 1.10  # cables, racks, etc.
-USD_TO_CAD = 1.25
+CURRENCY_CONVERSION = 1.25  # USD to CAD conversion
 
 # Can be set to None to disable the reporting
 AMORTIZATION_YEARS = 5  # servers are amortized over 5 years
@@ -268,8 +256,8 @@ COOLING_COST_PER_KWH = ELECTRICITY_COST_PER_KWH * 0.25  # not the exact value, b
 CO2_KG_PER_MWH = 0.5  # https://www.hydroquebec.com/data/developpement-durable/pdf/taux-emission-co2-approvisionnement-electricite-2020.pdf
 ELECTRIC_CAR_RANGE_KM_PER_KWH = 1 / 0.151  # 151Wh/km https://ev-database.org/car/1555/Tesla-Model-3
 
-CLOUD_CPU_CORE_COST_PER_HOUR = 2.448 / 64 * USD_TO_CAD  # c6a.16xlarge = 64 cores, 128GB, half the memory of Narval
-CLOUD_GPU_COST_PER_HOUR = 5.672 / 4 * USD_TO_CAD  # g5.12xlarge = 48 cores, 4 GPUs, 192GB of ram, less than half the memory of Narval
+CLOUD_CPU_CORE_COST_PER_HOUR = 2.448 / 64 * CURRENCY_CONVERSION  # c6a.16xlarge = 64 cores, 128GB, half the memory of Narval
+CLOUD_GPU_COST_PER_HOUR = 5.672 / 4 * CURRENCY_CONVERSION  # g5.12xlarge = 48 cores, 4 GPUs, 192GB of ram, less than half the memory of Narval
 
 # Used to set reasonable thresholds for the mem usage in the "top compute" page
 NORMAL_MEM_BY_CORE = 256/64 * 1024 * 1024 * 1024  # 256GB for 64 cores
@@ -280,7 +268,7 @@ NORMAL_CORES_BY_GPU = 48 / 4  # 48 cores for 4 GPUs
 QUOTA_TYPES = {
     'home': ('/lustre05/home/', 'project'),
     'scratch': ('/lustre07/scratch/', 'project'),
-    'project': ('/lustre06/project/', 'project')
+    'project': ('/lustre06/project/', 'project'),
 }
 
 SLURM_TRES = {
@@ -328,7 +316,16 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.TokenAuthentication',
         'rest_framework.authentication.SessionAuthentication',
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+        'rest_framework_datatables.renderers.DatatablesRenderer',
+    ),
+    'DEFAULT_FILTER_BACKENDS': (
+        'rest_framework_datatables.filters.DatatablesFilterBackend',
+    ),
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
+    'PAGE_SIZE': 100,
 }
 
 CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'
@@ -348,51 +345,77 @@ SAML_CONFIG = {
     'allow_unknown_attributes': True,
 
     'service': {
-        'sp' : {
+        'sp': {
             'name': 'Test Userportal',
             'name_id_format': saml2.saml.NAMEID_FORMAT_PERSISTENT,
             'name_id_format_allow_create': True,
 
             'endpoints': {
                 'assertion_consumer_service': [
-                    ('http://localhost:8000/saml2/acs/',
-                    saml2.BINDING_HTTP_POST),
+                    ('http://localhost:8000/saml2/acs/', saml2.BINDING_HTTP_POST),
                 ],
             },
 
-            'signing_algorithm':  saml2.xmldsig.SIG_RSA_SHA256,
-            'digest_algorithm':  saml2.xmldsig.DIGEST_SHA256,
+            'signing_algorithm': saml2.xmldsig.SIG_RSA_SHA256,
+            'digest_algorithm': saml2.xmldsig.DIGEST_SHA256,
 
             'required_attributes': [
-            'surName',
-            'givenName',
-            'uid',
-            'eduPersonAffiliation',
-            'eduPersonPrincipalName',
-            'displayName',
+                'surName',
+                'givenName',
+                'uid',
+                'eduPersonAffiliation',
+                'eduPersonPrincipalName',
+                'displayName',
             ],
 
             # When set to true, the SP will consume unsolicited SAML
             # Responses, i.e. SAML Responses for which it has not sent
             # a respective SAML Authentication Request.
             'allow_unsolicited': False,
-            },
         },
+    },
 
     'metadata': {
-        #'remote': [{"url": "https://idp.alliancecan.ca/idp/shibboleth"},],
-        #'remote': [{"url": "https://idp-alliance.mit.c3.ca/idp/shibboleth"},],
-        #'remote': [{"url": "https://samltest.id/saml/idp"},],
-        'local': ['idp_metadata.xml'], # need to remove the POST SingleSignOnService from shibboleth metadata, only redirect seems to work
-        },
+        'local': ['/opt/idp_metadata.xml'],  # need to remove the POST SingleSignOnService from shibboleth metadata, only redirect seems to work
+    },
 
     # Signing
-    'key_file': path.join(BASE_DIR, 'private.key'),  # private part
-    'cert_file': path.join(BASE_DIR, 'public.cert'),  # public part
+    'key_file': '/opt/private.key',  # private part
+    'cert_file': '/opt/public.cert',  # public part
 
     # Encryption
     'encryption_keypairs': [{
-        'key_file': path.join(BASE_DIR, 'private.key'),  # private part
-        'cert_file': path.join(BASE_DIR, 'public.cert'),  # public part
+        'key_file': '/opt/private.key',  # private part
+        'cert_file': '/opt/public.cert',  # public part
     }],
 }
+
+# Logging Configuration
+
+# Clear prev config
+LOGGING_CONFIG = None
+
+# Get loglevel from env
+LOGLEVEL = os.getenv('DJANGO_LOGLEVEL', 'info').upper()
+
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'console': {
+            'format': '%(asctime)s %(levelname)s [%(name)s:%(lineno)s] %(module)s %(process)d %(thread)d %(message)s',
+        },
+    },
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'console',
+        },
+    },
+    'loggers': {
+        '': {
+            'level': LOGLEVEL,
+            'handlers': ['console', ],
+        },
+    },
+})

@@ -22,10 +22,10 @@ spec:
         - containerPort: 8000
         resources:
           requests:
-            memory: "256Mi"
+            memory: "512Mi"
             cpu: "0.5"
           limits:
-            memory: "512Mi"
+            memory: "1024Mi"
             cpu: "1"
         volumeMounts:
         - name: settings
@@ -143,3 +143,52 @@ spec:
     services:
     - name: userportal
       port: 80
+
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: userportal-clearsessions
+spec:
+  schedule: "0 23 * * *"
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: userportal
+            image: git.computecanada.ca:4567/cc-analytics/userportal
+            imagePullPolicy: Always
+            command: ["/bin/sh","-c"]
+            args: ["cp /secrets/settings/* /opt/userportal/userportal/settings.py && python3 manage.py clearsessions && echo sessions cleared"]
+            resources:
+              requests:
+                memory: "256Mi"
+                cpu: "0.5"
+              limits:
+                memory: "512Mi"
+                cpu: "1"
+            volumeMounts:
+            - name: settings
+              readOnly: true
+              mountPath: "/secrets/settings/"
+            - name: sql-ca
+              readOnly: true
+              mountPath: "/opt/sql-ca/"
+          restartPolicy: OnFailure
+
+
+          volumes:
+          - name: settings
+            secret:
+              secretName: settings
+              optional: false
+          - name: sql-ca
+            configMap:
+              name: sql-ca
+              optional: true
+
+          imagePullSecrets:
+            - name: registry-credentials

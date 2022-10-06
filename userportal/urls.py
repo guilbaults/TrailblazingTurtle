@@ -44,6 +44,7 @@ urlpatterns = [
     path('api/', include((router.urls, 'app_name'))),
     path('api-auth/', include('rest_framework.urls')),
     path('saml2/', include('djangosaml2.urls')),
+    path('watchman/', include('watchman.urls')),
 
     path('secure/notes/', include('notes.urls')),
     path('secure/slurm/', include('slurm.urls')),

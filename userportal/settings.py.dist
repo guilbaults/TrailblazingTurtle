@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'djangosaml2',
+    'watchman',
 
     'pages',
     'slurm',
@@ -139,6 +140,8 @@ DATABASES = {
         'PASSWORD': 'changeme',
     },
 }
+
+WATCHMAN_DATABASES = ['default', 'slurm']
 
 DATABASE_ROUTERS = ['database_routers.dbrouters.DbRouter']
 

@@ -46,13 +46,12 @@ spec:
         - name: staticfiles
           mountPath: /var/www/api/
           readOnly: false
-        lifecycle:
-          postStart:
-            exec:
-              command:
-                - /bin/sh
-                - -c
-                - cp /secrets/settings/* /opt/userportal/userportal/settings.py
+        readinessProbe:
+          httpGet:
+            path: /watchman/
+            port: 8000
+          periodSeconds: 3
+          timeoutSeconds: 2
 
       - name: nginx-sidecar
         image: nginx:stable
@@ -80,6 +79,11 @@ spec:
           - name: staticfiles
             mountPath: /var/www/api/
             readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /nghealth/
+            port: 80
+          periodSeconds: 3
 
       volumes:
       - name: settings

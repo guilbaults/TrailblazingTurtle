@@ -1,0 +1,141 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: userportal
+  labels:
+    app: userportal
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: userportal
+  template:
+    metadata:
+      labels:
+        app: userportal
+    spec:
+      containers:
+      - name: userportal
+        image: git.computecanada.ca:4567/cc-analytics/userportal
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.5"
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        volumeMounts:
+        - name: settings
+          readOnly: true
+          mountPath: "/secrets/settings/"
+        - name: private-key
+          readOnly: true
+          mountPath: "/secrets/private-key/"
+        - name: sql-ca
+          readOnly: true
+          mountPath: "/opt/sql-ca/"
+        - name: idp
+          readOnly: true
+          mountPath: "/opt/idp/"
+        - name: allocations
+          readOnly: true
+          mountPath: "/opt/allocations/"
+        - name: staticfiles
+          mountPath: /var/www/api/
+          readOnly: false
+        lifecycle:
+          postStart:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - cp /secrets/settings/* /opt/userportal/userportal/settings.py
+
+      - name: nginx-sidecar
+        image: nginx:stable
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "0.5"
+          limits:
+            memory: "512Mi"
+            cpu: "1"
+        securityContext:
+          privileged: false
+          # Nginx must start as root to bind the proper port in the container.
+          allowPrivilegeEscalation: true
+          runAsNonRoot: false
+        ports:
+          - name: http
+            containerPort: 80
+            protocol: TCP
+        volumeMounts:
+          - name: nginx-conf
+            mountPath: /etc/nginx/conf.d
+            readOnly: true
+          - name: staticfiles
+            mountPath: /var/www/api/
+            readOnly: true
+
+      volumes:
+      - name: settings
+        secret:
+          secretName: settings
+          optional: false
+      - name: private-key
+        secret:
+          secretName: private-key
+          optional: false
+      - name: sql-ca
+        configMap:
+          name: sql-ca
+          optional: true
+      - name: idp
+        configMap:
+          name: idp
+          optional: false
+      - name: allocations
+        configMap:
+          name: allocations
+          optional: true
+      - name: nginx-conf
+        configMap:
+          name: backend-api-nginx
+      - name: staticfiles
+        emptyDir: {}
+
+      imagePullSecrets:
+        - name: registry-credentials
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: userportal
+
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+  selector:
+    app: userportal
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: userportal
+spec:
+  entryPoints:
+    - web
+  routes:
+  - kind: Rule
+    match: Host(`userportal.dev.dant.computecanada.ca`)
+    services:
+    - name: userportal
+      port: 80

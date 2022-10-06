@@ -223,7 +223,19 @@ REMOTE_USER=myuser@computecanada.ca affiliation=staff@computecanada.ca python ma
 
 This will start the server on port 8000 and remove the requirement to authenticate using the SSO. You should test with your own username instead of "myuser" so the access to slurm can find some of your previous jobs. For the initial test, you can keep the `affiliation=staff@computecanada.ca`, this is how our production server is mapping staff and non-staff users.
 
-## Production
+## Deployment with Kubernetes
+
+Kubernetes is used to serve the Django application. The production image is built with ubuntu and python3.8, Gunicorn is used to serve the application. The statics files are served by nginx. The image is built using the Containerfile in the root of the repository.
+
+To build the image manually, you can use the following command:
+
+```
+buildah bud -t userportal
+```
+
+Kaniko is used to build the image in the CI pipeline in Gitlab. The image is pushed to the registry and then deployed to the cluster. Some of the configuration files are located in the `kubernetes` directory.
+
+## Production without containers on Rocky Linux 8
 
 RPMs required for production
 

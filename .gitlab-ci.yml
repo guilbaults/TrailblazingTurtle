@@ -3,16 +3,38 @@ variables:
  GIT_SUBMODULE_STRATEGY: "recursive"
  DEBIAN_FRONTEND: "noninteractive"
  NOKOGIRI_USE_SYSTEM_LIBRARIES: "true"
+ DOCKER_HOST: tcp://localhost:2376
+ DOCKER_TLS_CERTDIR: ""
+
+services:
+  - docker:20.10.16-dind
 
 stages:
- - linting
+  - linting
+  - build
+  - deploy
 
 flake8:
- tags:
-  - k8s
- stage: linting
- image: registry.gitlab.com/pipeline-components/flake8:latest
- script:
-  - flake8 --verbose --max-line-length 200 --extend-exclude example/ .
+  tags:
+   - k8s
+  stage: linting
+  image: registry.gitlab.com/pipeline-components/flake8:latest
+  script:
+    - flake8 --verbose --max-line-length 200 --extend-exclude example/ .
+
+build:
+  tags:
+    - k8s
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Containerfile"
+      --destination "${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}"
+#  rules:
+#    - if: $CI_COMMIT_TAG
 
 # no blank lines after this

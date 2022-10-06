@@ -196,7 +196,7 @@ LOCALE_PATHS = (
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = '/var/www/userportal-static/'
+STATIC_ROOT = '/opt/userportal/collected-static/'
 
 AUTHENTICATION_BACKENDS = [
     'userportal.authentication.staffRemoteUserBackend',

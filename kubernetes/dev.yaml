@@ -5,7 +5,7 @@ metadata:
   labels:
     app: userportal
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: userportal
@@ -50,8 +50,8 @@ spec:
           httpGet:
             path: /watchman/
             port: 8000
-          periodSeconds: 3
-          timeoutSeconds: 2
+          periodSeconds: 5
+          timeoutSeconds: 5
 
       - name: nginx-sidecar
         image: nginx:stable

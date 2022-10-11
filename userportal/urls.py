@@ -45,6 +45,7 @@ urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('saml2/', include('djangosaml2.urls')),
     path('watchman/', include('watchman.urls')),
+    path('accounts/', include('django.contrib.auth.urls')),
 
     path('secure/notes/', include('notes.urls')),
     path('secure/slurm/', include('slurm.urls')),

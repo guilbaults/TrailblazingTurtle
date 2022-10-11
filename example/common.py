@@ -3,18 +3,23 @@ from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
 from django.conf import settings
-
-# for example purposes, use local uid resolver instead of ldap
 import pwd
+
+
+"""
+This example is using MagicCastle and FreeIPA
+https://github.com/ComputeCanada/magic_castle/
+"""
+
 
 def user_or_staff(func):
     """Decorator to allow access only to staff members or to the user"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['username'] == kwargs['username']:
+        if request.user.get_username() == kwargs['username']:
             # own info
             return func(request, *args, **kwargs)
-        elif request.META['is_staff']:
+        elif request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -26,20 +31,11 @@ def account_or_staff(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
         alloc_name = kwargs['account'].split('_')[0]
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             # IMPLEMENTATION search in LDAP or other sources to check if the user is in the allocation
             return HttpResponseForbidden()
-        #try:
-        #    LdapAllocation.objects.filter(
-        #        name=alloc_name,
-        #        members=request.META['username'],
-        #        status='active').get()
-        #except LdapAllocation.DoesNotExist:
-        #    # This user is not in the allocation
-        #    return HttpResponseForbidden()
-        #return func(request, *args, **kwargs)
     return wrapper
 
 
@@ -47,7 +43,7 @@ def openstackproject_or_staff(func):
     """Decorator to allow access if its the user is inside the project allocation or a staff member"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             # IMPLEMENTATION search in LDAP or other sources to check if the user is in the allocation
@@ -60,7 +56,7 @@ def staff(func):
     """Decorator to allow access only to staff members"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.META['is_staff']:
+        if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
@@ -74,7 +70,7 @@ def compute_allocations_by_user(username):
     - cpu: the number of cpu allocated to the user (optional)
     - gpu: the number of gpu allocated to the user (optional)
     """
-    return [{'name': 'test_alloc', 'cpu': 1, }]
+    return [{'name': 'def-sponsor00', 'cpu': 1, }]
 
 
 def compute_allocations_by_account(account):
@@ -84,17 +80,16 @@ def compute_allocations_by_account(account):
     - cpu: the number of cpu allocated to the user (optional)
     - gpu: the number of gpu allocated to the user (optional)
     """
-    return [{'name': 'test_alloc', 'cpu': 1, }]
+    return [{'name': 'def-sponsor00', 'cpu': 1, }]
 
 
 def compute_allocations_by_slurm_account(account):
     """
     takes a slurm account name and return the number of cpu or gpu allocated to that account
-
     Returns:
         int: the number of cpu or gpu allocated to that account
     """
-    return 42
+    return 1
 
 
 def storage_allocations(username):
@@ -105,7 +100,7 @@ def storage_allocations(username):
     - quota_bytes: the size of the allocation in bytes
     - quota_inodes: the inodes quota of the allocation
     """
-    return [{'name': 'test_alloc', 'type': 'home', 'quota_bytes': 1000000000000, 'quota_inodes': 1000000}]
+    return [{'name': 'def-sponsor00', 'type': 'home', 'quota_bytes': 1000000000000, 'quota_inodes': 1000000}]
 
 
 def cloud_projects_by_user(username):
@@ -116,13 +111,11 @@ def cloud_projects_by_user(username):
 
 def username_to_uid(username):
     """return the uid of a username"""
-    # IMPLEMENTATION search in LDAP, use local resolver as an example
     return int(pwd.getpwnam(username).pw_uid)
 
 
 def uid_to_username(uid):
     """return the username of a uid"""
-    # IMPLEMENTATION search in LDAP, use local resolver as an example
     return pwd.getpwuid(uid).pw_name
 
 
@@ -145,7 +138,7 @@ def query_time(request):
     else:
         # default to 1 hour
         start = datetime.now() - timedelta(hours=1)
-        step = '1m'
+        step = '10s'
     return (start, step)
 
 

@@ -276,9 +276,11 @@
     <dd>{% translate "Memory that cannot be reclaimed (mlocked etc). It can be used by cryptography to prevent memory containing keys from being swapped out" %}</dd>
   </dl>
   <div id="graph_mem"></div>
+  {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
   <h3>{% translate "Filesystem" %}</h3>
   <div id="graph_lustre_mdt"></div>
   <div id="graph_lustre_ost"></div>
+  {% endif %}
 
   {% if gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>

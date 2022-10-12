@@ -138,7 +138,7 @@ def query_time(request):
     else:
         # default to 1 hour
         start = datetime.now() - timedelta(hours=1)
-        step = '10s'
+        step = '30s'
     return (start, step)
 
 

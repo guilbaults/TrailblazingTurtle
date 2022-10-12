@@ -3,7 +3,7 @@ import configparser
 import os
 import time
 
-# This is script is taking the submited script on the slurmctld server
+# This is script is taking the submitted script on the slurmctld server
 # and send it to the userportal so it can be stored in a database
 
 

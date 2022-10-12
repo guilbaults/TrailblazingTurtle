@@ -103,7 +103,7 @@ Compile messages: `python manage.py compilemessages`
 
 # Deployment with Kubernetes
 
-Kubernetes is used to serve the Django application. The production image is built with ubuntu and python3.8, Gunicorn is used to serve the application. The statics files are served by nginx. The image is built using the Containerfile in the root of the repository.
+Kubernetes is used to serve the Django application. The production image is built with ubuntu and python3.8, Gunicorn is used to serve the application. The static files are served by nginx. The image is built using the Containerfile in the root of the repository.
 
 To build the image manually, you can use the following command:
 

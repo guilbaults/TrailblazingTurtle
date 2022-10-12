@@ -96,7 +96,7 @@ def compute(request):
             }
             waste_badges = []
             if stats_mem_asked[user] > reasonable_mem:
-                # If the user ask for more memory than whats available per core on a standard node
+                # If the user ask for more memory than what's available per core on a standard node
                 if stats['mem_ratio'] < 0.1:
                     waste_badges.append(('danger', _('Memory')))
                 elif stats['mem_ratio'] < 0.5:

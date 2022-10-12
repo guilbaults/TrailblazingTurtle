@@ -2,7 +2,7 @@
 Some features will not be available if the exporter required to gather the stats is not configured.
 
 ## slurm-job-exporter
-[slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture informations from cgroup managed by slurm on each compute nodes. This gather CPU, memory and GPU utilization.
+[slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture information from cgroup managed by slurm on each compute nodes. This gather CPU, memory and GPU utilization.
 
 The following recorder rules are used to pre-aggregate stats shown in the user portal.
 
@@ -46,7 +46,7 @@ groups:
 ```
 
 ## slurm-exporter
-[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture informations from slurm like the priority of each users. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
+[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture stats from slurm like the priority of each users. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
 
 ## Access to the database of slurmacct
 This mysql database is accessed with a read only user. It does not need to be in the same database server where django is storing its data.
@@ -91,4 +91,4 @@ groups:
 The information in this database is used to show the current utilization per user within a group.
 
 ## Slurm jobscript
-The script `slurm_jobscript/slurm_jobscripts_userportal.py` can be used to add the submited script to the database of the portal. This should run on the slurm server, it will collect the scripts from `/var/spool/slurmctld`. This script use the REST API of Django to push to job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.
+The script `slurm_jobscript/slurm_jobscripts_userportal.py` can be used to add the submitted script to the database of the portal. This should run on the slurm server, it will collect the scripts from `/var/spool/slurmctld`. This script use the REST API of Django to push to job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.

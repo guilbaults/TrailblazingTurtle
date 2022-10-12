@@ -18,13 +18,13 @@ This portal also support Openstack, the users are able to see their own use with
 
 Staff members can also see the use of any users to help them optimize their use of HPC and openstack clusters.
 
-Some information collected are also avaiable for the general public like the number of cores used, the performance of the filesystem and the load on the login nodes.
+Some information collected are also available for the general public like the number of cores used, the performance of the filesystem and the load on the login nodes.
 [Here is an example of this portal for the Narval Cluster at Calcul Quebec](https://portail.narval.calculquebec.ca/)
 
 ## Design
 Performance metrics are stored in Prometheus, multiple exporters are used to get this data, most are optional.
 
-The Django portal will also access various MySQL databases like the database of Slurm and Robinhood (if installed) to gather some informations. Timeseries are stored with Prometheus for better performance. Compatible alternative to Prometheus like Thanos, VictoriaMetrics and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate some stats for the portal.
+The Django portal will also access various MySQL databases like the database of Slurm and Robinhood (if installed) to gather some information. Timeseries are stored with Prometheus for better performance. Compatible alternative to Prometheus like Thanos, VictoriaMetrics and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate some stats for the portal.
 
 ![Architecture diagram](docs/userportal.png)
 
@@ -54,6 +54,6 @@ python manage.py runserver --settings example.settings
 This will start the server on port 8000 and remove the requirement to authenticate using the SSO. You should test with your own username instead of "myuser" so the access to slurm can find some of your previous jobs.
 
 ## Production install
-The portal can be installed directly on a centos/rocky Apache webserver, or in a container. The various recommandation on Django in production can be followed.
+The portal can be installed directly on a centos/rocky Apache webserver, or in a container. The various recommendation on Django in production can be followed.
 
 [Install documentation](docs/install.md)

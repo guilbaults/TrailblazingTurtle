@@ -49,7 +49,7 @@ class Note(models.Model):
 
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
 
-    # Theses can't be foreign keys because all the info are not in the portal or are from slurm
+    # These can't be foreign keys because all the info are not in the portal or are from slurm
     # Fields are optional because the note can be about an overall account for example
     job_id = models.PositiveIntegerField(null=True, blank=True, validators=[validate_job_id])
     username = models.CharField(max_length=255, null=True, blank=True, validators=[validate_valid_username])

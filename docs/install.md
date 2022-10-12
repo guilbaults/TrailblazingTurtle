@@ -5,7 +5,7 @@ RPMs required for production
 * `python39-pip` (python 3.9 will be used in the virtualenv)
 * `gcc` (to compile python modules)
 * `python3-virtualenv`
-* `python3-mod_wsgi`
+* `python39-mod_wsgi`
 * `python39-devel`
 * `openldap-devel`
 * `mariadb-devel`

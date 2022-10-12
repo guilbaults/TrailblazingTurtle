@@ -17,4 +17,4 @@ jobs:
       with:
         check_filenames: true
         ignore_words_list: keypair
-        only_warn: 1
+        skip: ./locale/fr/LC_MESSAGES/django.po,./locale/fr/LC_MESSAGES/djangojs.po

@@ -2,13 +2,21 @@
 
 RPMs required for production
 
-* `python36-virtualenv` 
+* `python39-pip` (python 3.9 will be used in the virtualenv)
+* `gcc` (to compile python modules)
+* `python3-virtualenv`
 * `python3-mod_wsgi`
+* `python39-devel`
 * `openldap-devel`
-* `gcc`
 * `mariadb-devel`
 * `xmlsec1` (for SAML)
 * `xmlsec1-openssl` (for SAML)
+
+Python >= 3.9 is required to fix a CVE in numpy, you can install that version on Rocky8 inside a python virtualenv
+
+```
+/usr/bin/virtualenv-3 --python="/usr/bin/python3.9" /var/www/userportal-env
+```
 
 A file in the python env need to be patched, check the diff in `ldapdb.patch`
 

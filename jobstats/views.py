@@ -1100,7 +1100,7 @@ def graph_disk_iops(request, username, job_id):
     data = {'lines': []}
     step = sanitize_step(request, minimum="3m")
 
-    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}(:9100)?",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}(:.*)?",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
     stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
@@ -1116,7 +1116,7 @@ def graph_disk_iops(request, username, job_id):
             'hovertemplate': '%{y:.1f} IOPS',
         })
 
-    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}(:9100)",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}(:.*)",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
     stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
@@ -1155,7 +1155,7 @@ def graph_disk_bdw(request, username, job_id):
     data = {'lines': []}
     step = sanitize_step(request, minimum="3m")
 
-    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}(:9100)?",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
+    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}(:.*)?",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1174,7 +1174,7 @@ def graph_disk_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}(:9100)?",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
+    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}(:.*)?",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1216,7 +1216,7 @@ def graph_disk_used(request, username, job_id):
 
     data = {'lines': []}
 
-    query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}(:9100)?",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}(:9100)?",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
+    query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}(:.*)?",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}(:.*)?",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter())
     stats_disk = prom.query_prometheus_multiple(query_disk, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
@@ -1264,7 +1264,7 @@ def power(job, step):
         # ( take the node power)
         # * (the ratio of cpu cores allocated in that node)
         query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") ) \
-            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{instance=~"({nodes}):9100", mode="idle", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )'.format(
+            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{instance=~"({nodes})(:.*)?", mode="idle", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )'.format(
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,

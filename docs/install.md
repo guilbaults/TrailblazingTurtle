@@ -5,7 +5,7 @@ RPMs required for production
 * `python39-pip` (python 3.9 will be used in the virtualenv)
 * `gcc` (to compile python modules)
 * `python3-virtualenv`
-* `python39-mod_wsgi`
+* `python39-mod_wsgi` or use gunicorn instead of WSGI in Apache
 * `python39-devel`
 * `openldap-devel`
 * `mariadb-devel`
@@ -26,7 +26,7 @@ Static files are handled by Apache and need to be collected since python will no
 python manage.py collectstatic
 ```
 
-## Apache virtualhost config
+## Apache virtualhost config for WSGI
 
 ```
 <VirtualHost *:443>
@@ -63,6 +63,33 @@ python manage.py collectstatic
   WSGIDaemonProcess userportal python-home=/var/www/userportal-env python-path=/var/www/userportal/
   WSGIProcessGroup userportal
   WSGIScriptAlias / "/var/www/userportal/userportal/wsgi.py"
+</VirtualHost>
+```
+
+## Apache virtualhost config for Gunicorn
+
+In this example, Apache is running on port 8000 and Gunicorn on port 8001. Apache will receive all the requests, will handle the static files and forward the other requests to Gunicorn.
+
+```
+Listen 8000
+
+<VirtualHost *:8000>
+  DocumentRoot "/var/www/userportal"
+  Alias /static "/var/www/userportal-static"
+
+  ProxyPass / http://127.0.0.1:8001/
+  ProxyPassReverse / "http://127.0.0.1:8001/"
+
+  <Directory "/var/www/userportal/">
+    AllowOverride None
+    Require all granted
+  </Directory>
+
+  <Directory "/var/www/userportal/static">
+    AllowOverride None
+    Require all granted
+  </Directory>
+
 </VirtualHost>
 ```
 

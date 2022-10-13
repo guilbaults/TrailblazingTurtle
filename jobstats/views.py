@@ -24,17 +24,18 @@ GPU_SHORT_NAME = {'NVIDIA A100-SXM4-40GB': 'A100', 'Tesla V100-SXM2-16GB': 'V100
 prom = Prometheus(settings.PROMETHEUS)
 
 
-def sanitize_step(request, minimum='30s'):
-    if request.GET.get('step') == '30s' and minimum == '30s':
-        return '30s'
-    elif request.GET.get('step') == '3m' and minimum in ['3m', '30s']:
-        return '3m'
-    elif request.GET.get('step') == '15m' and minimum in ['15m', '3m', '30s']:
-        return '15m'
-    elif request.GET.get('step') == '1h' and minimum in ['1h', '15m', '3m', '30s']:
-        return '1h'
+def sanitize_step(request, minimum=30):
+    # all in seconds, will return the smallest interval allowed to drap a graph
+    if request.GET.get('step') == '30s':
+        return max(30, minimum)
+    elif request.GET.get('step') == '3m':
+        return max(60*3, minimum)
+    elif request.GET.get('step') == '15m':
+        return max(60*15, minimum)
+    elif request.GET.get('step') == '1h':
+        return max(60*60, minimum)
     else:
-        return '5m'
+        return 60*5
 
 
 @login_required
@@ -61,7 +62,7 @@ def user(request, username):
     now = datetime.now()
     delta = timedelta(hours=1)
     try:
-        query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[2m]) / 1000000000)'.format(username, prom.get_filter())
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s]) / 1000000000)'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
         stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
         context['cpu_used'] = statistics.mean(stats_cpu[1])
     except ValueError:
@@ -216,7 +217,7 @@ def job(request, username, job_id):
         return render(request, 'jobstats/job.html', context)
 
     try:
-        query_cpu = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}", {}}}[2m]) / 1000000000)'.format(job_id, prom.get_filter())
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{slurmjobid="{}", {}}}[{}s]) / 1000000000)'.format(job_id, prom.get_filter(), prom.rate('slurm-job-exporter'))
         stats_cpu = prom.query_prometheus(query_cpu, job.time_start_dt(), job.time_end_dt())
         context['cpu_used'] = statistics.mean(stats_cpu[1])
     except ValueError:
@@ -319,7 +320,7 @@ def job(request, username, job_id):
 def graph_cpu(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    query = 'rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[2m]) / 1000000000'.format(context['id_regex'], prom.get_filter())
+    query = 'rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[{}s]) / 1000000000'.format(context['id_regex'], prom.get_filter(), prom.rate('slurm-job-exporter'))
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
@@ -377,7 +378,7 @@ def graph_cpu(request, username, job_id):
 def graph_cpu_user(request, username):
     data = {'lines': []}
     try:
-        query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[1m])) / 1000000000'.format(username, prom.get_filter())
+        query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s])) / 1000000000'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
         stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
         data['lines'].append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
@@ -536,15 +537,15 @@ def graph_mem(request, username, job_id):
 def graph_lustre_mdt(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid=~"{job_id}", {filter}}}[{step}])) by (operation, fs, jobid) !=0'.format(
+    query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid=~"{job_id}", {filter}}}[{step}s])) by (operation, fs, jobid) !=0'.format(
         job_id=context['id_regex'],
-        step=sanitize_step(request, minimum="3m"),
+        step=sanitize_step(request, minimum=prom.rate('lustre_exporter')),
         filter=prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum="3m"))
+        step=sanitize_step(request, minimum=prom.rate('lustre_exporter')))
 
     data = {'lines': []}
     for line in stats:
@@ -576,7 +577,7 @@ def graph_lustre_mdt(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_mdt_user(request, username):
-    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[5m])) by (operation, fs) !=0'.format(username, prom.get_filter())
+    query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[{}s])) by (operation, fs) !=0'.format(username, prom.get_filter(), prom.rate('lustre_exporter'))
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
     data = {'lines': []}
     for line in stats:
@@ -608,16 +609,16 @@ def graph_lustre_ost(request, username, job_id):
 
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}])) by (fs, jobid)) / (1024*1024)'.format(
+        query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}s])) by (fs, jobid)) / (1024*1024)'.format(
             i=i,
             job_id=context['id_regex'],
-            step=sanitize_step(request, minimum="3m"),
+            step=sanitize_step(request, minimum=prom.rate('lustre_exporter')),
             filter=prom.get_filter())
         stats = prom.query_prometheus_multiple(
             query,
             context['job'].time_start_dt(),
             context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum="3m"))
+            step=sanitize_step(request, minimum=prom.rate('lustre_exporter')))
 
         for line in stats:
             fs = line['metric']['fs']
@@ -653,7 +654,11 @@ def graph_lustre_ost(request, username, job_id):
 def graph_lustre_ost_user(request, username):
     data = {'lines': []}
     for i in ['read', 'write']:
-        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*", {}}}[5m])) by (fs)) / (1024*1024)'.format(i, username, prom.get_filter())
+        query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*", {}}}[{}s])) by (fs)) / (1024*1024)'.format(
+            i,
+            username,
+            prom.get_filter(),
+            prom.rate('lustre_exporter'))
         stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
         for line in stats:
@@ -948,7 +953,10 @@ def graph_gpu_pcie(request, username, job_id):
     context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid=~"{}", {}}}[5m])'.format(context['id_regex'], prom.get_filter())
+    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid=~"{}", {}}}[{}s])'.format(
+        context['id_regex'],
+        prom.get_filter(),
+        prom.rate('slurm-job-exporter'))
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
@@ -991,7 +999,10 @@ def graph_gpu_nvlink(request, username, job_id):
     context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[5m])'.format(context['id_regex'], prom.get_filter())
+    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[{}s])'.format(
+        context['id_regex'],
+        prom.get_filter(),
+        prom.rate('slurm-job-exporter'))
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
@@ -1040,12 +1051,12 @@ def graph_infiniband_bdw(request, username, job_id):
     instances = '|'.join([s + '(:.*)?' for s in nodes])
 
     data = {'lines': []}
-    step = sanitize_step(request, minimum="3m")
+    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}]) * 8 / (1000*1000*1000)'.format(
+    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=step)
+        step=prom.rate('slurm-job-exporter'))
     stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_received:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -1059,7 +1070,7 @@ def graph_infiniband_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{instances}", {filter}}}[{step}]) * 8 /(1000*1000*1000)'.format(
+    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1098,9 +1109,9 @@ def graph_disk_iops(request, username, job_id):
     instances = '|'.join([s + '(:.*)?' for s in nodes])
 
     data = {'lines': []}
-    step = sanitize_step(request, minimum="3m")
+    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
     stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
@@ -1116,7 +1127,7 @@ def graph_disk_iops(request, username, job_id):
             'hovertemplate': '%{y:.1f} IOPS',
         })
 
-    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}])'.format(instances, prom.get_filter(), step)
+    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
     stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
@@ -1153,9 +1164,9 @@ def graph_disk_bdw(request, username, job_id):
     instances = '|'.join([s + '(:.*)?' for s in nodes])
 
     data = {'lines': []}
-    step = sanitize_step(request, minimum="3m")
+    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
+    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1174,7 +1185,7 @@ def graph_disk_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}])'.format(
+    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
         instances=instances,
         filter=prom.get_filter(),
         step=step)

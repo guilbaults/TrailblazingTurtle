@@ -200,3 +200,7 @@ class Prometheus:
     def query_last(self, query):
         q = self.prom.custom_query(query)
         return q
+
+    def rate(self, exporter_name):
+        # return twice the sampling rate of the exporter in seconds
+        return int(settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2

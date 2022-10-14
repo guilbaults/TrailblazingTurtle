@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable, AssocTable
-from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user
+from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -26,16 +26,7 @@ prom = Prometheus(settings.PROMETHEUS)
 
 def sanitize_step(request, minimum=30):
     # all in seconds, will return the smallest interval allowed to drap a graph
-    if request.GET.get('step') == '30s':
-        return max(30, minimum)
-    elif request.GET.get('step') == '3m':
-        return max(60*3, minimum)
-    elif request.GET.get('step') == '15m':
-        return max(60*15, minimum)
-    elif request.GET.get('step') == '1h':
-        return max(60*60, minimum)
-    else:
-        return 60*5
+    return max(int(request.GET.get('step')), minimum)
 
 
 @login_required
@@ -120,22 +111,6 @@ def get_job_ids(jobs):
 
 def get_job_ids_regex(jobs):
     return '|'.join([str(job.id_job) for job in jobs])
-
-
-def get_step(start, end=None):
-    if end is None:
-        end = datetime.now()
-    if start is None:
-        start = datetime.now()
-    delta = end - start
-    if delta.total_seconds() < 3600 * 24:
-        # less than one day
-        return '30s'
-    elif delta.total_seconds() < 3600 * 24 * 7:
-        # less than a week
-        return '15m'
-    else:
-        return '1h'
 
 
 def context_job_info(username, job_id):
@@ -325,7 +300,7 @@ def graph_cpu(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     data = {'lines': []}
     for line in stats:
@@ -352,7 +327,7 @@ def graph_cpu(request, username, job_id):
             query_count,
             context['job'].time_start_dt(),
             context['job'].time_end_dt(),
-            step=sanitize_step(request))
+            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
         data['lines'].append({
@@ -484,7 +459,7 @@ def graph_mem(request, username, job_id):
             query,
             context['job'].time_start_dt(),
             context['job'].time_end_dt(),
-            step=sanitize_step(request))
+            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         for line in stats:
             compute_name = line['metric']['instance'].split(':')[0]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -509,7 +484,7 @@ def graph_mem(request, username, job_id):
             query_count,
             context['job'].time_start_dt(),
             context['job'].time_end_dt(),
-            step=sanitize_step(request))
+            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
         data['lines'].append({
@@ -708,7 +683,7 @@ def graph_gpu_utilization(request, username, job_id):
             query,
             context['job'].time_start_dt(),
             context['job'].time_end_dt(),
-            step=sanitize_step(request))
+            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
         for line in stats:
             gpu_num = int(line['metric']['gpu'])
@@ -780,7 +755,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     data = {'lines': []}
     for line in stats:
@@ -819,7 +794,7 @@ def graph_gpu_memory(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     data = {'lines': []}
     for line in stats:
@@ -859,7 +834,7 @@ def graph_gpu_power(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     data = {'lines': []}
     for line in stats:
@@ -961,7 +936,7 @@ def graph_gpu_pcie(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
@@ -1007,7 +982,7 @@ def graph_gpu_nvlink(request, username, job_id):
         query,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request))
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
@@ -1056,7 +1031,7 @@ def graph_infiniband_bdw(request, username, job_id):
     query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter(),
-        step=prom.rate('slurm-job-exporter'))
+        step=step)
     stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt(), step=step)
     for line in stats_received:
         compute_name = line['metric']['instance'].split(':')[0]
@@ -1230,7 +1205,7 @@ def graph_disk_used(request, username, job_id):
     query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter())
-    stats_disk = prom.query_prometheus_multiple(query_disk, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request))
+    stats_disk = prom.query_prometheus_multiple(query_disk, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
     for line in stats_disk:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1295,7 +1270,7 @@ def graph_power(request, username, job_id):
         return HttpResponseNotFound('Job not found')
 
     data = {'lines': []}
-    for line in power(job, step=sanitize_step(request)):
+    for line in power(job, step=sanitize_step(request, minimum=prom.rate('redfish_exporter'))):
         compute_name = "{}".format(line['metric']['instance'])
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         data['lines'].append({
@@ -1334,7 +1309,7 @@ def value_cost(request, username, job_id):
     response = {}
     if 'redfish_exporter' in settings.EXPORTER_INSTALLED:
         kwhs = []
-        for line in power(job, step=sanitize_step(request)):
+        for line in power(job, step=prom.rate('redfish_exporter')):
             # Instead of a proper integration, we just multiply the avg power by the time
             kw = (sum(line['y']) / len(line['y'])) / 1000  # compute the average power consumption
             kwhs.append(kw * hours)

@@ -128,7 +128,7 @@ def graph_login_cpu(request, login):
     )
     core_count = max(prom.query_prometheus(core_count_query, timing[0], step=timing[1])[1])
     data = {'lines': []}
-    query = 'sum by (mode)(rate(node_cpu_seconds_total{{mode=~"system|user|iowait",instance=~"{login}(:.*)?", {filter} }}[{step}]))'.format(
+    query = 'sum by (mode)(rate(node_cpu_seconds_total{{mode=~"system|user|iowait",instance=~"{login}(:.*)?", {filter} }}[{step}s]))'.format(
         login=login,
         filter=prom.get_filter(),
         step=timing[1],
@@ -267,7 +267,7 @@ def graph_dtn_network(request, dtn):
 def graph_network(request, node, device):
     timing = query_time(request)
     data = {'lines': []}
-    query_rx = 'rate(node_network_receive_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}]) * 8'.format(
+    query_rx = 'rate(node_network_receive_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
         node=node,
         filter=prom.get_filter(),
         device=device,
@@ -283,7 +283,7 @@ def graph_network(request, node, device):
         'name': '{}'.format('Receive'),
     })
 
-    query_tx = 'rate(node_network_transmit_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}]) * 8'.format(
+    query_tx = 'rate(node_network_transmit_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
         node=node,
         filter=prom.get_filter(),
         device=device,

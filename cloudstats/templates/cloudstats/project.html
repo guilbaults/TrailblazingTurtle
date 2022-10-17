@@ -53,20 +53,20 @@ function loadGraphs(delta){
   loadGraph('graph_network_bandwidth', 'graph/network_bandwidth.json?delta=' + delta);
 }
 $(document).ready(function(){
-  loadGraphs('1w');
+  loadGraphs(60*60*24*7);
 
   $('#myTabs a').click(function (e) {
       if($(this).attr('href') == '#last_month'){
-        loadGraphs('1m');
+        loadGraphs(60*60*24*30);
       }
       if($(this).attr('href') == '#last_week'){
-          loadGraphs('1w');
+          loadGraphs(60*60*24*7);
       }
       if($(this).attr('href') == '#last_day'){
-          loadGraphs('1d');
+          loadGraphs(60*60*24);
       }
       if($(this).attr('href') == '#last_hour'){
-          loadGraphs('1h');
+          loadGraphs(60*60);
       }
   })
 });

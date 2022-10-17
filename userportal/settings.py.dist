@@ -215,6 +215,14 @@ EXPORTER_INSTALLED = [
     'slurm_exporter',
 ]
 
+EXPORTER_SAMPLING_RATE = {
+    'slurm-job-exporter': 30,
+    'node_exporter': 30,
+    'redfish_exporter': 90,
+    'lustre_exporter': 90,
+    'slurm_exporter': 60,
+}
+
 CLUSTER_NAME = 'narval'  # used for slurm stats
 STORAGE_NAME = 'narval-storage'
 COMPUTE_NAME = 'narval'  # narval-compute or narval-gpu

@@ -41,17 +41,17 @@
         {% endfor %}
     }
     $(document).ready(function(){
-        loadGraphs('1h');
+        loadGraphs(60*60);
 
         $('#myTabs a').click(function (e) {
             if($(this).attr('href') == '#last_week'){
-                loadGraphs('1w');
+                loadGraphs(60*60*24*7);
             }
             if($(this).attr('href') == '#last_day'){
-                loadGraphs('1d');
+                loadGraphs(60*60*24);
             }
             if($(this).attr('href') == '#last_hour'){
-                loadGraphs('1h');
+                loadGraphs(60*60);
             }
         })
     });

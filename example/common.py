@@ -6,6 +6,10 @@ from django.conf import settings
 import pwd
 
 
+# How many points in the X axis of the graphs
+RESOLUTION = 500
+
+
 """
 This example is using MagicCastle and FreeIPA
 https://github.com/ComputeCanada/magic_castle/

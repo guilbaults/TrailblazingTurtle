@@ -8,6 +8,10 @@ import yaml
 from django.conf import settings
 
 
+# How many points in the X axis of the graphs
+RESOLUTION = 500
+
+
 def user_or_staff(func):
     """Decorator to allow access only to staff members or to the user"""
     @functools.wraps(func)
@@ -145,28 +149,19 @@ def request_to_username(request):
     return request.user.username.split('@')[0]
 
 
-def query_time(request):
+def query_time(request, exporter_name=None):
     delta = int(request.GET.get('delta', 0))
-    if delta <= 3600:
-        # an hour
-        step = 60
-        start = datetime.now() - timedelta(seconds=delta)
-    elif delta <= 3600 * 24:
-        # a day
-        step = 60 * 5
-        start = datetime.now() - timedelta(seconds=delta)
-    elif delta <= 3600 * 24 * 7:
-        # a week
-        step = 60 * 30
-        start = datetime.now() - timedelta(seconds=delta)
-    elif delta <= 3600 * 24 * 30:
-        # a month
-        step = 60 * 60 * 3
-        start = datetime.now() - timedelta(seconds=delta)
+
+    if delta > 3600 * 24 * 7 * 30 * 6:
+        # more than 6 months
+        delta = 3600 * 24 * 7 * 30 * 6
+
+    start = datetime.now() - timedelta(seconds=delta)
+
+    if exporter_name in settings.EXPORTER_SAMPLING_RATE:
+        step = max(int(delta / RESOLUTION), settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2
     else:
-        # too long, return 6 months
-        step = 60 * 60 * 12
-        start = datetime.now() - timedelta(seconds=3600 * 24 * 30 * 6)
+        step = max(int(delta / RESOLUTION), 30) * 2
 
     return (start, step)
 
@@ -177,14 +172,12 @@ def get_step(start, end=None):
     if start is None:
         start = datetime.now()
     delta = end - start
-    if delta.total_seconds() < 3600 * 24:
-        # less than one day
-        return 30
-    elif delta.total_seconds() < 3600 * 24 * 7:
-        # less than a week
-        return 60 * 15
+
+    if delta.days > 6 * 30:
+        # more than 6 months
+        return 3600 * 24
     else:
-        return 60 * 60
+        return int(delta.total_seconds() / RESOLUTION)
 
 
 class Prometheus:

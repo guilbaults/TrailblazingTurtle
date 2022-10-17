@@ -124,22 +124,35 @@ def request_to_username(request):
     return request.user.username.split('@')[0]
 
 
-def query_time(request):
-    delta = request.GET.get('delta', '1h')
-    if delta == '1m':
-        start = datetime.now() - timedelta(weeks=4)
-        step = '3h'
-    elif delta == '1w':
-        start = datetime.now() - timedelta(weeks=1)
-        step = '30m'
-    elif delta == '1d':
-        start = datetime.now() - timedelta(days=1)
-        step = '5m'
+def query_time(request, exporter_name=None):
+    delta = int(request.GET.get('delta', 0))
+
+    if delta > 3600 * 24 * 7 * 30 * 6:
+        # more than 6 months
+        delta = 3600 * 24 * 7 * 30 * 6
+
+    start = datetime.now() - timedelta(seconds=delta)
+
+    if exporter_name in settings.EXPORTER_SAMPLING_RATE:
+        step = max(int(delta / RESOLUTION), settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2
     else:
-        # default to 1 hour
-        start = datetime.now() - timedelta(hours=1)
-        step = '30s'
+        step = max(int(delta / RESOLUTION), 30) * 2
+
     return (start, step)
+
+
+def get_step(start, end=None):
+    if end is None:
+        end = datetime.now()
+    if start is None:
+        start = datetime.now()
+    delta = end - start
+
+    if delta.days > 6 * 30:
+        # more than 6 months
+        return 3600 * 24
+    else:
+        return int(delta.total_seconds() / RESOLUTION)
 
 
 class Prometheus:
@@ -179,3 +192,7 @@ class Prometheus:
     def query_last(self, query):
         q = self.prom.custom_query(query)
         return q
+
+    def rate(self, exporter_name):
+        # return twice the sampling rate of the exporter in seconds
+        return int(settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2

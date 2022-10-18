@@ -16,10 +16,24 @@ from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
 from django.http import Http404
 
-GPU_MEMORY = {'Tesla V100-SXM2-16GB': 16, 'NVIDIA A100-SXM4-40GB': 40}
+GPU_MEMORY = {
+    'GRID V100D-4C': 4,
+    'GRID V100D-8C': 8,
+    'GRID V100D-16C': 16,
+    'GRID V100D-32C': 32,
+    'Tesla V100-SXM2-16GB': 16,
+    'NVIDIA A100-SXM4-40GB': 40,
+}
 GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400}
 GPU_IDLE_POWER = {'Tesla V100-SXM2-16GB': 55, 'NVIDIA A100-SXM4-40GB': 55}
-GPU_SHORT_NAME = {'NVIDIA A100-SXM4-40GB': 'A100', 'Tesla V100-SXM2-16GB': 'V100'}
+GPU_SHORT_NAME = {
+    'GRID V100D-4C': 'V100 4GB',
+    'GRID V100D-8C': 'V100 8GB',
+    'GRID V100D-16C': 'V100 16GB',
+    'GRID V100D-32C': 'V100 32GB',
+    'Tesla V100-SXM2-16GB': 'V100',
+    'NVIDIA A100-SXM4-40GB': 'A100',
+    }
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -855,20 +869,21 @@ def graph_gpu_power(request, username, job_id):
             'hovertemplate': '%{y:.1f} W',
         })
 
-    data['lines'].append({
-        'x': x,
-        'y': [GPU_IDLE_POWER[gpu_type] for x in y],
-        'type': 'scatter',
-        'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
-        'hovertemplate': '%{y:.1f} W',
-    })
+    if len(stats) > 0:
+        data['lines'].append({
+            'x': x,
+            'y': [GPU_IDLE_POWER[gpu_type] for x in y],
+            'type': 'scatter',
+            'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+            'hovertemplate': '%{y:.1f} W',
+        })
 
-    data['layout'] = {
-        'yaxis': {
-            'ticksuffix': ' W',
-            'range': [0, GPU_FULL_POWER[gpu_type]],
-            'title': _('GPU Power'),
-        }
+        data['layout'] = {
+            'yaxis': {
+                'ticksuffix': ' W',
+                'range': [0, GPU_FULL_POWER[gpu_type]],
+                'title': _('GPU Power'),
+            }
     }
     return JsonResponse(data)
 

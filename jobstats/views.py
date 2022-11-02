@@ -33,7 +33,7 @@ GPU_SHORT_NAME = {
     'GRID V100D-32C': 'V100 32GB',
     'Tesla V100-SXM2-16GB': 'V100',
     'NVIDIA A100-SXM4-40GB': 'A100',
-    }
+}
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -884,7 +884,7 @@ def graph_gpu_power(request, username, job_id):
                 'range': [0, GPU_FULL_POWER[gpu_type]],
                 'title': _('GPU Power'),
             }
-    }
+        }
     return JsonResponse(data)
 
 

@@ -6,6 +6,7 @@ from ccldap.models import LdapAllocation, LdapUser
 from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
 import yaml
 from django.conf import settings
+import os
 
 
 # How many points in the X axis of the graphs
@@ -93,9 +94,6 @@ def compute_allocations_by_account(account):
 def compute_allocations_by_slurm_account(account):
     """
     takes a slurm account name and return the number of cpu or gpu allocated to that account
-
-    Returns:
-        int: the number of cpu or gpu allocated to that account
     """
     account_name = account.rstrip('_gpu').rstrip('_cpu')
     allocs = compute_allocations_by_account(account_name)
@@ -221,3 +219,8 @@ class Prometheus:
     def rate(self, exporter_name):
         # return twice the sampling rate of the exporter in seconds
         return int(settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2
+
+
+# Override the function here with the one in local.py if file exist
+if os.path.isfile(os.path.join(os.path.dirname(__file__), 'local.py')):
+    from .local import *  # noqa

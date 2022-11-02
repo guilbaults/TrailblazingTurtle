@@ -138,10 +138,8 @@ dmypy.json
 cython_debug/
 
 *.swp
-userportal/settings.py
-userportal/settings.py.dev
-userportal/settings.py.prod
-example/settings.py
+userportal/settings/*-local.py
+userportal/local.py
 slurm_prolog/api_config.ini
 private.key
 public.cert

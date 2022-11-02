@@ -220,6 +220,7 @@ class Prometheus:
         # return twice the sampling rate of the exporter in seconds
         return int(settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2
 
+
 # Override the function here with the one in local.py if file exist
 if os.path.isfile(os.path.join(os.path.dirname(__file__), 'local.py')):
-    from .local import *
+    from .local import *  # noqa

@@ -138,7 +138,7 @@ dmypy.json
 cython_debug/
 
 *.swp
-userportal/settings/*-local.conf
+userportal/settings/*-local.py
 userportal/local.py
 slurm_prolog/api_config.ini
 private.key

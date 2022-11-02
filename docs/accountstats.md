@@ -1,5 +1,5 @@
 # Accountstats
-The users can also see the aggregated use of the users in the same group. This also show the current priority of this account in slurm and a few months of history on how much the account used.
+The users can also see the aggregated use of the users in the same group. This also shows the current priority of this account in Slurm and a few months of history on how much the account used.
 
 <a href="accountstats.png"><img src="accountstats.png" alt="Stats per account" width="100"/></a>
 
@@ -12,4 +12,3 @@ Optional:
 
 * lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
 * slurm-exporter (show priority information)
-

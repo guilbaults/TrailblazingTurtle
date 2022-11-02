@@ -5,20 +5,20 @@ RPMs required for production
 * `python39-pip` (python 3.9 will be used in the virtualenv)
 * `gcc` (to compile python modules)
 * `python3-virtualenv`
-* `python39-mod_wsgi` or use gunicorn instead of WSGI in Apache
+* `python39-mod_wsgi` or use Gunicorn instead of WSGI in Apache
 * `python39-devel`
 * `openldap-devel`
 * `mariadb-devel`
 * `xmlsec1` (for SAML)
 * `xmlsec1-openssl` (for SAML)
 
-Python >= 3.9 is required to fix a CVE in numpy, you can install that version on Rocky8 inside a python virtualenv
+Python >= 3.9 is required to fix a CVE in NumPy, you can install that version on Rocky8 inside a python virtualenv
 
 ```
 /usr/bin/virtualenv-3 --python="/usr/bin/python3.9" /var/www/userportal-env
 ```
 
-A file in the python env need to be patched, check the diff in `ldapdb.patch`
+A file in the python env needs to be patched, check the diff in `ldapdb.patch` if using the ldapdb module.
 
 Static files are handled by Apache and need to be collected since python will not serve them:
 
@@ -138,7 +138,7 @@ Compile messages: `python manage.py compilemessages`
 
 # Deployment with Kubernetes
 
-Kubernetes is used to serve the Django application. The production image is built with ubuntu and python3.8, Gunicorn is used to serve the application. The static files are served by nginx. The image is built using the Containerfile in the root of the repository.
+Kubernetes is used to serve the Django application. The production image is built with ubuntu and python3.8, Gunicorn is used to serve the application. The static files are served by Nginx. The image is built using the Containerfile in the root of the repository.
 
 To build the image manually, you can use the following command:
 
@@ -147,5 +147,3 @@ buildah bud -t userportal
 ```
 
 Kaniko is used to build the image in the CI pipeline in Gitlab. The image is pushed to the registry and then deployed to the cluster. Some of the configuration files are located in the `kubernetes` directory.
-
-

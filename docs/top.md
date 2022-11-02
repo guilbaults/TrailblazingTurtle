@@ -1,7 +1,7 @@
 # Top
 These pages are only available to staff and are meant to visualize poor cluster utilization:
 
-* Largest compute users, CPU cores and GPUs
+* Largest compute users, CPU cores, and GPUs
 * Jobs on large memory nodes (ranked by worst to best)
 * Top users on Lustre
 
@@ -17,4 +17,3 @@ These pages are only available to staff and are meant to visualize poor cluster 
 Optional:
 
 * lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
-

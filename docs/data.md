@@ -2,7 +2,7 @@
 Some features will not be available if the exporter required to gather the stats is not configured.
 
 ## slurm-job-exporter
-[slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture information from cgroup managed by slurm on each compute nodes. This gather CPU, memory and GPU utilization.
+[slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture information from cgroup managed by Slurm on each compute node. This gathers CPU, memory, and GPU utilization.
 
 The following recorder rules are used to pre-aggregate stats shown in the user portal.
 
@@ -46,16 +46,16 @@ groups:
 ```
 
 ## slurm-exporter
-[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture stats from slurm like the priority of each users. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
+[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture stats from Slurm like the priority of each user. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
 
 ## Access to the database of slurmacct
-This mysql database is accessed with a read only user. It does not need to be in the same database server where django is storing its data.
+This MySQL database is accessed by a read-only user. It does not need to be in the same database server where Django is storing its data.
 
 ## lustre\_exporter and lustre\_exporter\_slurm
 Those 2 exporters are used to gather information about Lustre usage.
 
 * [lustre\_exporter](https://github.com/HewlettPackard/lustre_exporter) capture information on Lustre MDS and OSS but will only use \$SLURM\_JOBID as a tag on the metrics.
-* [lustre\_exporter\_slurm](https://github.com/guilbaults/lustre_exporter_slurm) is used as a proxy between Prometheus and lustre_exporter to improve the content of the tags. This will match the \$SLURM\_JOBID to a job in slurm and will add the username and slurm account in the tags.
+* [lustre\_exporter\_slurm](https://github.com/guilbaults/lustre_exporter_slurm) is used as a proxy between Prometheus and lustre_exporter to improve the content of the tags. This will match the \$SLURM\_JOBID to a job in Slurm and will add the username and Slurm account in the tags.
 
 The following recorder rules are used to pre-aggregate stats shown in the user portal.
 
@@ -79,10 +79,10 @@ groups:
 ```
 
 ## redfish\_exporter
-[redfish\_exporter](https://github.com/jenningsloy318/redfish_exporter) is used to gather the power usage of the nodes. This information is used to compute the energy used by a job and related metrics like CO2 emmissions.
+[redfish\_exporter](https://github.com/jenningsloy318/redfish_exporter) is used to gather the power usage of the nodes. This information is used to compute the energy used by a job and related metrics like CO2 emissions.
 
 ## node\_exporter
-[node\_exporter](https://github.com/prometheus/node_exporter) is used to gather generic information about the nodes. This is the default exporter used by most Prometheus installations. That information is used to show metrics like local disk IO of the nodes within the job.
+[node\_exporter](https://github.com/prometheus/node_exporter) is used to gather generic information about the nodes. This is the default exporter used by most Prometheus installations. That information is used to show metrics like the local disk IO of the nodes within the job.
 
 ## libvirtd\_exporter
 [libvirtd\_exporter](https://github.com/guilbaults/libvirtd_exporter/tree/metadata) is used to gather information about the VM running on Openstack.
@@ -91,4 +91,4 @@ groups:
 The information in this database is used to show the current utilization per user within a group.
 
 ## Slurm jobscript
-The script `slurm_jobscript/slurm_jobscripts_userportal.py` can be used to add the submitted script to the database of the portal. This should run on the slurm server, it will collect the scripts from `/var/spool/slurmctld`. This script use the REST API of Django to push to job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.
+The script `slurm_jobscript/slurm_jobscripts_userportal.py` can be used to add the submitted script to the database of the portal. This should run on the Slurm server, it will collect the scripts from `/var/spool/slurmctld`. This script uses the REST API of Django to push the job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.

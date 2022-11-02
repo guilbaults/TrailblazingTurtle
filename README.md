@@ -38,7 +38,7 @@ A test environment using the local `uid` resolver and dummies allocations is pro
 
 To use it, copy `example/local.py` to `userportal/local.py`. The other functions are documented in `common.py` if any other overrides are needed for your environment.
 
-To quickly test and bypass authentification, add this line to `userportal/settings/99-local.conf`. Other local configuration can be added in this file to override the default settings.
+To quickly test and bypass authentication, add this line to `userportal/settings/99-local.conf`. Other local configuration can be added in this file to override the default settings.
 
 ```
 AUTHENTICATION_BACKENDS.insert(0, 'userportal.authentication.staffRemoteUserBackend')

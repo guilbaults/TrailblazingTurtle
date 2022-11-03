@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: userportal
-        image: git.computecanada.ca:4567/cc-analytics/userportal
+        image: ghcr.io/guilbaults/userportal:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000

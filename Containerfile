@@ -15,7 +15,7 @@ RUN pip3 install --upgrade pip && \
 COPY . .
 
 RUN patch /usr/local/lib/python3.8/dist-packages/ldapdb/backends/ldap/base.py < /opt/userportal/ldapdb.patch
-RUN cp userportal/settings.py.dist userportal/settings.py && python3 manage.py collectstatic --noinput && python3 manage.py compilemessages
+RUN python3 manage.py collectstatic --noinput && python3 manage.py compilemessages
 
 EXPOSE 8000
 CMD ["./run-django-production.sh"]

@@ -1,42 +1,38 @@
 name: Build Image using Containerfile
 on: [push]
 
-env:
-    IMAGE_NAME: userportal
-    IMAGE_TAGS: latest ${{ github.sha }}
-    IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
-    REGISTRY_USER: ${{ github.actor }}
-    REGISTRY_PASSWORD: ${{ github.token }}
-
 jobs:
   build:
-    name: Build and push image
-    runs-on: ubuntu-20.04
-
+    name: Build image
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_NAME: userportal
+      REGISTRY: ghcr.io/major
     steps:
-    - uses: actions/checkout@v2
 
-    - name: Build Image
+    - name: Clone the repository
+      uses: actions/checkout@v2
+
+    - name: Buildah Action
       id: build-image
       uses: redhat-actions/buildah-build@v2
       with:
-        image: userportal
+        image: ${{ env.IMAGE_NAME }}
         tags: latest ${{ github.sha }}
         containerfiles: |
           ./Containerfile
 
-    - name: Push To GHCR
-      uses: ./
-      id: push
+    - name: Log in to the GitHub Container registry
+      uses: redhat-actions/podman-login@v1
       with:
-        image: ${{ steps.build_image.outputs.image }}
-        tags: ${{ steps.build_image.outputs.tags }}
-        registry: ${{ env.IMAGE_REGISTRY }}
-        username: ${{ env.REGISTRY_USER }}
-        password: ${{ env.REGISTRY_PASSWORD }}
-        extra-args: |
-          --disable-content-trust
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Echo outputs
-      run: |
-        echo "${{ toJSON(steps.push.outputs) }}"
+    - name: Push to GitHub Container Repository
+      id: push-to-ghcr
+      uses: redhat-actions/push-to-registry@v2
+      with:
+        image: ${{ steps.build-image.outputs.image }}
+        tags: ${{ steps.build-image.outputs.tags }}
+        registry: ${{ env.REGISTRY }}

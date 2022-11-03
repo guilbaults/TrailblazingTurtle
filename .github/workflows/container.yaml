@@ -10,7 +10,7 @@ jobs:
       packages: write
     env:
       IMAGE_NAME: userportal
-      REGISTRY: ghcr.io/major
+      REGISTRY: ghcr.io/guilbaults
     steps:
 
     - name: Clone the repository

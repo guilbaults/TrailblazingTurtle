@@ -1,6 +1,8 @@
 # Trailblazing Turtle
 🐢🚀
 
+[![DOI](https://zenodo.org/badge/549763009.svg)](https://zenodo.org/badge/latestdoi/549763009)
+
 This web portal is intended to give HPC users a view of the overall use of the HPC cluster and their use. This portal is using the information collected on compute nodes and management servers to produce the information in the various modules:
 
 * [jobstats](docs/jobstats.md)

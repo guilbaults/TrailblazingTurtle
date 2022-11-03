@@ -5,6 +5,9 @@ jobs:
   build:
     name: Build image
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     env:
       IMAGE_NAME: userportal
       REGISTRY: ghcr.io/major

@@ -9,7 +9,9 @@
   <li><a href="compute">{% translate "Computes" %}</a></li>
   <li><a href="gpucompute">{% translate "GPU Computes" %}</a></li>
   <li><a href="largemem">{% translate "Large memory nodes" %}</a></li>
-  <li><a href="lustre">{% translate "Lustre" %}</a></li>
+  {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
+    <li><a href="lustre">{% translate "Lustre" %}</a></li>
+  {% endif %}
 </ul>
 {% endblock content %}
 

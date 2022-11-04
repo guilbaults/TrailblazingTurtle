@@ -52,9 +52,11 @@
 <h3>{% translate "Wasted memory" %}</h3>
 <div id="graph_mem_wasted"></div>
 
+{% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
 <h2>{% translate "Filesystem" %}</h2>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
+{% endif %}
 
 <h2>{% translate "Jobs running with this account" %}</h2>
 
@@ -112,8 +114,10 @@ loadGraph('graph_mem_allocated', 'graph/mem_allocated.json');
 loadGraph('graph_mem_used', 'graph/mem_used.json');
 loadGraph('graph_mem_wasted', 'graph/mem_wasted.json');
 
+{% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
 loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
 loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
+{% endif %}
 
 $(document).ready(function() {
   luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken

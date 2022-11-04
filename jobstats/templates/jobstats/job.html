@@ -333,8 +333,10 @@
   <script>
   loadGraph('graph_cpu', 'graph/cpu.json?step={{step}}');
   loadGraph('graph_mem', 'graph/mem.json?step={{step}}');
-  loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
-  loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
+  {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
+    loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
+    loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
+  {% endif %}
 
   {% if gpu_count > 0 %}
     loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json?step={{step}}');

@@ -46,9 +46,11 @@
 <h2>{% translate "Memory" %}</h2>
 <div id="graph_mem"></div>
 
+{% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
 <h2>{% translate "Filesystem" %}</h2>
 <div id="graph_lustre_mdt"></div>
 <div id="graph_lustre_ost"></div>
+{% endif %}
 
 {% if gpu_used > 0 %}
 <h2>{% translate "GPUs" %}</h2>
@@ -93,8 +95,10 @@
 <script>
 loadGraph('graph_cpu', 'graph/cpu.json');
 loadGraph('graph_mem', 'graph/mem.json');
-loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
-loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
+{% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
+  loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
+  loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
+{% endif %}
 {% if gpu_used > 0 %}
 loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json');
 loadGraph('graph_gpu_power', 'graph/gpu_power.json');

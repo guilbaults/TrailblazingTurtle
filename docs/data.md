@@ -91,4 +91,4 @@ groups:
 The information in this database is used to show the current utilization per user within a group.
 
 ## Slurm jobscript
-The script `slurm_jobscript/slurm_jobscripts_userportal.py` can be used to add the submitted script to the database of the portal. This should run on the Slurm server, it will collect the scripts from `/var/spool/slurmctld`. This script uses the REST API of Django to push the job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.
+The script `slurm_jobscript/slurm_jobscripts.py` can be used to add the submitted script to the database of the portal. This should run on the Slurm server, it will collect the scripts from the `spool` directory of slurm. This script uses the REST API of Django to push the job script. A user with a token need to be created, check the [installation documentation](install.md) on how to create this API token.

@@ -140,7 +140,7 @@ cython_debug/
 *.swp
 userportal/settings/*-local.py
 userportal/local.py
-slurm_prolog/api_config.ini
+slurm_jobscripts/slurm_jobscripts.ini
 private.key
 public.cert
 idp_metadata.xml

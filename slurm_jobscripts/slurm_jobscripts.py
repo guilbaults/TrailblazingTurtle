@@ -18,8 +18,8 @@ def send_job(jobid):
             content = f.read()[:script_length].strip('\x00')
             logging.debug('Job script {}: {}'.format(jobid, content[:100]))  # Only log first 100 characters into DEBUG log
             r = requests.post('{}/api/jobscripts/'.format(host),
-                          json={'id_job': int(jobid), 'submit_script': content},
-                          headers={'Authorization': 'Token ' + token})
+                              json={'id_job': int(jobid), 'submit_script': content},
+                              headers={'Authorization': 'Token ' + token})
             if r.status_code != 201:
                 if r.status_code == 401:
                     logging.error('Token is invalid')
@@ -70,7 +70,7 @@ if __name__ == '__main__':
                 logging.debug('hash.{mod} does not exist yet'.format(mod=mod))
                 continue
             for job in filter(lambda x: 'job' in x, listing):
-                jobid = int(job[4:]) # parse the jobid (job.12345 -> 12345)
+                jobid = int(job[4:])  # parse the jobid (job.12345 -> 12345)
                 updated_jobs.add(jobid)
 
                 if jobid not in jobs:

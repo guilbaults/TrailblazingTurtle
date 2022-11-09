@@ -7,6 +7,12 @@ class PagesTestCase(CustomTestCase):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
 
+    def test_logged_user(self):
+        response = self.user_client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '({user})'.format(
+            user=settings.TESTS_USER))
+
     def test_filesystems(self):
         response = self.client.get('/filesystems/')
         self.assertEqual(response.status_code, 200)

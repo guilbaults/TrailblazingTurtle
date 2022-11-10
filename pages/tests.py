@@ -13,6 +13,13 @@ class PagesTestCase(CustomTestCase):
         self.assertContains(response, '({user})'.format(
             user=settings.TESTS_USER))
 
+    def test_logged_admin(self):
+        response = self.admin_client.get('/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, '({user})'.format(
+            user=settings.TESTS_ADMIN))
+        self.assertContains(response, 'Notes')
+
     def test_filesystems(self):
         response = self.client.get('/filesystems/')
         self.assertEqual(response.status_code, 200)

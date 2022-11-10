@@ -5,8 +5,7 @@ from django.test import Client
 
 
 class CustomTestCase(TestCase):
-    # databases = '__all__'
-    databases = {'default', 'ldap', 'slurm'}
+    databases = '__all__'
 
     @classmethod
     def setUp(self):
@@ -19,6 +18,9 @@ class CustomTestCase(TestCase):
 
         self.user_client = Client()
         self.user_client.login(username=settings.TESTS_USER, password='userpassword')
+
+        self.admin_client = Client()
+        self.admin_client.login(username=settings.TESTS_ADMIN, password='adminpassword')
 
     def assertJSONKeys(self, response, keys):
         self.assertEqual(set(response.json().keys()), set(keys))

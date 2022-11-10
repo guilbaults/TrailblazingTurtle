@@ -6,7 +6,7 @@ from django.test import Client
 
 class CustomTestCase(TestCase):
     # databases = '__all__'
-    databases = {'default', 'ldap'}
+    databases = {'default', 'ldap', 'slurm'}
 
     @classmethod
     def setUp(self):

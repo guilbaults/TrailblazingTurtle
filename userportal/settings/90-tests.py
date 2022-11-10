@@ -1,3 +1,5 @@
+TEST_RUNNER = 'userportal.testrunner.CustomTestRunner'
+
 TESTS_USER = 'user01'
 TESTS_ADMIN = 'admin'
 

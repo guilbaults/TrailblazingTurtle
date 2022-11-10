@@ -4,6 +4,7 @@ from tests.tests import CustomTestCase
 
 class JobstatsTestCase(CustomTestCase):
     def test_anonymous_user(self):
+        # A anonymous user should be redirected to login page
         response = self.client.get('/secure/jobstats/{user}/'.format(
             user=settings.TESTS_JOBSTATS[0][0]))
         self.assertEqual(response.status_code, 302)
@@ -11,6 +12,12 @@ class JobstatsTestCase(CustomTestCase):
             user=settings.TESTS_JOBSTATS[0][0],
             jobid=settings.TESTS_JOBSTATS[0][1]))
         self.assertEqual(response.status_code, 302)
+
+    def test_user_jobstats_redirect(self):
+        # Should redirect to the user own jobstats page
+        response = self.user_client.get('/secure/jobstats/')
+        self.assertRedirects(response, '/secure/jobstats/{user}/'.format(
+            user=settings.TESTS_USER))
 
     def test_user_jobstats(self):
         # A user can see only his jobstats

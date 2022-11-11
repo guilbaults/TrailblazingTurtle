@@ -38,25 +38,41 @@ def note(request, note_id=None):
             if request.POST['send'] == 'delete':
                 context['note'] = Note.objects.get(id=note_id)
                 context['note'].deleted_at = datetime.datetime.now()
+                # We don't delete, but set a deleted_at field
                 context['note'].save()
                 return redirect_success(request)
 
-            if request.POST['job_id'] == '':
+            if 'job_id' in request.POST:
+                if request.POST['job_id'] == '':
+                    job_id = None
+                else:
+                    job_id = int(request.POST['job_id'])
+            else:
                 job_id = None
+
+            if 'ticket_id' in request.POST:
+                if request.POST['ticket_id'] == '':
+                    ticket_id = None
+                else:
+                    ticket_id = request.POST['ticket_id']
             else:
-                job_id = int(request.POST['job_id'])
-            if request.POST['ticket_id'] == '':
                 ticket_id = None
+
+            if 'account' in request.POST:
+                if request.POST['account'] == '':
+                    account = None
+                else:
+                    account = request.POST['account']
             else:
-                ticket_id = request.POST['ticket_id']
-            if request.POST['account'] == '':
                 account = None
+
+            if 'username' in request.POST:
+                if request.POST['username'] == '':
+                    username = None
+                else:
+                    username = request.POST['username']
             else:
-                account = request.POST['account']
-            if request.POST['username'] == '':
                 username = None
-            else:
-                username = request.POST['username']
 
             if request.POST['send'] == 'update':
                 # Update the note

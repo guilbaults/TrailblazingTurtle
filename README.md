@@ -46,7 +46,7 @@ To quickly test and bypass authentication, add this line to `userportal/settings
 AUTHENTICATION_BACKENDS.insert(0, 'userportal.authentication.staffRemoteUserBackend')
 ```
 
-This bypasses the authentication and will use the `REMOTE_USER` header or env variable to authenticate the user. This is useful for testing the portal without having to set up a full IDP environment. The REMOTE_USER method can be used when using shibboleth or other IDP. SAML2 is now the preferred authentication method for production.
+This bypasses the authentication and will use the `REMOTE_USER` header or env variable to authenticate the user. This is useful to be able to try the portal without having to set up a full IDP environment. The REMOTE_USER method can be used when using shibboleth or other IDP. SAML2 is now the preferred authentication method for production.
 
 Examine the default configuration in `userportal/settings/` and override any settings in `99-local.conf` as needed.
 
@@ -57,6 +57,14 @@ REMOTE_USER=someuser@alliancecan.ca affiliation=staff@alliancecan.ca python mana
 ```
 
 This will run the portal with the user `someuser` logged in as a staff member.
+
+Automated Django tests are also available, they can be run with:
+
+```
+python manage.py test
+```
+
+This will test the various modules, including reading job data from the Slurm database and Prometheus. A temporary database for Django is created automatically for the tests. Slurm and Prometheus data are read directly from production data with a read-only account. A representative user, job and account need to be defined to be used in the tests, check the `90-tests.py` file for an example.
 
 ## Production install
 The portal can be installed directly on a centos/rocky Apache web server, or in a container. The various recommendation on Django in production can be followed.

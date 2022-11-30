@@ -276,6 +276,8 @@
     <dd>{% translate "Memory that cannot be reclaimed (mlocked etc). It can be used by cryptography to prevent memory containing keys from being swapped out" %}</dd>
   </dl>
   <div id="graph_mem"></div>
+  <h3>{% translate "Processes and threads" %}</h3>
+  <div id="graph_thread"></div>
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
   <h3>{% translate "Filesystem" %}</h3>
   <div id="graph_lustre_mdt"></div>
@@ -333,6 +335,7 @@
   <script>
   loadGraph('graph_cpu', 'graph/cpu.json?step={{step}}');
   loadGraph('graph_mem', 'graph/mem.json?step={{step}}');
+  loadGraph('graph_thread', 'graph/thread.json?step={{step}}');
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
     loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');

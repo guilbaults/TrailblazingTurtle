@@ -13,6 +13,7 @@ urlpatterns = [
     path('<str:username>/<str:job_id>/', views.job),
     path('<str:username>/<str:job_id>/graph/cpu.json', views.graph_cpu),
     path('<str:username>/<str:job_id>/graph/mem.json', views.graph_mem),
+    path('<str:username>/<str:job_id>/graph/thread.json', views.graph_thread),
     path('<str:username>/<str:job_id>/graph/lustre_mdt.json', views.graph_lustre_mdt),
     path('<str:username>/<str:job_id>/graph/lustre_ost.json', views.graph_lustre_ost),
     path('<str:username>/<str:job_id>/graph/gpu_utilization.json', views.graph_gpu_utilization),

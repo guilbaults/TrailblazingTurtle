@@ -299,6 +299,23 @@ def job(request, username, job_id):
             _('This job is using multiple nodes'),
             'info')]
 
+    try:
+        query_threads = 'sum(slurm_job_threads_count{{slurmjobid=~"{}", state="running", {}}})'.format(job_id, prom.get_filter())
+        stats_threads = prom.query_prometheus(query_threads, job.time_start_dt(), job.time_end_dt())
+        running_threads = statistics.mean(stats_threads[1])
+        if running_threads > 1.25 * context['tres_req']['total_cores']:
+            comments += [Comment(
+                _('This job is running on average {:.1f} threads on {} cores, the cores might be oversubscribed').format(
+                    running_threads, context['tres_req']['total_cores']),
+                'warning')]
+        elif running_threads < 0.75 * context['tres_req']['total_cores']:
+            comments += [Comment(
+                _('This job is running on average {:.1f} threads on {} cores, the cores might be underused').format(
+                    running_threads, context['tres_req']['total_cores']),
+                'warning')]
+    except ValueError:
+        pass
+
     context['comments'] = sorted(comments, key=lambda x: x.line_number)
 
     return render(request, 'jobstats/job.html', context)
@@ -515,6 +532,73 @@ def graph_mem(request, username, job_id):
             'ticksuffix': 'GiB',
             'range': [0, maximum],
             'title': _('Memory'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_thread(request, username, job_id):
+    context = context_job_info(username, job_id)
+
+    data = {'lines': []}
+
+    query_procs = 'slurm_job_process_count{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
+    stats_procs = prom.query_prometheus_multiple(
+        query_procs,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+    for line in stats_procs:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        if context['multiple_jobs']:
+            name = '{} {} {}'.format(line['metric']['slurmjobid'], _('Processes'), compute_name)
+        else:
+            name = '{} {}'.format(_('Processes'), compute_name)
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    query_threads = 'slurm_job_threads_count{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
+    stats_threads = prom.query_prometheus_multiple(
+        query_threads,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+    for line in stats_threads:
+        compute_name = line['metric']['instance'].split(':')[0]
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+
+        try:
+            # handle the slighly different format in slurm-job-exporter v0.0.11, fixed in v0.0.12
+            state = line['metric']['state']
+        except KeyError:
+            state = 'total'
+
+        if context['multiple_jobs']:
+            name = '{} {} {} {}'.format(line['metric']['slurmjobid'], _('Threads'), compute_name, state)
+        else:
+            name = '{} {} {}'.format(_('Threads'), compute_name, state)
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('Threads and processes'),
         }
     }
 

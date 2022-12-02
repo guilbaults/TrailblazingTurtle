@@ -87,6 +87,9 @@ groups:
 ## libvirtd\_exporter
 [libvirtd\_exporter](https://github.com/guilbaults/libvirtd_exporter/tree/metadata) is used to gather information about the VM running on Openstack.
 
+## pcm-sensor-server
+[pcm-sensor-server](https://github.com/intel/pcm/) is used to collect low-level data on Intel CPU like L2/L3 cache hit ratio, memory bandwidth, etc.
+
 ## Database used by Robinhood
 The information in this database is used to show the current utilization per user within a group.
 

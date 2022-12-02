@@ -1329,6 +1329,157 @@ def graph_disk_used(request, username, job_id):
     return JsonResponse(data)
 
 
+@login_required
+@user_or_staff
+def graph_mem_bdw(request, username, job_id):
+    context = context_job_info(username, job_id)
+    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+
+    data = {'lines': []}
+
+    for direction in ['Reads', 'Writes']:
+        query = 'rate(DRAM_{direction}{{instance=~"{instances}", {filter} }}[1m])/1024/1024/1024'.format(
+            direction=direction,
+            instances=instances,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        for line in stats:
+            if 'socket' not in line['metric']:
+                continue
+            compute_name = "{} {} socket {}".format(
+                direction,
+                line['metric']['instance'].split(':')[0],
+                line['metric']['socket'])
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            y = line['y']
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': compute_name,
+                'hovertemplate': '%{y:.1f} GB/s',
+            })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' GB/s',
+            'title': _('Memory bandwidth'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
+def graph_l2_rate(request, username, job_id):
+    return graph_cache_rate(request, username, job_id, 'L2')
+
+
+@login_required
+@user_or_staff
+def graph_l3_rate(request, username, job_id):
+    return graph_cache_rate(request, username, job_id, 'L3')
+
+
+def graph_cache_rate(request, username, job_id, l_cache='L3'):
+    context = context_job_info(username, job_id)
+    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+
+    data = {'lines': []}
+
+    # get the OS core mapping to the physical cores since they don't match
+    query_mapping = 'OS_ID{{instance=~"{instances}", {filter}}}'.format(
+        instances=instances,
+        filter=prom.get_filter())
+    stats_mapping = prom.query_prometheus_multiple(
+        query_mapping,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+
+    all_cores_mapping = {}  # key is the OS core, value is the (socket, core, thread)
+    reverse_mapping = {}  # key is the (socket, core, thread), value is the OS core
+    for line in stats_mapping:
+        os_core = int(line['y'][0])  # This is the core number as seen by the OS
+        instance = line['metric']['instance'].split(':')[0]
+        phys_core = (
+            int(line['metric']['socket']),
+            int(line['metric']['core']),
+            int(line['metric']['thread']))
+        if instance not in all_cores_mapping:
+            all_cores_mapping[instance] = {}
+        all_cores_mapping[instance][os_core] = phys_core
+
+        if instance not in reverse_mapping:
+            reverse_mapping[instance] = {}
+        reverse_mapping[instance][phys_core] = os_core
+
+    # A bit of a waste, we only need the core used by the job and not the time series
+    query_cpu = 'rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[{}s]) / 1000000000'.format(
+        context['id_regex'],
+        prom.get_filter(),
+        prom.rate('slurm-job-exporter'))
+    stats_cpu = prom.query_prometheus_multiple(
+        query_cpu,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+
+    used_mapping = {}
+    for line in stats_cpu:
+        instance = line['metric']['instance'].split(':')[0]
+        if instance not in used_mapping:
+            used_mapping[instance] = set()  # the set of physical cores/sockets used by the job
+        used_mapping[instance].add(all_cores_mapping[instance][int(line['metric']['core'])])
+
+    # get all the L3 cache hits and misses, we will discard the ones not used
+    # by the job since we can't easily filter them out with a regex in the query
+    query_cache = 'rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])/(rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s]) + rate({l_cache}_Cache_Misses{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])) * 100'.format(
+        l_cache=l_cache,
+        instances=instances,
+        filter=prom.get_filter(),
+        rate=prom.rate('pcm-sensor-server'))
+    stats_cache = prom.query_prometheus_multiple(
+        query_cache,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+
+    # from all the L3 cache hits and misses, keep only the ones used by the job
+    filtered_stats = []
+    for line in stats_cache:
+        instance = line['metric']['instance'].split(':')[0]
+        phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
+        if phys_core in used_mapping[instance]:
+            filtered_stats.append(line)
+
+    for line in filtered_stats:
+        phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
+        compute_name = "{} core {}".format(
+            line['metric']['instance'].split(':')[0],
+            reverse_mapping[line['metric']['instance'].split(':')[0]][phys_core])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': compute_name,
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' %',
+            'range': [0, 100],
+            'title': _('Hit rate'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
 def power(job, step):
     nodes = job.nodes()
     if job.gpu_count() > 0:

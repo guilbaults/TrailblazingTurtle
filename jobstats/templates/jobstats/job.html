@@ -284,6 +284,13 @@
   <div id="graph_lustre_ost"></div>
   {% endif %}
 
+  {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
+  <h3>{% translate "L2 cache hit rate" %}</h3>
+  <div id="graph_l2_rate"></div>
+  <h3>{% translate "L3 cache hit rate" %}</h3>
+  <div id="graph_l3_rate"></div>
+  {% endif %}
+
   {% if gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>
     <h4>{% translate "GPU Compute cycle used" %}</h4>
@@ -343,6 +350,11 @@
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
     loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
+  {% endif %}
+
+  {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
+    loadGraph('graph_l2_rate', 'graph/l2_rate.json?step={{step}}');
+    loadGraph('graph_l3_rate', 'graph/l3_rate.json?step={{step}}');
   {% endif %}
 
   {% if gpu_count > 0 %}

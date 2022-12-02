@@ -579,7 +579,7 @@ def graph_thread(request, username, job_id):
         y = line['y']
 
         try:
-            # handle the slighly different format in slurm-job-exporter v0.0.11, fixed in v0.0.12
+            # handle the slightly different format in slurm-job-exporter v0.0.11, fixed in v0.0.12
             state = line['metric']['state']
         except KeyError:
             state = 'total'
@@ -598,7 +598,7 @@ def graph_thread(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'title': _('Threads and processes'),
+            'title': _('Processes and threads'),
         }
     }
 

@@ -5,6 +5,7 @@ EXPORTER_INSTALLED = [
     'lfs_quota',
     'lustre_exporter',
     'slurm_exporter',
+    'pcm-sensor-server',
 ]
 
 EXPORTER_SAMPLING_RATE = {
@@ -13,6 +14,7 @@ EXPORTER_SAMPLING_RATE = {
     'redfish_exporter': 90,
     'lustre_exporter': 90,
     'slurm_exporter': 60,
+    'pcm-sensor-server': 30,
 }
 
 CLUSTER_NAME = 'narval'  # used for slurm stats

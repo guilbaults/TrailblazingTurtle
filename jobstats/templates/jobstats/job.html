@@ -324,6 +324,10 @@
     <div id="graph_disk_bdw"></div>
     <h3>{% translate "Localscratch space used" %}</h3>
     <div id="graph_disk_used"></div>
+    {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
+      <h3>{% translate "Memory bandwidth" %}</h3>
+      <div id="graph_mem_bdw"></div>
+    {% endif %}
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
       <h3>{% translate "Power used" %}</h3>
       <div id="graph_power"></div>
@@ -355,10 +359,14 @@
     loadGraph('graph_disk_iops', 'graph/disk_iops.json?step={{step}}');
     loadGraph('graph_disk_bdw', 'graph/disk_bdw.json?step={{step}}');
     loadGraph('graph_disk_used', 'graph/disk_used.json?step={{step}}');
-  {% endif %}
+  
+    {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
+      loadGraph('graph_mem_bdw', 'graph/mem_bdw.json?step={{step}}');
+    {% endif %}
 
-  {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False%}
-    loadGraph('graph_power', 'graph/power.json?step={{step}}');
+    {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
+      loadGraph('graph_power', 'graph/power.json?step={{step}}');
+    {% endif %}
   {% endif %}
 
   hljs.highlightAll();

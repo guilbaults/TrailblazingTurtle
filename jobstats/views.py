@@ -1329,6 +1329,47 @@ def graph_disk_used(request, username, job_id):
     return JsonResponse(data)
 
 
+@login_required
+@user_or_staff
+def graph_mem_bdw(request, username, job_id):
+    context = context_job_info(username, job_id)
+    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+
+    data = {'lines': []}
+
+    for direction in ['Reads', 'Writes']:
+        query = 'rate(DRAM_{direction}{{instance=~"{instances}", {filter} }}[1m])/1024/1024/1024'.format(
+            direction=direction,
+            instances=instances,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        for line in stats:
+            if 'socket' not in line['metric']:
+                continue
+            compute_name = "{} {} socket {}".format(
+                direction,
+                line['metric']['instance'].split(':')[0],
+                line['metric']['socket'])
+            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+            y = line['y']
+            data['lines'].append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': compute_name,
+                'hovertemplate': '%{y:.1f} GB/s',
+            })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' GB/s',
+            'title': _('Memory bandwidth'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
 def power(job, step):
     nodes = job.nodes()
     if job.gpu_count() > 0:

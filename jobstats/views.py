@@ -1480,6 +1480,43 @@ def graph_cache_rate(request, username, job_id, l_cache='L3'):
     return JsonResponse(data)
 
 
+@login_required
+@user_or_staff
+def graph_cpu_interconnect(request, username, job_id):
+    context = context_job_info(username, job_id)
+    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+
+    data = {'lines': []}
+
+    # Only measuring the incoming traffic, not the outgoing one since it's only a p2p connection
+    query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[1m]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[1m]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[1m]))/1024/1024/1024'.format(
+        instances=instances,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+    for line in stats:
+        compute_name = "Received {} socket {}".format(
+            line['metric']['instance'].split(':')[0],
+            line['metric']['socket'])
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': compute_name,
+            'hovertemplate': '%{y:.1f} GB/s',
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' GB/s',
+            'title': _('CPU interconnect bandwidth'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
 def power(job, step):
     nodes = job.nodes()
     if job.gpu_count() > 0:

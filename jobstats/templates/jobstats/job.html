@@ -334,6 +334,8 @@
     {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
       <h3>{% translate "Memory bandwidth" %}</h3>
       <div id="graph_mem_bdw"></div>
+      <h3>{% translate "CPU interconnect bandwidth" %}</h3>
+      <div id="graph_cpu_interconnect"></div>
     {% endif %}
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
       <h3>{% translate "Power used" %}</h3>
@@ -374,6 +376,7 @@
   
     {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
       loadGraph('graph_mem_bdw', 'graph/mem_bdw.json?step={{step}}');
+      loadGraph('graph_cpu_interconnect', 'graph/cpu_interconnect.json?step={{step}}');
     {% endif %}
 
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}

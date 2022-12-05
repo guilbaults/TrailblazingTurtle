@@ -289,6 +289,9 @@
   <div id="graph_l2_rate"></div>
   <h3>{% translate "L3 cache hit rate" %}</h3>
   <div id="graph_l3_rate"></div>
+  <h3>{% translate "Instructions per cycle" %}</h3>
+  <p>{% translate "A low IPC might indicate memory-bound computation" %}</p>
+  <div id="graph_ipc"></div>
   {% endif %}
 
   {% if gpu_count > 0 %}
@@ -357,6 +360,7 @@
   {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
     loadGraph('graph_l2_rate', 'graph/l2_rate.json?step={{step}}');
     loadGraph('graph_l3_rate', 'graph/l3_rate.json?step={{step}}');
+    loadGraph('graph_ipc', 'graph/ipc.json?step={{step}}');
   {% endif %}
 
   {% if gpu_count > 0 %}

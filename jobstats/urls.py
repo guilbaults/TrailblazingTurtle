@@ -30,6 +30,7 @@ urlpatterns = [
     path('<str:username>/<str:job_id>/graph/l2_rate.json', views.graph_l2_rate),
     path('<str:username>/<str:job_id>/graph/l3_rate.json', views.graph_l3_rate),
     path('<str:username>/<str:job_id>/graph/cpu_interconnect.json', views.graph_cpu_interconnect),
+    path('<str:username>/<str:job_id>/graph/ipc.json', views.graph_ipc),
     path('<str:username>/<str:job_id>/graph/power.json', views.graph_power),
     path('<str:username>/<str:job_id>/value/cost.json', views.value_cost),
 ]

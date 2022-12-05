@@ -1416,30 +1416,10 @@ def map_pcm_cores(request, context):
     return used_mapping, reverse_mapping
 
 
-def graph_cache_rate(request, username, job_id, l_cache):
-    context = context_job_info(username, job_id)
-    instances = instances_regex(context)
-
-    data = {'lines': []}
-
-    used_mapping, reverse_mapping = map_pcm_cores(request, context)
-
-    # get all the L3 cache hits and misses, we will discard the ones not used
-    # by the job since we can't easily filter them out with a regex in the query
-    query_cache = 'rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])/(rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s]) + rate({l_cache}_Cache_Misses{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])) * 100'.format(
-        l_cache=l_cache,
-        instances=instances,
-        filter=prom.get_filter(),
-        rate=prom.rate('pcm-sensor-server'))
-    stats_cache = prom.query_prometheus_multiple(
-        query_cache,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
-
-    # from all the L3 cache hits and misses, keep only the ones used by the job
+def filter_stats(stats, used_mapping, reverse_mapping):
     filtered_stats = []
-    for line in stats_cache:
+    data = {'lines': []}
+    for line in stats:
         instance = line['metric']['instance'].split(':')[0]
         phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
         if phys_core in used_mapping[instance]:
@@ -1459,12 +1439,70 @@ def graph_cache_rate(request, username, job_id, l_cache):
             'name': compute_name,
             'hovertemplate': '%{y:.1f}',
         })
+    return data
+
+
+def graph_cache_rate(request, username, job_id, l_cache):
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
+
+    used_mapping, reverse_mapping = map_pcm_cores(request, context)
+
+    # get all the L3 cache hits and misses, we will discard the ones not used
+    # by the job since we can't easily filter them out with a regex in the query
+    query_cache = 'rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])/(rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s]) + rate({l_cache}_Cache_Misses{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])) * 100'.format(
+        l_cache=l_cache,
+        instances=instances,
+        filter=prom.get_filter(),
+        rate=prom.rate('pcm-sensor-server'))
+    stats_cache = prom.query_prometheus_multiple(
+        query_cache,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+
+    # from all the L3 cache hits and misses, keep only the ones used by the job
+    data = filter_stats(stats_cache, used_mapping, reverse_mapping)
 
     data['layout'] = {
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
             'title': _('Hit rate'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
+def graph_ipc(request, username, job_id):
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
+
+    used_mapping, reverse_mapping = map_pcm_cores(request, context)
+
+    # Retired instructions are the number of instructions that were executed
+    # This is ignoring speculative instructions that were not used
+    # https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top/analyze-performance/custom-analysis/custom-analysis-options/hardware-event-list/instructions-retired-event.html
+
+    # We compute the IPC instead of the CPI to show a graph with "higher is better"
+    # so read that documentation and invert their formula and ratio
+    # https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top/reference/cpu-metrics-reference.html#cpu-metrics-reference_CLOCKTICKS-PER-INSTRUCTIONS-RETIRED-CPI
+    query_ipc = 'rate(Instructions_Retired_Any{{instance=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s]) / rate(Clock_Unhalted_Ref{{instance=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s])'.format(
+        instances=instances,
+        filter=prom.get_filter(),
+        rate=prom.rate('pcm-sensor-server'))
+    stats_ipc = prom.query_prometheus_multiple(
+        query_ipc,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+
+    data = filter_stats(stats_ipc, used_mapping, reverse_mapping)
+
+    data['layout'] = {
+        'yaxis': {
+            'title': _('IPC'),
         }
     }
 

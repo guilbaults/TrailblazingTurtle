@@ -26,7 +26,9 @@ function loadGraph(container, url){
             }
             else{
                 $(container_div).html('');
-                Plotly.newPlot(container, data['lines'], data['layout']);
+                var layout = data['layout'];
+                layout['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
+                Plotly.newPlot(container, data['lines'], layout);
             }
         },
         error : function(xhr, textStatus, errorThrown ) {

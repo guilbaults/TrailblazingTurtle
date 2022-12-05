@@ -248,101 +248,353 @@
 
 {% if job.time_start_dt %}
   <h2>{% translate "Resources used (details)" %}</h2>
-  <h3>{% translate "CPU" %}</h3>
-  <p>{% translate "Ratio of cycles consumed on each CPU core by all processes in this job. This graph should be all filled up most of the time, if not, you can lower the cores requested to the scheduler. Unused cycles does not improve your job performance and will lower your priority when cores are wasted." %}</p>
-  <div id="graph_cpu"></div>
-  <h3>{% translate "Memory" %}</h3>
-  <p>{% translate "The max used memory should be close to the allocated memory. If the memory is not used by the job, ask a lower amount, your jobs will be able to start faster. Unused memory does not increase your job performance." %}</p>
-  <dl>
-    <dt>{% translate "Allocated" %}</dt>
-    <dd>{% translate "Memory allocated by the scheduler and enforced for the job" %}</dd>
-    <dt>{% translate "Max used" %}</dt>
-    <dd>{% translate "Maximum recorded during the job. This is not using samples and is measured by the kernel, so this will catch large allocations that only last for a fraction of a second" %}</dd>
-    <dt>{% translate "Used" %}</dt>
-    <dd>{% translate "Memory being used by the job. Include the memory of the items below" %}</dd>
-    <dt>{% translate "Cache" %}</dt>
-    <dd>{% translate "Page cache memory, this memory is used to cache data recently read from the filesystem" %}</dd>
-    <dt>{% translate "RSS (Resident Set Size)" %}</dt>
-    <dd>{% translate "Memory allocated to the processes in ram. It include memory from the program itself, shared libraries, stack and heap. (includes transparent hugepages)" %}</dd>
-    <dt>{% translate "RSS Huge" %}</dt>
-    <dd>{% translate "Some application can use <a href=\"https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt\">hugepages</a>" %}</dd>
-    <dt>{% translate "Memory mapped file" %}</dt>
-    <dd>{% translate "Memory mapped file (includes tmpfs/shmem and <a href=\"https://man7.org/linux/man-pages/man2/mmap.2.html\">mmap</a>)" %}</dd>
-    <dt>{% translate "Active file" %}</dt>
-    <dd>{% translate "File-backed memory on active LRU list" %}</dd>
-    <dt>{% translate "Inactive" %}</dt>
-    <dd>{% translate "File-backed memory on inactive LRU list. This memory would be the first to be swapped out if swap is enabled" %}</dd>
-    <dt>{% translate "Unevictable" %}</dt>
-    <dd>{% translate "Memory that cannot be reclaimed (mlocked etc). It can be used by cryptography to prevent memory containing keys from being swapped out" %}</dd>
-  </dl>
-  <div id="graph_mem"></div>
-  <h3>{% translate "Processes and threads" %}</h3>
-  <div id="graph_thread"></div>
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "CPU" %}</h3>
+      <p class="card-text">
+        <div id="cpu">
+          <p>{% translate "Ratio of cycles consumed on each CPU core by all processes in this job. This graph should be all filled up most of the time, if not, you can lower the cores requested to the scheduler. Unused cycles does not improve your job performance and will lower your priority when cores are wasted." %}</p>
+          <div id="graph_cpu"></div>
+        </div>
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Memory" %}</h3>
+      <p class="card-text">
+        <div id="mem">
+          <p>{% translate "The max used memory should be close to the allocated memory. If the memory is not used by the job, ask a lower amount, your jobs will be able to start faster. Unused memory does not increase your job performance." %}</p>
+
+          <div class="accordion" id="accordionMemLegend">
+            <div class="card">
+              <div class="card-header" id="headingOne">
+                <h2 class="mb-0">
+                  <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseMemLegend" aria-expanded="false" aria-controls="collapseMemLegend">
+                    {% translate "Graph legend and explanation" %}
+                  </button>
+                </h2>
+              </div>
+          
+              <div id="collapseMemLegend" class="collapse" aria-labelledby="headingOne" data-parent="#accordionMemLegend">
+                <div class="card-body">
+                  <dl>
+                    <dt>{% translate "Allocated" %}</dt>
+                    <dd>{% translate "Memory allocated by the scheduler and enforced for the job" %}</dd>
+                    <dt>{% translate "Max used" %}</dt>
+                    <dd>{% translate "Maximum recorded during the job. This is not using samples and is measured by the kernel, so this will catch large allocations that only last for a fraction of a second" %}</dd>
+                    <dt>{% translate "Used" %}</dt>
+                    <dd>{% translate "Memory being used by the job. Include the memory of the items below" %}</dd>
+                    <dt>{% translate "Cache" %}</dt>
+                    <dd>{% translate "Page cache memory, this memory is used to cache data recently read from the filesystem" %}</dd>
+                    <dt>{% translate "RSS (Resident Set Size)" %}</dt>
+                    <dd>{% translate "Memory allocated to the processes in ram. It include memory from the program itself, shared libraries, stack and heap. (includes transparent hugepages)" %}</dd>
+                    <dt>{% translate "RSS Huge" %}</dt>
+                    <dd>{% translate "Some application can use <a href=\"https://www.kernel.org/doc/Documentation/vm/hugetlbpage.txt\">hugepages</a>" %}</dd>
+                    <dt>{% translate "Memory mapped file" %}</dt>
+                    <dd>{% translate "Memory mapped file (includes tmpfs/shmem and <a href=\"https://man7.org/linux/man-pages/man2/mmap.2.html\">mmap</a>)" %}</dd>
+                    <dt>{% translate "Active file" %}</dt>
+                    <dd>{% translate "File-backed memory on active LRU list" %}</dd>
+                    <dt>{% translate "Inactive" %}</dt>
+                    <dd>{% translate "File-backed memory on inactive LRU list. This memory would be the first to be swapped out if swap is enabled" %}</dd>
+                    <dt>{% translate "Unevictable" %}</dt>
+                    <dd>{% translate "Memory that cannot be reclaimed (mlocked etc). It can be used by cryptography to prevent memory containing keys from being swapped out" %}</dd>
+                  </dl>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="graph_mem"></div>
+        </div>
+      </p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Processes and threads" %}</h3>
+      <p class="card-text">
+        <div id="thread">
+          <p>{% translate "The number of processes and threads used in the job." %}</p>
+          <div id="graph_thread"></div>
+        </div>
+      </p>
+    </div>
+  </div>
+
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-  <h3>{% translate "Filesystem" %}</h3>
-  <div id="graph_lustre_mdt"></div>
-  <div id="graph_lustre_ost"></div>
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Filesystem" %}</h3>
+      <p class="card-text">
+        <div id="fs">
+          <p>{% translate "The filesystem usage of the job. This is the filesystem usage of the job, not the whole node." %}</p>
+          <div class="row">
+            <div class="col-sm-6">
+              <div id="graph_lustre_mdt"></div>
+            </div>
+            <div class="col-sm-6">
+              <div id="graph_lustre_ost"></div>
+            </div>
+          </div>
+        </div>
+      </p>
+    </div>
+  </div>
   {% endif %}
 
   {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
-  <h3>{% translate "L2 cache hit rate" %}</h3>
-  <div id="graph_l2_rate"></div>
-  <h3>{% translate "L3 cache hit rate" %}</h3>
-  <div id="graph_l3_rate"></div>
-  <h3>{% translate "Instructions per cycle" %}</h3>
-  <p>{% translate "A low IPC might indicate memory-bound computation" %}</p>
-  <div id="graph_ipc"></div>
+  <div class="row">
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">{% translate "L2 cache hit rate" %}</h3>
+          <p class="card-text">
+            <div id="l2">
+              <div id="graph_l2_rate"></div>
+            </div>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6">
+      <div class="card">
+        <div class="card-body">
+          <h3 class="card-title">{% translate "L3 cache hit rate" %}</h3>
+          <p class="card-text">
+            <div id="l3">
+              <div id="graph_l3_rate"></div>
+            </div>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Instructions per cycle" %}</h3>
+      <p class="card-text">
+        <div id="ipc">
+          <div id="graph_ipc"></div>
+        </div>
+      </p>
+    </div>
+  </div>
   {% endif %}
 
   {% if gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>
-    <h4>{% translate "GPU Compute cycle used" %}</h4>
-    <dl>
-      <dt>{% translate "SM Active" %}</dt>
-      <dd>{% translate "The % of cycles an Streaming Multiprocessor (SM) has at least 1 <a href=\"https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/\">warp</a> assigned" %}</dd>
-      <dt><a href="https://docs.nvidia.com/gameworks/content/developertools/desktop/analysis/report/cudaexperiments/kernellevel/achievedoccupancy.htm">{% translate "SM Occupancy" %}</a></dt>
-      <dd>{% translate "The % of number of warps resident on an SM" %}</dd>
-      <dt>{% translate "Tensor" %}</dt>
-      <dd>{% translate "The % of cycles the <a href=\"https://developer.nvidia.com/tensor-cores\">tensor</a> (HMMA) pipe is active" %}</dd>
-      <dt>{% translate "FP64/32/16" %}</dt>
-      <dd>{% translate "The % of cycles the floating point 64/32/16 pipe is active" %}</dd>
-    </dl>
-    <div id="graph_gpu_utilization"></div>
-    <h4>{% translate "GPU Memory access cycle used" %}</h4>
-    <p>{% translate "The ratio of cycles the device memory interface is active sending or receiving data" %}</p>
-    <div id="graph_gpu_memory_utilization"></div>
-    <h4>{% translate "GPU Memory used" %}</h4>
-    <div id="graph_gpu_memory"></div>
-    <h4>{% translate "GPU Power" %}</h4>
-    <div id="graph_gpu_power"></div>
-    <h4>{% translate "GPU PCIe bandwidth" %}</h4>
-    <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
-    <div id="graph_gpu_pcie"></div>
-    <h4>{% translate "GPU Nvlink bandwidth" %}</h4>
-    <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
-    <div id="graph_gpu_nvlink"></div>
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "GPU Compute cycle used" %}</h3>
+        <p class="card-text">
+          <div id="gpu_utilization">
+
+            <div class="accordion" id="accordionGpuLegend">
+              <div class="card">
+                <div class="card-header" id="headingOne">
+                  <h2 class="mb-0">
+                    <button class="btn btn-link btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseGpuLegend" aria-expanded="false" aria-controls="collapseGpuLegend">
+                      {% translate "Graph legend and explanation" %}
+                    </button>
+                  </h2>
+                </div>
+            
+                <div id="collapseGpuLegend" class="collapse" aria-labelledby="headingOne" data-parent="#accordionGpuLegend">
+                  <div class="card-body">
+                    <dl>
+                      <dt>{% translate "SM Active" %}</dt>
+                      <dd>{% translate "The % of cycles an Streaming Multiprocessor (SM) has at least 1 <a href=\"https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/\">warp</a> assigned" %}</dd>
+                      <dt><a href="https://docs.nvidia.com/gameworks/content/developertools/desktop/analysis/report/cudaexperiments/kernellevel/achievedoccupancy.htm">{% translate "SM Occupancy" %}</a></dt>
+                      <dd>{% translate "The % of number of warps resident on an SM" %}</dd>
+                      <dt>{% translate "Tensor" %}</dt>
+                      <dd>{% translate "The % of cycles the <a href=\"https://developer.nvidia.com/tensor-cores\">tensor</a> (HMMA) pipe is active" %}</dd>
+                      <dt>{% translate "FP64/32/16" %}</dt>
+                      <dd>{% translate "The % of cycles the floating point 64/32/16 pipe is active" %}</dd>
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="graph_gpu_utilization"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "GPU Memory used" %}</h3>
+            <p class="card-text">
+              <div id="gpu_memory">
+                <div id="graph_gpu_memory"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "GPU Memory access cycle used" %}</h3>
+            <p class="card-text">
+              <div id="gpu_memory_utilization">
+                <p>{% translate "The ratio of cycles the device memory interface is active sending or receiving data" %}</p>
+                <div id="graph_gpu_memory_utilization"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "GPU Power" %}</h3>
+        <p class="card-text">
+          <div id="gpu_power">
+            <div id="graph_gpu_power"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      {% if gpu_count > 1 %}
+      <div class="col-sm-6">
+      {% else %}
+      <div class="col-sm-6">
+      {% endif %}
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "GPU PCIe bandwidth" %}</h3>
+            <p class="card-text">
+              <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
+              <div id="gpu_pcie">
+                <div id="graph_gpu_pcie"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {% if gpu_count > 1 %}
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "GPU Nvlink bandwidth" %}</h3>
+            <p class="card-text">
+              <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
+              <div id="gpu_nvlink">
+                <div id="graph_gpu_nvlink"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
   {% endif %}
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}
     <h2>{% translate "Whole node resources" %}</h2>
     <p>{% translate "Those stats are not accurate when the node is shared with multiple users" %}</p>
-    <h3>{% translate "Infiniband" %}</h3>
-    <div id="graph_infiniband_bdw"></div>
-    <h3>{% translate "Localscratch IOPS" %}</h3>
-    <div id="graph_disk_iops"></div>
-    <h3>{% translate "Localscratch bandwidth" %}</h3>
-    <div id="graph_disk_bdw"></div>
-    <h3>{% translate "Localscratch space used" %}</h3>
-    <div id="graph_disk_used"></div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "Infiniband" %}</h3>
+        <p class="card-text">
+          <div id="infiniband">
+            <div id="graph_infiniband_bdw"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "Localscratch IOPS" %}</h3>
+            <p class="card-text">
+              <div id="localscratch">
+                <div id="graph_disk_iops"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "Localscratch bandwidth" %}</h3>
+            <p class="card-text">
+              <div id="localscratch">
+                <div id="graph_disk_bdw"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "Localscratch space used" %}</h3>
+        <p class="card-text">
+          <div id="localscratch">
+            <div id="graph_disk_used"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+
     {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
-      <h3>{% translate "Memory bandwidth" %}</h3>
-      <div id="graph_mem_bdw"></div>
-      <h3>{% translate "CPU interconnect bandwidth" %}</h3>
-      <div id="graph_cpu_interconnect"></div>
+    <div class="row">
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "Memory bandwidth" %}</h3>
+            <p class="card-text">
+              <div id="memory">
+                <div id="graph_mem_bdw"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-sm-6">
+        <div class="card">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "CPU interconnect bandwidth" %}</h3>
+            <p class="card-text">
+              <div id="memory">
+                <div id="graph_cpu_interconnect"></div>
+              </div>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
     {% endif %}
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-      <h3>{% translate "Power used" %}</h3>
-      <div id="graph_power"></div>
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "Power used" %}</h3>
+        <p class="card-text">
+          <div id="power">
+            <div id="graph_power"></div>
+          </div>
+        </p>
+      </div>
+    </div>
     {% endif %}
   {% endif %}
 
@@ -369,7 +621,9 @@
     loadGraph('graph_gpu_memory', 'graph/gpu_memory.json?step={{step}}');
     loadGraph('graph_gpu_power', 'graph/gpu_power.json?step={{step}}');
     loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json?step={{step}}');
+    {% if gpu_count > 1 %}
     loadGraph('graph_gpu_nvlink', 'graph/gpu_nvlink.json?step={{step}}');
+    {% endif %}
   {% endif %}
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}

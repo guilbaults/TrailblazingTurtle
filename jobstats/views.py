@@ -906,9 +906,9 @@ def graph_gpu_memory(request, username, job_id):
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_type, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
         else:
-            name = '{} {} GPU {}'.format(gpu_type, gpu_num, compute_name)
+            name = '{} GPU {}'.format(gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,

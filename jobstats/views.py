@@ -43,56 +43,6 @@ def sanitize_step(request, minimum=30):
     return max(int(request.GET.get('step')), minimum)
 
 
-@login_required
-def index(request):
-    return redirect('{}/'.format(request_to_username(request)))
-
-
-@login_required
-@user_or_staff
-def user(request, username):
-    uid = username_to_uid(username)
-    context = {'username': username}
-
-    running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
-    context['total_cores'] = 0
-    context['total_mem'] = 0
-    context['total_gpus'] = 0
-    for job in running_jobs:
-        info = job.parse_tres_req()
-        context['total_cores'] += info['total_cores']
-        context['total_mem'] += (info['total_mem'] * 1024 * 1024)
-        context['total_gpus'] += job.gpu_count()
-
-    now = datetime.now()
-    delta = timedelta(hours=1)
-    try:
-        query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s]) / 1000000000)'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
-        stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
-        context['cpu_used'] = statistics.mean(stats_cpu[1])
-    except ValueError:
-        context['cpu_used'] = 'N/A'
-
-    try:
-        query_mem = 'sum(slurm_job_memory_max{{user="{}", {}}})'.format(username, prom.get_filter())
-        stats_mem = prom.query_prometheus(query_mem, now - delta, now)
-        context['mem_used'] = max(stats_mem[1])
-    except ValueError:
-        context['mem_used'] = 'N/A'
-
-    try:
-        query_gpu = 'sum(slurm_job_utilization_gpu{{user="{}", {}}})/100'.format(username, prom.get_filter())
-        stats_gpu = prom.query_prometheus(query_gpu, now - delta, now)
-        context['gpu_used'] = max(stats_gpu[1])
-    except ValueError:
-        context['gpu_used'] = 'N/A'
-
-    if request.user.is_staff:
-        context['notes'] = Note.objects.filter(username=username).filter(deleted_at=None).order_by('-modified_at')
-
-    return render(request, 'jobstats/user.html', context)
-
-
 def jobid_str_to_list(jobid_str):
     # split range of jobids in format 100-105,107,109,110-120 to a list of jobids
     jobs_blocks = jobid_str.split(',')
@@ -161,6 +111,60 @@ def context_job_info(username, job_id):
         context['step'] = get_step(context['job'].time_start_dt(), context['job'].time_end_dt())
         context['gpu_count'] = context['job'].gpu_count()
     return context
+
+
+def instances_regex(context):
+    return '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+
+
+@login_required
+def index(request):
+    return redirect('{}/'.format(request_to_username(request)))
+
+
+@login_required
+@user_or_staff
+def user(request, username):
+    uid = username_to_uid(username)
+    context = {'username': username}
+
+    running_jobs = JobTable.objects.filter(id_user=uid, state=1).all()
+    context['total_cores'] = 0
+    context['total_mem'] = 0
+    context['total_gpus'] = 0
+    for job in running_jobs:
+        info = job.parse_tres_req()
+        context['total_cores'] += info['total_cores']
+        context['total_mem'] += (info['total_mem'] * 1024 * 1024)
+        context['total_gpus'] += job.gpu_count()
+
+    now = datetime.now()
+    delta = timedelta(hours=1)
+    try:
+        query_cpu = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s]) / 1000000000)'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
+        stats_cpu = prom.query_prometheus(query_cpu, now - delta, now)
+        context['cpu_used'] = statistics.mean(stats_cpu[1])
+    except ValueError:
+        context['cpu_used'] = 'N/A'
+
+    try:
+        query_mem = 'sum(slurm_job_memory_max{{user="{}", {}}})'.format(username, prom.get_filter())
+        stats_mem = prom.query_prometheus(query_mem, now - delta, now)
+        context['mem_used'] = max(stats_mem[1])
+    except ValueError:
+        context['mem_used'] = 'N/A'
+
+    try:
+        query_gpu = 'sum(slurm_job_utilization_gpu{{user="{}", {}}})/100'.format(username, prom.get_filter())
+        stats_gpu = prom.query_prometheus(query_gpu, now - delta, now)
+        context['gpu_used'] = max(stats_gpu[1])
+    except ValueError:
+        context['gpu_used'] = 'N/A'
+
+    if request.user.is_staff:
+        context['notes'] = Note.objects.filter(username=username).filter(deleted_at=None).order_by('-modified_at')
+
+    return render(request, 'jobstats/user.html', context)
 
 
 @login_required
@@ -1116,13 +1120,8 @@ def graph_gpu_nvlink(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_infiniband_bdw(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
-    nodes = job.nodes()
-    instances = '|'.join([s + '(:.*)?' for s in nodes])
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
 
     data = {'lines': []}
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
@@ -1131,7 +1130,7 @@ def graph_infiniband_bdw(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         step=step)
-    stats_received = prom.query_prometheus_multiple(query_received, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_received:
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -1148,7 +1147,7 @@ def graph_infiniband_bdw(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         step=step)
-    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_transmitted:
         compute_name = line['metric']['instance'].split(':')[0]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -1174,19 +1173,14 @@ def graph_infiniband_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_iops(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
-    nodes = job.nodes()
-    instances = '|'.join([s + '(:.*)?' for s in nodes])
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
 
     data = {'lines': []}
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
     query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
-    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1202,7 +1196,7 @@ def graph_disk_iops(request, username, job_id):
         })
 
     query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
-    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1229,13 +1223,8 @@ def graph_disk_iops(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_bdw(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
-    nodes = job.nodes()
-    instances = '|'.join([s + '(:.*)?' for s in nodes])
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
 
     data = {'lines': []}
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
@@ -1244,7 +1233,7 @@ def graph_disk_bdw(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         step=step)
-    stats_read = prom.query_prometheus_multiple(query_read, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1263,7 +1252,7 @@ def graph_disk_bdw(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         step=step)
-    stats_write = prom.query_prometheus_multiple(query_write, job.time_start_dt(), job.time_end_dt(), step=step)
+    stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1291,20 +1280,15 @@ def graph_disk_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_used(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
-    nodes = job.nodes()
-    instances = '|'.join([s + '(:.*)?' for s in nodes])
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
 
     data = {'lines': []}
 
     query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
         instances=instances,
         filter=prom.get_filter())
-    stats_disk = prom.query_prometheus_multiple(query_disk, job.time_start_dt(), job.time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
+    stats_disk = prom.query_prometheus_multiple(query_disk, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
     for line in stats_disk:
         compute_name = "{} {}".format(
             line['metric']['instance'].split(':')[0],
@@ -1333,7 +1317,7 @@ def graph_disk_used(request, username, job_id):
 @user_or_staff
 def graph_mem_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
-    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+    instances = instances_regex(context)
 
     data = {'lines': []}
 
@@ -1382,12 +1366,8 @@ def graph_l3_rate(request, username, job_id):
     return graph_cache_rate(request, username, job_id, 'L3')
 
 
-def graph_cache_rate(request, username, job_id, l_cache='L3'):
-    context = context_job_info(username, job_id)
-    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
-
-    data = {'lines': []}
-
+def map_pcm_cores(request, context):
+    instances = instances_regex(context)
     # get the OS core mapping to the physical cores since they don't match
     query_mapping = 'OS_ID{{instance=~"{instances}", {filter}}}'.format(
         instances=instances,
@@ -1432,6 +1412,17 @@ def graph_cache_rate(request, username, job_id, l_cache='L3'):
         if instance not in used_mapping:
             used_mapping[instance] = set()  # the set of physical cores/sockets used by the job
         used_mapping[instance].add(all_cores_mapping[instance][int(line['metric']['core'])])
+
+    return used_mapping, reverse_mapping
+
+
+def graph_cache_rate(request, username, job_id, l_cache):
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
+
+    data = {'lines': []}
+
+    used_mapping, reverse_mapping = map_pcm_cores(request, context)
 
     # get all the L3 cache hits and misses, we will discard the ones not used
     # by the job since we can't easily filter them out with a regex in the query
@@ -1484,14 +1475,15 @@ def graph_cache_rate(request, username, job_id, l_cache='L3'):
 @user_or_staff
 def graph_cpu_interconnect(request, username, job_id):
     context = context_job_info(username, job_id)
-    instances = '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+    instances = instances_regex(context)
 
     data = {'lines': []}
 
     # Only measuring the incoming traffic, not the outgoing one since it's only a p2p connection
-    query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[1m]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[1m]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[1m]))/1024/1024/1024'.format(
+    query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
         instances=instances,
-        filter=prom.get_filter())
+        filter=prom.get_filter(),
+        rate=prom.rate('pcm-sensor-server'))
     stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
     for line in stats:
         compute_name = "Received {} socket {}".format(

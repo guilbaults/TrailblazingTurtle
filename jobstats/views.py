@@ -263,18 +263,21 @@ def job(request, username, job_id):
             comments += [Comment(
                 _('Less than 1 core was used on average but {} were asked for, this look like a serial job').format(context['tres_req']['total_cores']),
                 'critical',
-                'https://docs.alliancecan.ca/wiki/Running_jobs#Serial_job')]
+                'https://docs.alliancecan.ca/wiki/Running_jobs#Serial_job',
+                graph_ids=['cpu'])]
 
         if (context['tres_req']['total_cores'] / 2) > context['cpu_used']:
             comments += [Comment(
                 _('Less than half the CPU compute cycle were used').format(context['tres_req']['total_cores']),
-                'critical')]
+                'critical',
+                graph_ids=['cpu'])]
 
     if context['mem_used'] is not None:
         if context['total_mem'] / 10 > context['mem_used']:
             comments += [Comment(
                 _('Less than 10% of the asked memory was used, please adjust the amount of memory requested'),
-                'critical')]
+                'critical',
+                graph_ids=['mem'])]
 
     if job.state == JobTable.StatesJob.COMPLETE:
         if job.timelimit < 60:  # in minutes
@@ -291,7 +294,8 @@ def job(request, username, job_id):
     if job.state == JobTable.StatesJob.OOM:
         comments += [Comment(
             _('Out of memory, increase memory asked and retry this job'),
-            'critical')]
+            'critical',
+            graph_ids=['mem'])]
 
     if job.state == JobTable.StatesJob.NODE_FAIL:
         comments += [Comment(
@@ -311,16 +315,23 @@ def job(request, username, job_id):
             comments += [Comment(
                 _('This job is running on average {:.1f} threads on {} cores, the cores might be oversubscribed').format(
                     running_threads, context['tres_req']['total_cores']),
-                'warning')]
+                'warning',
+                graph_ids=['thread'])]
         elif running_threads < 0.75 * context['tres_req']['total_cores']:
             comments += [Comment(
                 _('This job is running on average {:.1f} threads on {} cores, the cores might be underused').format(
                     running_threads, context['tres_req']['total_cores']),
-                'warning')]
+                'warning',
+                graph_ids=['thread'])]
     except ValueError:
         pass
 
     context['comments'] = sorted(comments, key=lambda x: x.line_number)
+
+    context['graph_div'] = {}
+    for comment in comments:
+        for graph in comment.graph_ids:
+            context['graph_div'][graph] = comment.display_card_class()
 
     return render(request, 'jobstats/job.html', context)
 
@@ -906,9 +917,9 @@ def graph_gpu_memory(request, username, job_id):
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_type, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
         else:
-            name = '{} {} GPU {}'.format(gpu_type, gpu_num, compute_name)
+            name = '{} GPU {}'.format(gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,

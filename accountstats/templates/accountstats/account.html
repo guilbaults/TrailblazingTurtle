@@ -11,51 +11,108 @@
 {% endif %}
 
 <h1>{% translate "Account use of" %} {{ account }}</h1>
+<div class="card">
+  <div class="card-body">
+    <div class="card-text">
+      <p>{% translate "A priority under 1 means you were previously using more resources than allocated. Your new jobs are now launched at a lower priority to let the other user catch up their fair share." %}</p>
+      <p>{% translate "A priority above 1 means you were not using the cluster as much as you were allocated. Your new jobs are now launched at a higher priority to catch up your fair share." %}</p>
 {% if gpu %}
-<p>{{gpu_count}} {% translate "GPUs were allocated" %}</p>
+      <p>{{gpu_count}} {% translate "GPUs were allocated" %}</p>
+      <div id="graph_gpu_priority"></div>
 {% else %}
-<p>{{cpu_count}} {% translate "CPUs were allocated" %}</p>
+      <p>{{cpu_count}} {% translate "CPUs were allocated" %}</p>
+      <div id="graph_cpu_priority"></div>
 {% endif %}
+    </div>
+  </div>
+</div>
 
-<p>{% translate "A priority under 1 means you were previously using more resources than allocated. Your new jobs are now launched at a lower priority to let the other user catch up their fair share." %}</p>
-<p>{% translate "A priority above 1 means you were not using the cluster as much as you were allocated. Your new jobs are now launched at a higher priority to catch up your fair share." %}</p>
-
-{% if gpu %}
-<div id="graph_gpu_priority"></div>
-{% else %}
-<div id="graph_cpu_priority"></div>
-{% endif %}
 <h2>{% translate "Detailed utilization by user" %}</h2>
 
 {% if gpu %}
 <h2>{% translate "GPUs" %}</h2>
-<h3>{% translate "Allocated GPUs" %}</h3>
-<div id="graph_gpu_allocated"></div>
-<h3>{% translate "Used GPUs" %}</h3>
-<div id="graph_gpu_used"></div>
-<h3>{% translate "Wasted GPUs" %}</h3>
-<div id="graph_gpu_wasted"></div>
+<div class="row">
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h5 class="card-title">{% translate "Allocated GPUs" %}</h5>
+      <p class="card-text"><div id="graph_gpu_allocated"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h5 class="card-title">{% translate "Used GPUs" %}</h5>
+      <p class="card-text"><div id="graph_gpu_used"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-12">
+    <div class="card-body">
+      <h5 class="card-title">{% translate "Wasted GPUs" %}</h5>
+      <p class="card-text"><div id="graph_gpu_wasted"></div></p>
+    </div>
+  </div>
+</div>
 {% endif %}
 
-<h3>{% translate "Allocated CPU cores" %}</h3>
-<div id="graph_cpu_allocated"></div>
-<h3>{% translate "Used CPU cores" %}</h3>
-<div id="graph_cpu_used"></div>
-<h3>{% translate "Wasted CPU cores" %}</h3>
-<div id="graph_cpu_wasted"></div>
+<h2>{% translate "CPUs" %}</h2>
+<div class="row">
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Allocated CPU cores" %}</h3>
+      <p class="card-text"><div id="graph_cpu_allocated"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Used CPU cores" %}</h3>
+      <p class="card-text"><div id="graph_cpu_used"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-12">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Wasted CPU cores" %}</h3>
+      <p class="card-text"><div id="graph_cpu_wasted"></div></p>
+    </div>
+  </div>
+</div>
 
 <h2>{% translate "Memory" %}</h2>
-<h3>{% translate "Allocated memory" %}</h3>
-<div id="graph_mem_allocated"></div>
-<h3>{% translate "Used memory" %}</h3>
-<div id="graph_mem_used"></div>
-<h3>{% translate "Wasted memory" %}</h3>
-<div id="graph_mem_wasted"></div>
+<div class="row">
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Allocated memory" %}</h3>
+      <p class="card-text"><div id="graph_mem_allocated"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Used memory" %}</h3>
+      <p class="card-text"><div id="graph_mem_used"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-12">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Wasted memory" %}</h3>
+      <p class="card-text"><div id="graph_mem_wasted"></div></p>
+    </div>
+  </div>
+</div>
 
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
 <h2>{% translate "Filesystem" %}</h2>
-<div id="graph_lustre_mdt"></div>
-<div id="graph_lustre_ost"></div>
+<div class="row">
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Metadata operations" %}</h3>
+      <p class="card-text"><div id="graph_lustre_mdt"></div></p>
+    </div>
+  </div>
+  <div class="card col-md-6">
+    <div class="card-body">
+      <h3 class="card-title">{% translate "Bandwidth" %}</h3>
+      <p class="card-text"><div id="graph_lustre_ost"></div></p>
+    </div>
+  </div>
+</div>
 {% endif %}
 
 <h2>{% translate "Jobs running with this account" %}</h2>

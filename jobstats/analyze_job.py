@@ -3,11 +3,13 @@ from django.utils.translation import gettext as _
 
 
 class Comment(object):
-    def __init__(self, comment, severity='info', url=None, line_number=0):
+    def __init__(self, comment, severity='info', url=None, line_number=0, graph_ids=[]):
         self.comment = comment
         self.severity = severity
         self.url = url
         self.line_number = line_number
+        # graph_ids is a list of graph div id to highlight in the page, such as ['cpu', 'mem']
+        self.graph_ids = graph_ids
 
     def __repr__(self):
         return self.comment
@@ -20,6 +22,14 @@ class Comment(object):
             return 'list-group-item-warning'
         elif self.severity == 'critical':
             return 'list-group-item-danger'
+        else:
+            return None
+
+    def display_card_class(self):
+        if self.severity == 'warning':
+            return 'text-white bg-warning'
+        elif self.severity == 'critical':
+            return 'text-white bg-danger'
         else:
             return None
 

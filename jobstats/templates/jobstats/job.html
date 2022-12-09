@@ -248,11 +248,11 @@
 
 {% if job.time_start_dt %}
   <h2>{% translate "Resources used (details)" %}</h2>
-  <div class="card">
+  <div id="cpu" class="card {{graph_div.cpu}}">
     <div class="card-body">
       <h3 class="card-title">{% translate "CPU" %}</h3>
       <p class="card-text">
-        <div id="cpu">
+        <div>
           <p>{% translate "Ratio of cycles consumed on each CPU core by all processes in this job. This graph should be all filled up most of the time, if not, you can lower the cores requested to the scheduler. Unused cycles does not improve your job performance and will lower your priority when cores are wasted." %}</p>
           <div id="graph_cpu"></div>
         </div>
@@ -260,11 +260,11 @@
     </div>
   </div>
 
-  <div class="card">
+  <div id="mem" class="card {{graph_div.mem}}">
     <div class="card-body">
       <h3 class="card-title">{% translate "Memory" %}</h3>
       <p class="card-text">
-        <div id="mem">
+        <div>
           <p>{% translate "The max used memory should be close to the allocated memory. If the memory is not used by the job, ask a lower amount, your jobs will be able to start faster. Unused memory does not increase your job performance." %}</p>
 
           <div class="accordion" id="accordionMemLegend">
@@ -278,7 +278,7 @@
               </div>
           
               <div id="collapseMemLegend" class="collapse" aria-labelledby="headingOne" data-parent="#accordionMemLegend">
-                <div class="card-body">
+                <div class="card-body text-body">
                   <dl>
                     <dt>{% translate "Allocated" %}</dt>
                     <dd>{% translate "Memory allocated by the scheduler and enforced for the job" %}</dd>
@@ -311,11 +311,11 @@
     </div>
   </div>
 
-  <div class="card">
+  <div id="thread" class="card {{graph_div.thread}}">
     <div class="card-body">
       <h3 class="card-title">{% translate "Processes and threads" %}</h3>
       <p class="card-text">
-        <div id="thread">
+        <div>
           <p>{% translate "The number of processes and threads used in the job." %}</p>
           <div id="graph_thread"></div>
         </div>
@@ -324,11 +324,11 @@
   </div>
 
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-  <div class="card">
+  <div id="fs" class="card {{graph_div.fs}}">
     <div class="card-body">
       <h3 class="card-title">{% translate "Filesystem" %}</h3>
       <p class="card-text">
-        <div id="fs">
+        <div>
           <p>{% translate "The filesystem usage of the job. This is the filesystem usage of the job, not the whole node." %}</p>
           <div class="row">
             <div class="col-sm-6">
@@ -347,11 +347,11 @@
   {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
   <div class="row">
     <div class="col-sm-6">
-      <div class="card">
+      <div id="l2" class="card {{graph_div.l2}}">
         <div class="card-body">
           <h3 class="card-title">{% translate "L2 cache hit rate" %}</h3>
           <p class="card-text">
-            <div id="l2">
+            <div>
               <div id="graph_l2_rate"></div>
             </div>
           </p>
@@ -359,11 +359,11 @@
       </div>
     </div>
     <div class="col-sm-6">
-      <div class="card">
+      <div id="l3" class="card {{graph_div.l3}}">
         <div class="card-body">
           <h3 class="card-title">{% translate "L3 cache hit rate" %}</h3>
           <p class="card-text">
-            <div id="l3">
+            <div>
               <div id="graph_l3_rate"></div>
             </div>
           </p>
@@ -372,11 +372,11 @@
     </div>
   </div>
 
-  <div class="card">
+  <div id="ipc" class="card {{graph_div.ipc}}">
     <div class="card-body">
       <h3 class="card-title">{% translate "Instructions per cycle" %}</h3>
       <p class="card-text">
-        <div id="ipc">
+        <div>
           <div id="graph_ipc"></div>
         </div>
       </p>
@@ -386,12 +386,11 @@
 
   {% if gpu_count > 0 %}
     <h3>{% translate "GPU" %}</h3>
-    <div class="card">
+    <div id="gpu_utilization" class="card {{graph_div.gpu_utilization}}">
       <div class="card-body">
         <h3 class="card-title">{% translate "GPU Compute cycle used" %}</h3>
         <p class="card-text">
-          <div id="gpu_utilization">
-
+          <div>
             <div class="accordion" id="accordionGpuLegend">
               <div class="card">
                 <div class="card-header" id="headingOne">
@@ -403,7 +402,7 @@
                 </div>
             
                 <div id="collapseGpuLegend" class="collapse" aria-labelledby="headingOne" data-parent="#accordionGpuLegend">
-                  <div class="card-body">
+                  <div class="card-body text-body">
                     <dl>
                       <dt>{% translate "SM Active" %}</dt>
                       <dd>{% translate "The % of cycles an Streaming Multiprocessor (SM) has at least 1 <a href=\"https://developer.nvidia.com/blog/using-cuda-warp-level-primitives/\">warp</a> assigned" %}</dd>
@@ -426,11 +425,11 @@
 
     <div class="row">
       <div class="col-sm-6">
-        <div class="card">
+        <div id="gpu_memory" class="card {{graph_div.gpu_memory}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "GPU Memory used" %}</h3>
             <p class="card-text">
-              <div id="gpu_memory">
+              <div>
                 <div id="graph_gpu_memory"></div>
               </div>
             </p>
@@ -438,11 +437,11 @@
         </div>
       </div>
       <div class="col-sm-6">
-        <div class="card">
+        <div id="gpu_memory_utilization" class="card {{graph_div.gpu_memory_utilization}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "GPU Memory access cycle used" %}</h3>
             <p class="card-text">
-              <div id="gpu_memory_utilization">
+              <div>
                 <p>{% translate "The ratio of cycles the device memory interface is active sending or receiving data" %}</p>
                 <div id="graph_gpu_memory_utilization"></div>
               </div>
@@ -452,11 +451,11 @@
       </div>
     </div>
 
-    <div class="card">
+    <div id="gpu_power" class="card {{graph_div.gpu_power}}">
       <div class="card-body">
         <h3 class="card-title">{% translate "GPU Power" %}</h3>
         <p class="card-text">
-          <div id="gpu_power">
+          <div>
             <div id="graph_gpu_power"></div>
           </div>
         </p>
@@ -467,14 +466,14 @@
       {% if gpu_count > 1 %}
       <div class="col-sm-6">
       {% else %}
-      <div class="col-sm-6">
+      <div>
       {% endif %}
-        <div class="card">
+        <div id="gpu_pcie" class="card {{graph_div.gpu_pcie}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "GPU PCIe bandwidth" %}</h3>
             <p class="card-text">
               <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
-              <div id="gpu_pcie">
+              <div>
                 <div id="graph_gpu_pcie"></div>
               </div>
             </p>
@@ -484,12 +483,12 @@
 
       {% if gpu_count > 1 %}
       <div class="col-sm-6">
-        <div class="card">
+        <div id="gpu_nvlink" class="card {{graph_div.gpu_nvlink}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "GPU Nvlink bandwidth" %}</h3>
             <p class="card-text">
               <p>{% translate "Note that this is from the perspective of the GPU" %}</p>
-              <div id="gpu_nvlink">
+              <div>
                 <div id="graph_gpu_nvlink"></div>
               </div>
             </p>
@@ -504,11 +503,11 @@
     <h2>{% translate "Whole node resources" %}</h2>
     <p>{% translate "Those stats are not accurate when the node is shared with multiple users" %}</p>
 
-    <div class="card">
+    <div id="infiniband" class="card {{graph_div.infiniband}}">
       <div class="card-body">
         <h3 class="card-title">{% translate "Infiniband" %}</h3>
         <p class="card-text">
-          <div id="infiniband">
+          <div>
             <div id="graph_infiniband_bdw"></div>
           </div>
         </p>
@@ -517,11 +516,11 @@
 
     <div class="row">
       <div class="col-sm-6">
-        <div class="card">
+        <div id="disk_iops" class="card {{graph_div.disk_iops}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "Localscratch IOPS" %}</h3>
             <p class="card-text">
-              <div id="localscratch">
+              <div>
                 <div id="graph_disk_iops"></div>
               </div>
             </p>
@@ -530,11 +529,11 @@
       </div>
 
       <div class="col-sm-6">
-        <div class="card">
+        <div id="disk_bdw" class="card {{graph_div.disk_bdw}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "Localscratch bandwidth" %}</h3>
             <p class="card-text">
-              <div id="localscratch">
+              <div >
                 <div id="graph_disk_bdw"></div>
               </div>
             </p>
@@ -543,11 +542,11 @@
       </div>
     </div>
 
-    <div class="card">
+    <div id="disk_used" class="card {{graph_div.disk_used}}">
       <div class="card-body">
         <h3 class="card-title">{% translate "Localscratch space used" %}</h3>
         <p class="card-text">
-          <div id="localscratch">
+          <div>
             <div id="graph_disk_used"></div>
           </div>
         </p>
@@ -557,11 +556,11 @@
     {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
     <div class="row">
       <div class="col-sm-6">
-        <div class="card">
+        <div id="memory_bdw" class="card {{graph_div.memory_bdw}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "Memory bandwidth" %}</h3>
             <p class="card-text">
-              <div id="memory">
+              <div>
                 <div id="graph_mem_bdw"></div>
               </div>
             </p>
@@ -570,11 +569,11 @@
       </div>
 
       <div class="col-sm-6">
-        <div class="card">
+        <div id="cpu_interconnect" class="card {{graph_div.cpu_interconnect}}">
           <div class="card-body">
             <h3 class="card-title">{% translate "CPU interconnect bandwidth" %}</h3>
             <p class="card-text">
-              <div id="memory">
+              <div>
                 <div id="graph_cpu_interconnect"></div>
               </div>
             </p>
@@ -585,11 +584,11 @@
 
     {% endif %}
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-    <div class="card">
+    <div id="power" class="card {{graph_div.power}}">
       <div class="card-body">
         <h3 class="card-title">{% translate "Power used" %}</h3>
         <p class="card-text">
-          <div id="power">
+          <div>
             <div id="graph_power"></div>
           </div>
         </p>

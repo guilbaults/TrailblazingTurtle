@@ -41,21 +41,72 @@
   </tbody>
 </table>
 
-<h2>{% translate "CPU cores" %}</h2>
-<div id="graph_cpu"></div>
-<h2>{% translate "Memory" %}</h2>
-<div id="graph_mem"></div>
+<div class="row">
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "CPU cores" %}</h3>
+        <p class="card-text">
+          <div>
+            <div id="graph_cpu"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="card-title">{% translate "Memory" %}</h3>
+        <p class="card-text">
+          <div>
+            <div id="graph_mem"></div>
+          </div>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
 
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-<h2>{% translate "Filesystem" %}</h2>
-<div id="graph_lustre_mdt"></div>
-<div id="graph_lustre_ost"></div>
+<div class="card {{graph_div.fs}}">
+  <div class="card-body">
+    <h3 class="card-title">{% translate "Filesystem" %}</h3>
+    <p class="card-text">
+      <div>
+        <div class="row">
+          <div class="col-sm-6">
+            <div id="graph_lustre_mdt"></div>
+          </div>
+          <div class="col-sm-6">
+            <div id="graph_lustre_ost"></div>
+          </div>
+        </div>
+      </div>
+    </p>
+  </div>
+</div>
 {% endif %}
 
 {% if gpu_used > 0 %}
-<h2>{% translate "GPUs" %}</h2>
-<div id="graph_gpu_utilization"></div>
-<div id="graph_gpu_power"></div>
+<div class="card {{graph_div.fs}}">
+  <div class="card-body">
+    <h3 class="card-title">{% translate "GPUs" %}</h3>
+    <p class="card-text">
+      <div>
+        <div class="row">
+          <div class="col-sm-6">
+            <div id="graph_gpu_utilization"></div>
+          </div>
+          <div class="col-sm-6">
+            <div id="graph_gpu_power"></div>
+          </div>
+        </div>
+      </div>
+    </p>
+  </div>
+</div>
 {% endif %}
 
 <h1>{% translate "Your jobs" %}</h1>

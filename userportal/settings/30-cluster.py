@@ -101,7 +101,9 @@ EXTERNAL_LINKS = [
     {'name': 'Globus', 'url': 'https://app.globus.org/file-manager?origin_id=a1713da6-098f-40e6-b3aa-034efe8b6e5b', 'icon': 'globe'},
     {'name': 'JupyterHub', 'url': 'https://jupyterhub.narval.calculquebec.ca', 'icon': 'terminal'},
 ]
+# Path parameter enable other non-compatible portals to be added
 OTHER_PORTALS = [
-    {'name': 'Beluga', 'url': 'https://portail.beluga.calculquebec.ca'},
-    {'name': 'Graham', 'url': 'https://dashboard.graham.sharcnet.ca'},
+    {'name': 'Beluga', 'url': 'https://portail.beluga.calculquebec.ca', 'path': True},
+    {'name': 'Graham', 'url': 'https://dashboard.graham.sharcnet.ca', 'path': True},
+    {'name': 'Niagara', 'url': 'https://my.scinet.utoronto.ca', 'path': False},
 ]

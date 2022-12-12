@@ -134,7 +134,11 @@
               </li>
               {% for link in settings.OTHER_PORTALS %}
               <li class="nav-item">
+                {% if link.path %}
                 <a class="nav-link" href="{{ link.url }}{{ request.path }}"><span data-feather="external-link"></span>{{ link.name }}</a>
+                {% else %}
+                <a class="nav-link" href="{{ link.url }}"><span data-feather="external-link"></span>{{ link.name }}</a>
+                {% endif %}
               </li>
               {% endfor %}
               {% endif %}

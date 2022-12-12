@@ -94,3 +94,10 @@ CLUSTER_INTRO = """
 """
 
 CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'
+
+# Can be empty to remove the external links from the menu
+EXTERNAL_LINKS = [
+    {'name': 'Documentation', 'url': 'https://docs.alliancecan.ca/wiki/Narval', 'icon': 'book'},
+    {'name': 'Globus', 'url': 'https://app.globus.org/file-manager?origin_id=a1713da6-098f-40e6-b3aa-034efe8b6e5b', 'icon': 'globe'},
+    {'name': 'JupyterHub', 'url': 'https://jupyterhub.narval.calculquebec.ca', 'icon': 'terminal'},
+]

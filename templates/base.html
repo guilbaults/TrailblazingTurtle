@@ -127,6 +127,17 @@
               </li>
               {% endfor %}
               {% endif %}
+
+              {% if settings.OTHER_PORTALS %}
+              <li class="nav-item">
+                <a class="nav-link disabled">Other portals <span data-feather="corner-right-down"></a>
+              </li>
+              {% for link in settings.OTHER_PORTALS %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ link.url }}{{ request.path }}"><span data-feather="external-link"></span>{{ link.name }}</a>
+              </li>
+              {% endfor %}
+              {% endif %}
             </ul>
           </div>
         </nav>

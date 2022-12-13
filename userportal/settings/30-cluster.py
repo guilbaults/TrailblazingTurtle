@@ -95,15 +95,19 @@ CLUSTER_INTRO = """
 
 CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'
 
-# Can be empty to remove the external links and portals from the menu
-EXTERNAL_LINKS = [
-    {'name': 'Documentation', 'url': 'https://docs.alliancecan.ca/wiki/Narval', 'icon': 'book'},
-    {'name': 'Globus', 'url': 'https://app.globus.org/file-manager?origin_id=a1713da6-098f-40e6-b3aa-034efe8b6e5b', 'icon': 'globe'},
-    {'name': 'JupyterHub', 'url': 'https://jupyterhub.narval.calculquebec.ca', 'icon': 'terminal'},
-]
-# Path parameter enable other non-compatible portals to be added
-OTHER_PORTALS = [
-    {'name': 'Beluga', 'url': 'https://portail.beluga.calculquebec.ca', 'path': True},
-    {'name': 'Graham', 'url': 'https://dashboard.graham.sharcnet.ca', 'path': True},
-    {'name': 'Niagara', 'url': 'https://my.scinet.utoronto.ca', 'path': False},
-]
+# Links in the menu
+EXTERNAL_LINKS = []
+#EXTERNAL_LINKS = [
+#    {'name': 'Documentation', 'url': 'https://docs.alliancecan.ca/wiki/Narval', 'icon': 'book'},
+#    {'name': 'Globus', 'url': 'https://app.globus.org/file-manager?origin_id=a1713da6-098f-40e6-b3aa-034efe8b6e5b', 'icon': 'globe'},
+#    {'name': 'JupyterHub', 'url': 'https://jupyterhub.narval.calculquebec.ca', 'icon': 'terminal'},
+#]
+
+# Links to other portals, under external links. 
+# The path parameter enable compatibility with other portals by sending the user to the same page in the other portal
+OTHER_PORTALS = []
+#OTHER_PORTALS = [
+#    {'name': 'Beluga', 'url': 'https://portail.beluga.calculquebec.ca', 'path': True},
+#    {'name': 'Graham', 'url': 'https://dashboard.graham.sharcnet.ca', 'path': True},
+#    {'name': 'Niagara', 'url': 'https://my.scinet.utoronto.ca', 'path': False},
+#]

@@ -117,6 +117,16 @@ def instances_regex(context):
     return '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
 
 
+def display_compute_name(lines, line):
+    # Display compute name as needed, only if multiple nodes are used
+    names = [entry['metric']['instance'].split(':')[0] for entry in lines]
+    if len(set(names)) == 1:
+        # if its a single node job, don't return anything
+        return ""
+    else:
+        return line['metric']['instance'].split(':')[0]
+
+
 @login_required
 def index(request):
     return redirect('{}/'.format(request_to_username(request)))
@@ -351,13 +361,13 @@ def graph_cpu(request, username, job_id):
     data = {'lines': []}
     for line in stats:
         core_num = int(line['metric']['core'])
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} core {} {}'.format(line['metric']['slurmjobid'], core_num, compute_name)
+            name = '{} Core {} {}'.format(line['metric']['slurmjobid'], core_num, compute_name)
         else:
-            name = 'core {} {}'.format(core_num, compute_name)
+            name = 'Core {} {}'.format(core_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -507,7 +517,7 @@ def graph_mem(request, username, job_id):
             context['job'].time_end_dt(),
             step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         for line in stats:
-            compute_name = line['metric']['instance'].split(':')[0]
+            compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             if context['multiple_jobs']:
@@ -567,7 +577,7 @@ def graph_thread(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
     for line in stats_procs:
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats_procs, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
@@ -589,7 +599,10 @@ def graph_thread(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
     for line in stats_threads:
-        compute_name = line['metric']['instance'].split(':')[0]
+        if line['metric']['state'] == '?':
+            # ignore "?" state
+            continue
+        compute_name = display_compute_name(stats_threads, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
 
@@ -600,9 +613,9 @@ def graph_thread(request, username, job_id):
             state = 'total'
 
         if context['multiple_jobs']:
-            name = '{} {} {} {}'.format(line['metric']['slurmjobid'], _('Threads'), compute_name, state)
+            name = '{} {} {} {}'.format(line['metric']['slurmjobid'], state.capitalize(), _('threads'), compute_name)
         else:
-            name = '{} {} {}'.format(_('Threads'), compute_name, state)
+            name = '{} {} {}'.format(state.capitalize(), _('threads'), compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -642,9 +655,9 @@ def graph_lustre_mdt(request, username, job_id):
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} {} {}'.format(line['metric']['jobid'], operation, fs)
+            name = '{} {} {}'.format(line['metric']['jobid'], operation.capitalize(), fs)
         else:
-            name = '{} {}'.format(operation, fs)
+            name = '{} {}'.format(operation.capitalize(), fs)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -678,7 +691,7 @@ def graph_lustre_mdt_user(request, username):
             'y': y,
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': '{} {}'.format(operation, fs),
+            'name': '{} {}'.format(operation.capitalize(), fs),
             'hovertemplate': '%{y:.1f}',
         })
 
@@ -716,9 +729,9 @@ def graph_lustre_ost(request, username, job_id):
                 y = [-x for x in line['y']]
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             if context['multiple_jobs']:
-                name = '{} {} {}'.format(line['metric']['jobid'], i, fs)
+                name = '{} {} {}'.format(line['metric']['jobid'], i.capitalize(), fs)
             else:
-                name = '{} {}'.format(i, fs)
+                name = '{} {}'.format(i.capitalize(), fs)
             data['lines'].append({
                 'x': x,
                 'y': y,
@@ -761,7 +774,7 @@ def graph_lustre_ost_user(request, username):
                 'y': y,
                 'type': 'scatter',
                 'fill': 'tozeroy',
-                'name': '{} {}'.format(i, fs),
+                'name': '{} {}'.format(i.capitalize(), fs),
                 'hovertemplate': '%{y:.1f}',
             })
 
@@ -800,7 +813,7 @@ def graph_gpu_utilization(request, username, job_id):
 
         for line in stats:
             gpu_num = int(line['metric']['gpu'])
-            compute_name = line['metric']['instance'].split(':')[0]
+            compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             if context['multiple_jobs']:
@@ -873,7 +886,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
     data = {'lines': []}
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
@@ -913,13 +926,13 @@ def graph_gpu_memory(request, username, job_id):
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
         gpu_type = line['metric']['gpu_type']
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
         else:
-            name = '{} GPU {}'.format(gpu_num, compute_name)
+            name = 'GPU {} {}'.format(gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -953,13 +966,13 @@ def graph_gpu_power(request, username, job_id):
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
         gpu_type = line['metric']['gpu_type']
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_type, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
         else:
-            name = '{} {} GPU {}'.format(gpu_type, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -973,7 +986,7 @@ def graph_gpu_power(request, username, job_id):
             'x': x,
             'y': [GPU_IDLE_POWER[gpu_type] for x in y],
             'type': 'scatter',
-            'name': '{} {}'.format(_('Idle power'), GPU_SHORT_NAME[gpu_type]),
+            'name': '{} {}'.format(GPU_SHORT_NAME[gpu_type], _('Idle power')),
             'hovertemplate': '%{y:.1f} W',
         })
 
@@ -1054,7 +1067,7 @@ def graph_gpu_pcie(request, username, job_id):
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
             y = line['y']
@@ -1062,9 +1075,9 @@ def graph_gpu_pcie(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
         else:
-            name = '{} {} GPU {}'.format(direction, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -1100,7 +1113,7 @@ def graph_gpu_nvlink(request, username, job_id):
 
     for line in stats:
         gpu_num = int(line['metric']['gpu'])
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
             y = line['y']
@@ -1108,9 +1121,9 @@ def graph_gpu_nvlink(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
         else:
-            name = '{} {} GPU {}'.format(direction, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -1143,7 +1156,7 @@ def graph_infiniband_bdw(request, username, job_id):
         step=step)
     stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_received:
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats_received, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1160,7 +1173,7 @@ def graph_infiniband_bdw(request, username, job_id):
         step=step)
     stats_transmitted = prom.query_prometheus_multiple(query_transmitted, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_transmitted:
-        compute_name = line['metric']['instance'].split(':')[0]
+        compute_name = display_compute_name(stats_transmitted, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1194,8 +1207,8 @@ def graph_disk_iops(request, username, job_id):
     stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
-            line['metric']['instance'].split(':')[0],
-            line['metric']['device'])
+            line['metric']['device'],
+            display_compute_name(stats_read, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1210,8 +1223,8 @@ def graph_disk_iops(request, username, job_id):
     stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
-            line['metric']['instance'].split(':')[0],
-            line['metric']['device'])
+            line['metric']['device'],
+            display_compute_name(stats_write, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1247,8 +1260,8 @@ def graph_disk_bdw(request, username, job_id):
     stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
-            line['metric']['instance'].split(':')[0],
-            line['metric']['device'])
+            line['metric']['device'],
+            display_compute_name(stats_read, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1266,8 +1279,8 @@ def graph_disk_bdw(request, username, job_id):
     stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
-            line['metric']['instance'].split(':')[0],
-            line['metric']['device'])
+            line['metric']['device'],
+            display_compute_name(stats_write, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1302,8 +1315,8 @@ def graph_disk_used(request, username, job_id):
     stats_disk = prom.query_prometheus_multiple(query_disk, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
     for line in stats_disk:
         compute_name = "{} {}".format(
-            line['metric']['instance'].split(':')[0],
-            line['metric']['device'])
+            line['metric']['device'],
+            display_compute_name(stats_disk, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1343,7 +1356,7 @@ def graph_mem_bdw(request, username, job_id):
                 continue
             compute_name = "{} {} socket {}".format(
                 direction,
-                line['metric']['instance'].split(':')[0],
+                display_compute_name(stats, line),
                 line['metric']['socket'])
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
@@ -1536,7 +1549,7 @@ def graph_cpu_interconnect(request, username, job_id):
     stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
     for line in stats:
         compute_name = "Received {} socket {}".format(
-            line['metric']['instance'].split(':')[0],
+            display_compute_name(stats, line),
             line['metric']['socket'])
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']

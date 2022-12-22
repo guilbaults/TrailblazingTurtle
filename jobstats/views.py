@@ -1354,10 +1354,10 @@ def graph_mem_bdw(request, username, job_id):
         for line in stats:
             if 'socket' not in line['metric']:
                 continue
-            compute_name = "{} {} socket {}".format(
+            compute_name = "{} socket {} {}".format(
                 direction,
-                display_compute_name(stats, line),
-                line['metric']['socket'])
+                line['metric']['socket'],
+                display_compute_name(stats, line))
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             data['lines'].append({
@@ -1451,9 +1451,9 @@ def filter_stats(stats, used_mapping, reverse_mapping):
 
     for line in filtered_stats:
         phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
-        compute_name = "{} core {}".format(
-            line['metric']['instance'].split(':')[0],
-            reverse_mapping[line['metric']['instance'].split(':')[0]][phys_core])
+        compute_name = "Core {} {}".format(
+            reverse_mapping[line['metric']['instance'].split(':')[0]][phys_core],
+            display_compute_name(filtered_stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({
@@ -1548,9 +1548,9 @@ def graph_cpu_interconnect(request, username, job_id):
         rate=prom.rate('pcm-sensor-server'))
     stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
     for line in stats:
-        compute_name = "Received {} socket {}".format(
-            display_compute_name(stats, line),
-            line['metric']['socket'])
+        compute_name = "Received socket {} {}".format(
+            line['metric']['socket'],
+            display_compute_name(stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data['lines'].append({

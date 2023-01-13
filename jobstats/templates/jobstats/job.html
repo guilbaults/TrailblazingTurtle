@@ -503,14 +503,30 @@
     <h2>{% translate "Whole node resources" %}</h2>
     <p>{% translate "Those stats are not accurate when the node is shared with multiple users" %}</p>
 
-    <div id="infiniband" class="card {{graph_div.infiniband}}">
-      <div class="card-body">
-        <h3 class="card-title">{% translate "Infiniband" %}</h3>
-        <p class="card-text">
-          <div>
-            <div id="graph_infiniband_bdw"></div>
+    <div class="row">
+      <div class="col-sm-6">
+        <div id="ethernet" class="card {{graph_div.ethernet}}">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "Ethernet" %}</h3>
+            <p class="card-text">
+              <div>
+                <div id="graph_ethernet_bdw"></div>
+              </div>
+            </p>
           </div>
-        </p>
+        </div>
+      </div>
+      <div class="col-sm-6">
+        <div id="infiniband" class="card {{graph_div.infiniband}}">
+          <div class="card-body">
+            <h3 class="card-title">{% translate "Infiniband" %}</h3>
+            <p class="card-text">
+              <div>
+                <div id="graph_infiniband_bdw"></div>
+              </div>
+            </p>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -627,6 +643,7 @@
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}
     loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json?step={{step}}');
+    loadGraph('graph_ethernet_bdw', 'graph/ethernet_bdw.json?step={{step}}');
     loadGraph('graph_disk_iops', 'graph/disk_iops.json?step={{step}}');
     loadGraph('graph_disk_bdw', 'graph/disk_bdw.json?step={{step}}');
     loadGraph('graph_disk_used', 'graph/disk_used.json?step={{step}}');

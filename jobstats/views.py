@@ -1143,6 +1143,60 @@ def graph_gpu_nvlink(request, username, job_id):
 
 @login_required
 @user_or_staff
+def graph_ethernet_bdw(request, username, job_id):
+    context = context_job_info(username, job_id)
+    instances = instances_regex(context)
+
+    data = {'lines': []}
+    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
+
+    query_received = 'rate(node_network_receive_bytes_total{{device!~"ib.*|lo", instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
+    print(query_received)
+    stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+    for line in stats_received:
+        compute_name = display_compute_name(stats_received, line)
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Received {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    query_transmitted = '-rate(node_network_transmit_bytes_total{{device!~"ib.*|lo", instance=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000)'.format(
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
+    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+    for line in stats_transmitted:
+        compute_name = display_compute_name(stats_transmitted, line)
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data['lines'].append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': 'Transmitted {}'.format(compute_name),
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    data['layout'] = {
+        'yaxis': {
+            'ticksuffix': ' Mb/s',
+            'title': _('Bandwidth'),
+        }
+    }
+
+    return JsonResponse(data)
+
+
+@login_required
+@user_or_staff
 def graph_infiniband_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)

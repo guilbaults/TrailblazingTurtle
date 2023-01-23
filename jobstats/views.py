@@ -1154,7 +1154,6 @@ def graph_ethernet_bdw(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         step=step)
-    print(query_received)
     stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_received:
         compute_name = display_compute_name(stats_received, line)

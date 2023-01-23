@@ -27,7 +27,6 @@ def validate_job_id(job_id):
 
 
 def validate_account(account):
-    print(account)
     if account is None or account == '':
         # we allow empty account in the note
         return

@@ -154,13 +154,24 @@
     </tr>
     <tr>
       <td>{% translate "Nodes" %}</td>
-      <td>{{tres_req.nb_nodes}}</td>
+      <td>{{nb_nodes}}</td>
       <td></td>
     </tr>
     <tr>
       <td>{% translate "CPU cores" %}</td>
       <td>{{tres_req.total_cores}}</td>
       <td>{{cpu_used | floatformat:-2}}</td>
+    </tr>
+    <tr>
+      <td>{% translate "CPU cores by node" %}</td>
+      <td>
+        <ul class="list-unstyled">
+          {% for node in cpu_bynode %}
+            <li>{{node.name}}: {{node.count}}</li>
+          {% endfor %}
+        </ul>
+      </td>
+      <td></td>
     </tr>
     <tr>
       <td>{% translate "Memory" %}</td>

@@ -227,6 +227,19 @@ def job(request, username, job_id):
         context['cpu_used'] = None
 
     try:
+        query_cpu_bynode = 'count(slurm_job_core_usage_total{{slurmjobid="{}", {}}}) by (instance)'.format(job_id, prom.get_filter())
+        stats_cpu_bynode = prom.query_prometheus_multiple(query_cpu_bynode, job.time_start_dt(), job.time_end_dt())
+        cpu_bynode = []
+        for node in stats_cpu_bynode:
+            node_name = node['metric']['instance'].split(':')[0]
+            cpu_bynode.append({'name': node_name, 'count': int(node['y'][0])})
+        context['cpu_bynode'] = cpu_bynode
+        context['nb_nodes'] = len(cpu_bynode)
+    except ValueError:
+        context['cpu_bynode'] = None
+        context['nb_nodes'] = None
+
+    try:
         query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}", {}}})'.format(job_id, prom.get_filter())
         stats_mem = prom.query_prometheus(query_mem, job.time_start_dt(), job.time_end_dt())
         context['mem_used'] = max(stats_mem[1])

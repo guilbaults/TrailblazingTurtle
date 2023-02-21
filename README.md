@@ -16,7 +16,7 @@ Some examples of the available graphs are displayed in the documentation of each
 
 This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
 
-This portal also supports Openstack, the users can see their own use without having to install a monitoring agent in their VM in their OpenStack VMs.
+This portal also supports Openstack, the users can see their use without having to install a monitoring agent in their VM in their OpenStack VMs.
 
 Staff members can also see the use of any users to help them optimize their use of HPC and OpenStack clusters.
 
@@ -40,7 +40,7 @@ A test environment using the local `uid` resolver and dummies allocations is pro
 
 To use it, copy `example/local.py` to `userportal/local.py`. The other functions are documented in `common.py` if any other overrides are needed for your environment.
 
-To quickly test and bypass authentication, add this line to `userportal/settings/99-local.conf`. Other local configuration can be added in this file to override the default settings.
+To quickly test and bypass authentication, add this line to `userportal/settings/99-local.py`. Other local configuration can be added in this file to override the default settings.
 
 ```
 AUTHENTICATION_BACKENDS.insert(0, 'userportal.authentication.staffRemoteUserBackend')
@@ -48,7 +48,7 @@ AUTHENTICATION_BACKENDS.insert(0, 'userportal.authentication.staffRemoteUserBack
 
 This bypasses the authentication and will use the `REMOTE_USER` header or env variable to authenticate the user. This is useful to be able to try the portal without having to set up a full IDP environment. The REMOTE_USER method can be used when using shibboleth or other IDP. SAML2 is now the preferred authentication method for production.
 
-Examine the default configuration in `userportal/settings/` and override any settings in `99-local.conf` as needed.
+Examine the default configuration in `userportal/settings/` and override any settings in `99-local.py` as needed.
 
 Then you can launch the example server with:
 
@@ -67,6 +67,8 @@ python manage.py test
 This will test the various modules, including reading job data from the Slurm database and Prometheus. A temporary database for Django is created automatically for the tests. Slurm and Prometheus data are read directly from production data with a read-only account. A representative user, job and account need to be defined to be used in the tests, check the `90-tests.py` file for an example.
 
 ## Production install
-The portal can be installed directly on a centos/rocky Apache web server, or in a container. The various recommendation on Django in production can be followed.
+The portal can be installed directly on a Centos7 or Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container. The various recommendation for any normal Django production deployment can be followed.
+
+[Deploying Django](https://docs.djangoproject.com/en/3.2/howto/deployment/)
 
 [Install documentation](docs/install.md)

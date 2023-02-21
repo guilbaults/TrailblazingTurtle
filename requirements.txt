@@ -2,10 +2,10 @@ asgiref==3.4.1
 certifi==2022.12.7
 cffi==1.15.1
 chardet==4.0.0
-cryptography==38.0.3
+cryptography==39.0.1
 dateparser==1.0.0
 defusedxml==0.7.1
-Django==3.2.16
+Django==3.2.18
 django-auth-ldap==2.3.0
 django-bootstrap-pagination==1.7.1
 django-debug-toolbar==3.2.4

@@ -7,7 +7,7 @@
 {% block content %}
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-<p><a class="btn btn-primary" href="/secure/notes/new?account={{account}}">{% translate "Create a new note" %}</a></p>
+<p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new?account={{account}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
 <h1>{% translate "Account use of" %} {{ account }}</h1>
@@ -214,7 +214,7 @@ $(document).ready(function() {
       },
       { data: 'id_job',
         render: function ( data, type, row ) {
-          return '<a href="/secure/jobstats/' + row['username'] + '/' + data + '">' + data + '</a>';
+          return '<a href="{{settings.BASE_URL}}secure/jobstats/' + row['username'] + '/' + data + '">' + data + '</a>';
         }
       },
       { data: 'get_state_display',

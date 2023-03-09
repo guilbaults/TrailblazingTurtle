@@ -8,7 +8,7 @@
 {% block content %}
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-  <p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}&job_id={{job_id}}">{% translate "Create a new note" %}</a></p>
+  <p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new?username={{username}}&job_id={{job_id}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
 {% if multiple_jobs %}
@@ -27,7 +27,7 @@
     <tbody>
       {% for job in jobs %}
       <tr>
-        <td><a href="/secure/jobstats/{{username}}/{{job.id_job}}">{{job.id_job}}</a></td>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{job.id_job}}">{{job.id_job}}</a></td>
         <td>{{job.job_name}}</td>
         <td>{{job.time_submit_dt | date:"c"}}</td>
         <td>{{job.time_in_queue_dt}}</td>
@@ -121,7 +121,7 @@
       <tr>
         <td>
           {% if 'accountstats' in settings.INSTALLED_APPS %}
-            <a href="/secure/accountstats/{{ job.account }}">{{job.account}}</a>
+            <a href="{{settings.BASE_URL}}secure/accountstats/{{ job.account }}">{{job.account}}</a>
           {% else %}
             {{job.account}}
           {% endif %}

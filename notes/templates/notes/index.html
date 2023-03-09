@@ -5,7 +5,7 @@
 {% block title %}{% translate "All notes" %}{% endblock title %}
 
 {% block content %}
-<p><a class="btn btn-primary" href="/secure/notes/new">Create a new note</a></p>
+<p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new">Create a new note</a></p>
 
 <h2>{% translate "All notes" %}</h2>
 <table table id="notes" class="table table-striped table-bordered" style="width:100%" data-server-side="true" data-ajax="/api/notes/?format=datatables">

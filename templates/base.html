@@ -69,49 +69,49 @@
               </li>
               {% if 'usersummary' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/usersummary/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/usersummary/">
                   <span data-feather="user"></span>{% translate "User summary" %}
                 </a>
               </li>
               {% endif %}
               {% if 'jobstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/jobstats/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/jobstats/">
                   <span data-feather="activity"></span>{% translate "Job stats" %}
                 </a>
               </li>
               {% endif %}
               {% if 'accountstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/accountstats/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/accountstats/">
                   <span data-feather="users"></span>{% translate "Account stats" %}
                 </a>
               </li>
               {% endif %}
               {% if 'quotas' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/quotas/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/quotas/">
                   <span data-feather="hard-drive"></span>{% translate "Filesystem quotas" %}
                 </a>
               </li>
               {% endif %}
               {% if 'cloudstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/cloudstats/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/cloudstats/">
                   <span data-feather="cloud"></span>{% translate "Cloud stats" %}
                 </a>
               </li>
               {% endif %}
               {% if request.user.is_staff and 'top' in settings.INSTALLED_APPS %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/top/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/top/">
                   <span data-feather="award"></span>{% translate "Top" %}
                 </a>
               </li>
               {% endif %}
               {% if request.user.is_staff %}
               <li class="nav-item">
-                <a class="nav-link" href="/secure/notes/">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/notes/">
                   <span data-feather="edit"></span>{% translate "Notes" %}
                 </a>
               </li>

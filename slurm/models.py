@@ -226,7 +226,6 @@ class JobTable(models.Model):
     wckey = models.TextField()
     work_dir = models.TextField()
     system_comment = models.TextField(blank=True, null=True)
-    track_steps = models.IntegerField()
     tres_alloc = models.TextField()
     tres_req = models.TextField()
 

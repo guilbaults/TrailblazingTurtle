@@ -9,7 +9,7 @@
 
 {% include "notes_header.html" %}
 {% if user.is_staff%}
-<p><a class="btn btn-primary" href="/secure/notes/new?username={{username}}">{% translate "Create a new note" %}</a></p>
+<p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new?username={{username}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
 <h1>{% translate "Your current use" %}</h1>
@@ -189,7 +189,7 @@ $(document).ready(function() {
     columns: [
       { data: 'id_job',
         render: function ( data, type ) {
-          return '<a href="/secure/jobstats/{{username}}/' + data + '">' + data + '</a>';
+          return '<a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/' + data + '">' + data + '</a>';
         }
       },
       { data: 'get_state_display',

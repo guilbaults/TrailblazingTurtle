@@ -3,6 +3,7 @@ from django.core.exceptions import ValidationError
 from userportal.common import username_to_uid
 from slurm.models import JobTable, AssocTable
 from django.contrib.auth.models import User
+from django.conf import settings
 
 
 def validate_valid_username(username):
@@ -71,4 +72,4 @@ class Note(models.Model):
         return super().form_valid(form)
 
     def get_absolute_url(self):
-        return "/secure/notes/%i/" % self.id
+        return "{}secure/notes/{}/".format(settings.BASE_URL, self.id)

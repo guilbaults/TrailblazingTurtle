@@ -41,12 +41,12 @@
   <tbody>
 {% for job in jobs %}
     <tr>
-      <td><a href="/secure/jobstats/{{job.user}}">{{job.user}}
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}">{{job.user}}
         {% if job.user_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>
       </td>
-      <td><a href="/secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a>
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a>
         {% if job.job_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="Job has a note"></span></span>
         {% endif %}</a>

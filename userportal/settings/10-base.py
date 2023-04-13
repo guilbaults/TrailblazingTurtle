@@ -149,6 +149,7 @@ LOCALE_PATHS = (
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
+BASE_URL = '/'
 STATIC_URL = '/static/'
 STATIC_ROOT = '/opt/userportal/collected-static/'
 
@@ -178,6 +179,7 @@ SETTINGS_EXPORT = [
     'GPU_COST_PER_HOUR',
     'EXTERNAL_LINKS',
     'OTHER_PORTALS',
+    'BASE_URL',
 ]
 
 INTERNAL_IPS = [

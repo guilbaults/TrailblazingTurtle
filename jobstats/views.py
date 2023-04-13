@@ -1068,10 +1068,9 @@ def graph_gpu_pcie(request, username, job_id):
     context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_pcie_gpu_total{{slurmjobid=~"{}", {}}}[{}s])'.format(
+    query = 'slurm_job_pcie_gpu{{slurmjobid=~"{}", {}}} /1024/1024/1024'.format(
         context['id_regex'],
-        prom.get_filter(),
-        prom.rate('slurm-job-exporter'))
+        prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
@@ -1101,7 +1100,7 @@ def graph_gpu_pcie(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'B/s',
+            'ticksuffix': 'GB/s',
             'title': _('Bandwidth'),
         }
     }
@@ -1114,10 +1113,9 @@ def graph_gpu_nvlink(request, username, job_id):
     context = context_job_info(username, job_id)
 
     data = {'lines': []}
-    query = 'rate(slurm_job_nvlink_gpu_total{{slurmjobid="{}", {}}}[{}s])'.format(
+    query = 'slurm_job_nvlink_gpu{{slurmjobid="{}", {}}} /1024/1024/1024'.format(
         context['id_regex'],
-        prom.get_filter(),
-        prom.rate('slurm-job-exporter'))
+        prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
         context['job'].time_start_dt(),
@@ -1147,7 +1145,7 @@ def graph_gpu_nvlink(request, username, job_id):
 
     data['layout'] = {
         'yaxis': {
-            'ticksuffix': 'B/s',
+            'ticksuffix': 'GB/s',
             'title': _('Bandwidth'),
         }
     }

@@ -14,7 +14,7 @@ This web portal is intended to give HPC users a view of the overall use of the H
 
 Some examples of the available graphs are displayed in the documentation of each module. 
 
-This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies, if the dependencies are not met some graphs will not be displayed.
+This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies and will hide some graphs if the data is not available.
 
 This portal also supports Openstack, the users can see their use without having to install a monitoring agent in their VM in their OpenStack VMs.
 
@@ -31,7 +31,8 @@ The Django portal will also access various MySQL databases like the database of 
 ![Architecture diagram](docs/userportal.png)
 
 ## Data sources
-Various data sources are used to populate the content of this portal. Most of them are optional and their usefulness depends on the modules enabled.
+Various data sources are used to populate the content of this portal. Most of them are optional and their usefulness depends on the modules enabled in the portal.
+Some pre-aggregation is done using recorder rules in Prometheus. The required recorder rules are documented in the data sources documentation.
 
 [Data sources documentation](docs/data.md)
 
@@ -46,7 +47,7 @@ To quickly test and bypass authentication, add this line to `userportal/settings
 AUTHENTICATION_BACKENDS.insert(0, 'userportal.authentication.staffRemoteUserBackend')
 ```
 
-This bypasses the authentication and will use the `REMOTE_USER` header or env variable to authenticate the user. This is useful to be able to try the portal without having to set up a full IDP environment. The REMOTE_USER method can be used when using shibboleth or other IDP. SAML2 is now the preferred authentication method for production.
+This bypasses the authentication and will use the `REMOTE_USER` header or env variable to authenticate the user. This is useful to be able to try the portal without having to set up a full IDP environment. The REMOTE_USER method can be used when using some IDP such as Shibboleth. SAML2 based IDP is now the preferred authentication method for production.
 
 Examine the default configuration in `userportal/settings/` and override any settings in `99-local.py` as needed.
 
@@ -67,7 +68,7 @@ python manage.py test
 This will test the various modules, including reading job data from the Slurm database and Prometheus. A temporary database for Django is created automatically for the tests. Slurm and Prometheus data are read directly from production data with a read-only account. A representative user, job and account need to be defined to be used in the tests, check the `90-tests.py` file for an example.
 
 ## Production install
-The portal can be installed directly on a Centos7 or Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container. The various recommendation for any normal Django production deployment can be followed.
+The portal can be installed directly on a Centos7 or Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container. The various recommendations for any normal Django production deployment can be followed.
 
 [Deploying Django](https://docs.djangoproject.com/en/3.2/howto/deployment/)
 

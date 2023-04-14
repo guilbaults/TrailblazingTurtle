@@ -68,7 +68,7 @@ python manage.py collectstatic
 
 ## Apache virtualhost config for Gunicorn
 
-In this example, Apache is running on port 8000 and Gunicorn on port 8001. Apache will receive all the requests, will handle the static files and forward the other requests to Gunicorn.
+In this example, Apache is running on port 8000 and Gunicorn on port 8001. Apache will handle the static files and forward the other requests to Gunicorn. An external load balancer is used to forward the requests from ports 80/443 to Apache on port 8000.
 
 ```
 Listen 8000
@@ -104,7 +104,7 @@ openssl req -nodes -new -x509 -newkey rsa:2048 -days 3650 -keyout private.key -o
 ```
 
 Download the metadata file from the IDP as metadata.xml
-Our Shibboleth IDP only seems to work with Redirect binding, so we remove manually the POST binding for SingleSignOnService.
+Our Shibboleth IDP only seems to work with Redirect binding, so we manually remove the POST binding for SingleSignOnService.
 
 # API
 An API is available to modify resources in the database. This is used by the jobscript collector. A local superuser need to be created:
@@ -120,7 +120,7 @@ manage.py drf_create_token
 ```
 
 # Upgrades
-When SQL models are modified, the automated migration script need to run once:
+When SQL models are modified, the automated migration script needs to run once:
 ```
 python manage.py migrate
 ```

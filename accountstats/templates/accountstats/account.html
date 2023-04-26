@@ -132,7 +132,7 @@
   <option value="OOM">OOM</option>
 </select>
 
-<table id="jobs" class="table table-striped table-bordered" style="width:100%" data-server-side="true" data-ajax="/api/jobs/?format=datatables&account={{account}}">
+<table id="jobs" class="table table-striped table-bordered" style="width:100%" data-server-side="true" data-ajax="{{settings.BASE_URL}}api/jobs/?format=datatables&account={{account}}">
   <thead class="thead-dark">
     <tr>
         <th scope="col">{% translate "Username" %}</th>
@@ -258,7 +258,7 @@ $(document).ready(function() {
 
   $(".chosen-select").chosen({width:"100%"})
   $('#select-status').on('change', function() {
-    $('#jobs').DataTable().ajax.url( '/api/jobs/?format=datatables&account={{account}}&status=' + $(this).val().join(',') ).load();
+    $('#jobs').DataTable().ajax.url( '{{settings.BASE_URL}}api/jobs/?format=datatables&account={{account}}&status=' + $(this).val().join(',') ).load();
   }).trigger('change');
 });
 </script>

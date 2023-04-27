@@ -159,6 +159,8 @@ AUTHENTICATION_BACKENDS = [
     'userportal.authentication.staffSaml2Backend',
 ]
 
+LDAP_BASE_DN = 'dc=computecanada,dc=ca'
+
 LOGIN_REDIRECT_URL = '/'
 
 SETTINGS_EXPORT = [
@@ -180,6 +182,7 @@ SETTINGS_EXPORT = [
     'EXTERNAL_LINKS',
     'OTHER_PORTALS',
     'BASE_URL',
+    'LDAP_BASE_DN',
 ]
 
 INTERNAL_IPS = [

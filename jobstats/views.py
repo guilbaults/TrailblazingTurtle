@@ -25,9 +25,49 @@ GPU_MEMORY = {
     'Tesla V100-PCIE-32GB': 32,
     'NVIDIA A100-SXM4-40GB': 40,
     'Quadro RTX 6000': 20,
+    '1g.5gb': 5,
+    '1g.10gb': 10,
+    '2g.10gb': 10,
+    '2g.20gb': 20,
+    '3g.20gb': 20,
+    '3g.40gb': 40,
+    '4g.20gb': 20,
+    '4g.40gb': 40,
+    '7g.40gb': 40,
+    '7g.80gb': 80,
 }
-GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400, 'Tesla V100-PCIE-32GB': 250, 'Quadro RTX 6000': 250}
-GPU_IDLE_POWER = {'Tesla V100-SXM2-16GB': 55, 'NVIDIA A100-SXM4-40GB': 55, 'Tesla V100-PCIE-32GB': 55, 'Quadro RTX 6000': 50}
+GPU_FULL_POWER = {
+    'Tesla V100-SXM2-16GB': 300,
+    'NVIDIA A100-SXM4-40GB': 400,
+    'Tesla V100-PCIE-32GB': 250,
+    'Quadro RTX 6000': 250,
+    '1g.5gb': 300,  # assuming A100 for all MIGs at the moment
+    '1g.10gb': 300,
+    '2g.10gb': 300,
+    '2g.20gb': 300,
+    '3g.20gb': 300,
+    '3g.40gb': 300,
+    '4g.20gb': 300,
+    '4g.40gb': 300,
+    '7g.40gb': 300,
+    '7g.80gb': 300,
+}
+GPU_IDLE_POWER = {
+    'Tesla V100-SXM2-16GB': 55,
+    'NVIDIA A100-SXM4-40GB': 55,
+    'Tesla V100-PCIE-32GB': 55,
+    'Quadro RTX 6000': 50,
+    '1g.5gb': 55,  # assuming A100 for all MIGs at the moment
+    '1g.10gb': 55,
+    '2g.10gb': 55,
+    '2g.20gb': 55,
+    '3g.20gb': 55,
+    '3g.40gb': 55,
+    '4g.20gb': 55,
+    '4g.40gb': 55,
+    '7g.40gb': 55,
+    '7g.80gb': 55,
+}
 GPU_SHORT_NAME = {
     'GRID V100D-4C': 'V100 4GB',
     'GRID V100D-8C': 'V100 8GB',
@@ -37,6 +77,16 @@ GPU_SHORT_NAME = {
     'Tesla V100-PCIE-32GB': 'V100-32G',
     'Quadro RTX 6000': 'RTX6000',
     'NVIDIA A100-SXM4-40GB': 'A100',
+    '1g.5gb': '1g.5gb',
+    '1g.10gb': '1g.10gb',
+    '2g.10gb': '2g.10gb',
+    '2g.20gb': '2g.20gb',
+    '3g.20gb': '3g.20gb',
+    '3g.40gb': '3g.40gb',
+    '4g.20gb': '4g.20gb',
+    '4g.40gb': '4g.40gb',
+    '7g.40gb': '7g.40gb',
+    '7g.80gb': '7g.80gb',
 }
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -129,6 +179,14 @@ def display_compute_name(lines, line):
         return ""
     else:
         return line['metric']['instance'].split(':')[0]
+
+
+def display_gpu_id(line):
+    if 'MIG' in line['metric']['gpu']:
+        # return a truncated MIG ID
+        return line['metric']['gpu'][4:12]
+    else:
+        return int(line['metric']['gpu'])
 
 
 @login_required
@@ -829,14 +887,14 @@ def graph_gpu_utilization(request, username, job_id):
             step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
         for line in stats:
-            gpu_num = int(line['metric']['gpu'])
+            gpu_id = display_gpu_id(line)
             compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             if context['multiple_jobs']:
-                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_num, compute_name)
+                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_id, compute_name)
             else:
-                name = '{} GPU {} {}'.format(q[1], gpu_num, compute_name)
+                name = '{} GPU {} {}'.format(q[1], gpu_id, compute_name)
             data['lines'].append({
                 'x': x,
                 'y': y,
@@ -902,14 +960,14 @@ def graph_gpu_memory_utilization(request, username, job_id):
 
     data = {'lines': []}
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
         else:
-            name = 'GPU {} {}'.format(gpu_num, compute_name)
+            name = 'GPU {} {}'.format(gpu_id, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -941,15 +999,15 @@ def graph_gpu_memory(request, username, job_id):
 
     data = {'lines': []}
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
         else:
-            name = 'GPU {} {}'.format(gpu_num, compute_name)
+            name = 'GPU {} {}'.format(gpu_id, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -981,15 +1039,15 @@ def graph_gpu_power(request, username, job_id):
 
     data = {'lines': []}
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -1082,7 +1140,7 @@ def graph_gpu_pcie(request, username, job_id):
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
@@ -1091,9 +1149,9 @@ def graph_gpu_pcie(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,
@@ -1127,7 +1185,7 @@ def graph_gpu_nvlink(request, username, job_id):
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
@@ -1136,9 +1194,9 @@ def graph_gpu_nvlink(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
         data['lines'].append({
             'x': x,
             'y': y,

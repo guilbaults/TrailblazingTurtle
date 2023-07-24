@@ -41,16 +41,16 @@ GPU_FULL_POWER = {
     'NVIDIA A100-SXM4-40GB': 400,
     'Tesla V100-PCIE-32GB': 250,
     'Quadro RTX 6000': 250,
-    '1g.5gb': 300,  # assuming A100 for all MIGs at the moment
-    '1g.10gb': 300,
-    '2g.10gb': 300,
-    '2g.20gb': 300,
-    '3g.20gb': 300,
-    '3g.40gb': 300,
-    '4g.20gb': 300,
-    '4g.40gb': 300,
-    '7g.40gb': 300,
-    '7g.80gb': 300,
+    '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
+    '1g.10gb': 400,
+    '2g.10gb': 400,
+    '2g.20gb': 400,
+    '3g.20gb': 400,
+    '3g.40gb': 400,
+    '4g.20gb': 400,
+    '4g.40gb': 400,
+    '7g.40gb': 400,
+    '7g.80gb': 400,
 }
 GPU_IDLE_POWER = {
     'Tesla V100-SXM2-16GB': 55,

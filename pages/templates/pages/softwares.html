@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Scheduler" %}{% endblock title %}
+
+{% block content %}
+<h2>{% translate "Scientific softwares" %}</h2>
+
+<div class="container">
+    <div class="row">
+        <div class="col-sm">
+            <h4>{% translate "By software" %}</h4>
+            <div id="graph_software"></div>
+        </div>
+        <div class="col-sm">
+            <h4>{% translate "By stack" %}</h4>
+            <div id="graph_software_stack"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function(){
+        loadGraph('graph_software', 'graph/software.json');
+        loadGraph('graph_software_stack', 'graph/software_stack.json');
+    });
+</script>
+
+{% endblock content %}

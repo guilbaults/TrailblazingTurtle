@@ -45,7 +45,7 @@ def account(request, account):
 @login_required
 @account_or_staff
 def graph_cpu_allocated(request, account):
-    data = {'lines': []}
+    data = []
     query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -53,7 +53,7 @@ def graph_cpu_allocated(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -61,15 +61,15 @@ def graph_cpu_allocated(request, account):
             'name': user,
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_cpu_used(request, account):
-    data = {'lines': []}
+    data = []
     query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -77,7 +77,7 @@ def graph_cpu_used(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -85,15 +85,15 @@ def graph_cpu_used(request, account):
             'name': user,
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_cpu_wasted(request, account):
-    data = {'lines': []}
+    data = []
     query_alloc = 'clamp_min(sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user), 0)'.format(account, prom.get_filter(), account, prom.get_filter())
     stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -101,22 +101,22 @@ def graph_cpu_wasted(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'name': user,
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_mem_allocated(request, account):
-    data = {'lines': []}
+    data = []
     query_alloc = 'sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
     stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -124,7 +124,7 @@ def graph_mem_allocated(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -133,20 +133,20 @@ def graph_mem_allocated(request, account):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_mem_used(request, account):
-    data = {'lines': []}
+    data = []
     query_used = 'sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -154,7 +154,7 @@ def graph_mem_used(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -163,20 +163,20 @@ def graph_mem_used(request, account):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_mem_wasted(request, account):
-    data = {'lines': []}
+    data = []
     query_alloc = 'clamp_min(sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user), 0) /(1024*1024*1024)'.format(account, prom.get_filter(), account, prom.get_filter())
     stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
 
@@ -184,7 +184,7 @@ def graph_mem_wasted(request, account):
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -192,14 +192,14 @@ def graph_mem_wasted(request, account):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -207,13 +207,13 @@ def graph_mem_wasted(request, account):
 def graph_lustre_mdt(request, account):
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",account=~"{}", {}}}[5m])) by (user, fs) !=0'.format(account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
-    data = {'lines': []}
+    data = []
     for line in stats:
         user = line['metric']['user']
         fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -222,19 +222,19 @@ def graph_lustre_mdt(request, account):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' IOPS'
         },
         'showlegend': True
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @account_or_staff
 def graph_lustre_ost(request, account):
-    data = {'lines': []}
+    data = []
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",account=~"{}",target=~".*-OST.*", {}}}[5m])) by (user, fs)) / (1024*1024)'.format(i, account, prom.get_filter())
         stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
@@ -247,7 +247,7 @@ def graph_lustre_ost(request, account):
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -255,13 +255,13 @@ def graph_lustre_ost(request, account):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' MiB/s'
         },
         'showlegend': True
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -270,11 +270,11 @@ def graph_gpu_allocated(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -282,9 +282,9 @@ def graph_gpu_allocated(request, account):
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -293,11 +293,11 @@ def graph_gpu_used(request, account):
     query = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -305,9 +305,9 @@ def graph_gpu_used(request, account):
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -316,20 +316,20 @@ def graph_gpu_wasted(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter(), account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {'showlegend': True}
+    layout = {'showlegend': True}
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -339,11 +339,11 @@ def graph_gpu_power_allocated(request, account):
     query = 'count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300'.format(account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -351,14 +351,14 @@ def graph_gpu_power_allocated(request, account):
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' W',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -368,11 +368,11 @@ def graph_gpu_power_used(request, account):
     query = 'sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000'.format(account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -380,14 +380,14 @@ def graph_gpu_power_used(request, account):
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' W',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -397,11 +397,11 @@ def graph_gpu_power_wasted(request, account):
     query = '(count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300) - (sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000)'.format(account, prom.get_filter(), account, prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -409,14 +409,14 @@ def graph_gpu_power_wasted(request, account):
             'name': line['metric']['user'],
             'hovertemplate': '%{y:.1f}',
         })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' W',
         },
         'showlegend': True
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -433,7 +433,7 @@ def graph_gpu_priority(request, account):
 
 # auth done in functions above
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
-    data = {'lines': []}
+    data = []
     if gpu_or_cpu == 'gpu':
         query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
@@ -453,7 +453,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         allocated['name'] = 'Allocated GPUs'
     else:
         allocated['name'] = 'Allocated cores'
-    data['lines'].append(allocated)
+    data.append(allocated)
 
     allocation = compute_allocations_by_slurm_account(account)
     if allocation is not None:
@@ -464,7 +464,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     else:
         alloc = 0
     if account.startswith('def-') is False:
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': [alloc] * len(x),
             'type': 'scatter',
@@ -491,14 +491,14 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         used['name'] = 'Used GPUs'
     else:
         used['name'] = 'Used cores'
-    data['lines'].append(used)
+    data.append(used)
 
     query_levelfs = 'slurm_account_levelfs{{account="{}", {}}}'.format(account, prom.get_filter())
     stats_levelfs = prom.query_prometheus(query_levelfs, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_levelfs[0]))
     y = stats_levelfs[1]
-    data['lines'].append({
+    data.append({
         'x': x,
         'y': y,
         'type': 'scatter',
@@ -511,7 +511,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         title = 'GPUs'
     else:
         title = 'Cores'
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': title,
             'range': [0, max(stats_alloc[1])],
@@ -525,4 +525,4 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         'showlegend': True,
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})

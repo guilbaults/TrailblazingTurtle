@@ -53,7 +53,7 @@ def instance(request, project, uuid):
 @login_required
 @openstackproject_or_staff
 def project_graph_cpu(request, project):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = 'sum(rate(libvirtd_domain_vcpu_time{{project_name="{project}", {filter}}}[1m])) by (uuid,instance_name) / 1000000000'.format(
         project=project,
@@ -73,7 +73,7 @@ def project_graph_cpu(request, project):
             name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
         else:
             name = line['metric']['instance_name']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -90,7 +90,7 @@ def project_graph_cpu(request, project):
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -98,25 +98,25 @@ def project_graph_cpu(request, project):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('Cores'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @staff
 def projects_graph_cpu(request):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[5m])) by (project_name) / 1000000000'.format(
         filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
     for line in stats_used:
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
@@ -129,7 +129,7 @@ def projects_graph_cpu(request):
         filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
@@ -137,18 +137,18 @@ def projects_graph_cpu(request):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('Cores'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def instance_graph_cpu(request, project, uuid):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = 'rate(libvirtd_domain_vcpu_time{{project_name="{project}", uuid="{uuid}", {filter}}}[1m]) / 1000000000'.format(
         project=project,
@@ -159,7 +159,7 @@ def instance_graph_cpu(request, project, uuid):
     for line in stats_used:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -177,7 +177,7 @@ def instance_graph_cpu(request, project, uuid):
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -185,19 +185,19 @@ def instance_graph_cpu(request, project, uuid):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('Cores'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def project_graph_memory(request, project):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", {filter}}})/1024/1024'.format(
         project=project,
@@ -217,7 +217,7 @@ def project_graph_memory(request, project):
             name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
         else:
             name = line['metric']['instance_name']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -233,7 +233,7 @@ def project_graph_memory(request, project):
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -241,20 +241,20 @@ def project_graph_memory(request, project):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
             'title': _('Memory'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def instance_graph_memory(request, project, uuid):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
         project=project,
@@ -265,7 +265,7 @@ def instance_graph_memory(request, project, uuid):
     for line in stats_used:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -281,7 +281,7 @@ def instance_graph_memory(request, project, uuid):
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -289,26 +289,26 @@ def instance_graph_memory(request, project, uuid):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
             'title': _('Memory'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @staff
 def projects_graph_mem(request):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
     query_used = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
         filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
     for line in stats_used:
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
@@ -321,7 +321,7 @@ def projects_graph_mem(request):
         filter=prom.get_filter())
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
@@ -329,20 +329,20 @@ def projects_graph_mem(request):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
             'title': _('Memory'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def project_graph_disk_bandwidth(request, project):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['read', 'write']:
@@ -368,7 +368,7 @@ def project_graph_disk_bandwidth(request, project):
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
                 name = line['metric']['instance_name']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -376,20 +376,20 @@ def project_graph_disk_bandwidth(request, project):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'MiB',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def instance_graph_disk_bandwidth(request, project, uuid):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['read', 'write']:
@@ -406,7 +406,7 @@ def instance_graph_disk_bandwidth(request, project, uuid):
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -415,20 +415,20 @@ def instance_graph_disk_bandwidth(request, project, uuid):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'MiB',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def project_graph_disk_iops(request, project):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['read', 'write']:
@@ -454,7 +454,7 @@ def project_graph_disk_iops(request, project):
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
                 name = line['metric']['instance_name']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -462,19 +462,19 @@ def project_graph_disk_iops(request, project):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IOPS'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def instance_graph_disk_iops(request, project, uuid):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['read', 'write']:
@@ -491,7 +491,7 @@ def instance_graph_disk_iops(request, project, uuid):
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -499,19 +499,19 @@ def instance_graph_disk_iops(request, project, uuid):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IOPS'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def project_graph_network_bandwidth(request, project):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['rx', 'tx']:
@@ -537,7 +537,7 @@ def project_graph_network_bandwidth(request, project):
                 name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
             else:
                 name = line['metric']['instance_name']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -545,20 +545,20 @@ def project_graph_network_bandwidth(request, project):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'MiB',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @openstackproject_or_staff
 def instance_graph_network_bandwidth(request, project, uuid):
-    data = {'lines': []}
+    data = []
     timing = query_time(request)
 
     for direction in ['rx', 'tx']:
@@ -575,7 +575,7 @@ def instance_graph_network_bandwidth(request, project, uuid):
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -584,11 +584,11 @@ def instance_graph_network_bandwidth(request, project, uuid):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'MiB',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})

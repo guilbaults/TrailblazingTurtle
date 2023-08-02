@@ -16,4 +16,7 @@ urlpatterns = [
     path('scheduler/', views.sheduler),
     path('scheduler/graph/allocated_cpu.json', views.graph_scheduler_cpu),
     path('scheduler/graph/allocated_gpu.json', views.graph_scheduler_gpu),
+    path('softwares/', views.softwares),
+    path('softwares/graph/software.json', views.graph_software_processes),
+    path('softwares/graph/software_stack.json', views.graph_software_stack),
 ]

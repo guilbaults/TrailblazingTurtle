@@ -533,7 +533,7 @@ def graph_software(query_str, software_regexes, extract_path=False):
             continue
         for regex, name in software_regexes:
             if re.match(regex, bin):
-                if bin in software:
+                if name in software:
                     software[name] += value
                 else:
                     software[name] = value
@@ -568,6 +568,7 @@ def graph_software(query_str, software_regexes, extract_path=False):
         'values': values,
         'labels': labels,
         'type': 'pie',
+        'texttemplate': '%{label}: %{value:.0f}',
     }]}
 
     data['layout'] = {

@@ -526,7 +526,11 @@ def graph_software(query_str, software_regexes, extract_path=False):
 
     for line in stats:
         value = statistics.median(line['y'])
-        bin = line['metric']['exe']
+        try:
+            bin = line['metric']['exe']
+        except KeyError:
+            # Somehow the metric is missing the exe label
+            continue
         for regex, name in software_regexes:
             if re.match(regex, bin):
                 if bin in software:

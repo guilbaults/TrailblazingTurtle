@@ -38,9 +38,9 @@ def sheduler(request):
     return render(request, 'pages/scheduler.html', context)
 
 
-def softwares(request):
+def software(request):
     context = {}
-    return render(request, 'pages/softwares.html', context)
+    return render(request, 'pages/software.html', context)
 
 
 def graph_lustre_mdt(request, fs):
@@ -431,7 +431,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
     return JsonResponse({'data': data, 'layout': layout})
 
 
-SOFTWARES_REGEX = [
+SOFTWARE_REGEX = [
     (r'.*/gmx_mpi|.*/gmx', 'GROMACS'),
     (r'.*/vasp', 'VASP'),
     (r'.*/lammps', 'LAMMPS'),
@@ -486,7 +486,7 @@ SOFTWARES_REGEX = [
     (r'.*/nc(ap2|atted|bo|climo|es|ecat|flint|ks|pdq|ra|rcat|remap|rename|wa)', 'NCO'),
 ]
 
-SOFTWARES_STACK_REGEX = [
+SOFTWARE_STACK_REGEX = [
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/Core/.*', '2017 - Core'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/sse3/.*', '2017 - SSE3'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/avx/.*', '2017 - AVX'),
@@ -503,15 +503,15 @@ SOFTWARES_STACK_REGEX = [
 
 def graph_software_processes(request):
     query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
-    return graph_softwares(query_str, SOFTWARES_REGEX)
+    return graph_software(query_str, SOFTWARE_REGEX)
 
 
 def graph_software_stack(request):
     query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
-    return graph_softwares(query_str, SOFTWARES_STACK_REGEX, extract_path=True)
+    return graph_software(query_str, SOFTWARE_STACK_REGEX, extract_path=True)
 
 
-def graph_softwares(query_str, software_regexes, extract_path=False):
+def graph_software(query_str, software_regexes, extract_path=False):
     query = query_str.format(prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), step="5m")
 
@@ -522,36 +522,36 @@ def graph_softwares(query_str, software_regexes, extract_path=False):
     labels = []
     unidentified = 0
     accounted = 0
-    softwares = {}
+    software = {}
 
     for line in stats:
         value = statistics.median(line['y'])
         bin = line['metric']['exe']
         for regex, name in software_regexes:
             if re.match(regex, bin):
-                if bin in softwares:
-                    softwares[name] += value
+                if bin in software:
+                    software[name] += value
                 else:
-                    softwares[name] = value
+                    software[name] = value
                 accounted += value
                 break
         else:
             if extract_path:
                 name = "Stored in /{}".format(bin.split('/')[1])
-                if name in softwares:
-                    softwares[name] += value
+                if name in software:
+                    software[name] += value
                 else:
-                    softwares[name] = value
+                    software[name] = value
             else:
                 unidentified += value
             accounted += value
 
-    for key in softwares.keys():
+    for key in software.keys():
         labels.append(key)
-        values.append(softwares[key])
+        values.append(software[key])
 
     if unidentified > 0:
-        # Softwares that are not in the list of known regexes
+        # Software that are not in the list of known regexes
         labels.append(_('Unidentified'))
         values.append(unidentified)
 

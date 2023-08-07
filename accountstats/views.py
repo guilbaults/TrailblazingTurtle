@@ -68,6 +68,29 @@ def graph_cpu_allocated(request, account):
 
 @login_required
 @account_or_staff
+def graph_application(request, account):
+    data = []
+    query_alloc = 'slurm_job:process_usage:sum_account{{account="{}", {}}}'.format(account, prom.get_filter())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+
+    for line in stats_alloc:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data.append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['bin'],
+            'hovertemplate': '%{y:.1f}',
+        })
+    layout = {'showlegend': True}
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@account_or_staff
 def graph_cpu_used(request, account):
     data = []
     query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())

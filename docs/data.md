@@ -43,6 +43,8 @@ groups:
     expr: sum(slurm_job_power_gpu) by (cluster)
   - record: slurm_job:power_gpu:sum_user_account
     expr: sum(slurm_job_power_gpu) by (user,account,cluster)
+  - record: slurm_job:process_usage:sum_account
+    expr: sum(label_replace(deriv(slurm_job_process_usage_total{}[1m]) > 0, "bin", "$1", "exe", ".*/(.*)")) by (cluster, account, bin)
 ```
 
 ## slurm-exporter

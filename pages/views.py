@@ -431,84 +431,14 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
     return JsonResponse({'data': data, 'layout': layout})
 
 
-SOFTWARE_REGEX = [
-    (r'.*/gmx_mpi|.*/gmx', 'GROMACS'),
-    (r'.*/vasp', 'VASP'),
-    (r'.*/lammps', 'LAMMPS'),
-    (r'.*/cp2k', 'CP2K'),
-    (r'.*/nwchem', 'NWChem'),
-    (r'.*/namd2', 'NAMD'),
-    (r'.*/abinit', 'ABINIT'),
-    (r'.*/espresso', 'Quantum Espresso'),
-    (r'.*/gaussian', 'Gaussian'),
-    (r'.*/octopus', 'Octopus'),
-    (r'.*/orca', 'ORCA'),
-    (r'.*/qchem', 'Q-Chem'),
-    (r'.*/tinker', 'Tinker'),
-    (r'.*/amber', 'Amber'),
-    (r'.*/charmm', 'CHARMM'),
-    (r'.*/cpmd', 'CPMD'),
-    (r'.*/dftb', 'DFTB+'),
-    (r'.*/gamess', 'GAMESS'),
-    (r'.*/molcas', 'Molcas'),
-    (r'.*/molpro', 'Molpro'),
-    (r'.*/mpqc', 'MPQC'),
-    (r'.*/mopac', 'MOPAC'),
-    (r'.*/mpqc', 'MPQC'),
-    (r'.*/openmx', 'OpenMX'),
-    (r'.*/psi4', 'Psi4'),
-    (r'.*/qbox', 'Qbox'),
-    (r'.*/epw.x', 'EPW'),
-    (r'.*/python.*', 'Python'),
-    (r'.*/matlab.*', 'Matlab'),
-    (r'.*/r.*', 'R'),
-    (r'.*/julia.*', 'Julia'),
-    (r'.*/java.*', 'Java'),
-    (r'.*/perl.*', 'Perl'),
-    (r'.*/maingemdm', 'GEMDM'),
-    (r'.*/maingem', 'GEM'),
-    (r'.*/pimpleFoam', 'pimpleFoam'),
-    (r'.*/simpleFoam', 'simpleFoam'),
-    (r'.*/icoFoam', 'icoFoam'),
-    (r'.*/interFoam', 'interFoam'),
-    (r'.*/topas', 'Topas'),
-    (r'.*/OstrichMPI', 'Ostrich'),
-    (r'.*/phylobayes.*', 'PhyloBayes'),
-    (r'.*/gh3d2m', 'gh3d2m'),
-    (r'.*/dmft.*', 'DMFT'),
-    (r'.*/pw.x', 'Quantum Espresso'),
-    (r'.*/siesta', 'SIESTA'),
-    (r'.*/bcftools', 'BCFTools'),
-    (r'.*/samtools', 'SAMTools'),
-    (r'.*/bowtie2', 'Bowtie2'),
-    (r'.*/bwa', 'BWA'),
-    (r'.*/vcftools', 'VCFTools'),
-    (r'.*/nc(ap2|atted|bo|climo|es|ecat|flint|ks|pdq|ra|rcat|remap|rename|wa)', 'NCO'),
-]
-
-SOFTWARE_STACK_REGEX = [
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/Core/.*', '2017 - Core'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/sse3/.*', '2017 - SSE3'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/avx/.*', '2017 - AVX'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/avx2/.*', '2017 - AVX2'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/avx512/.*', '2017 - AVX512'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2019/Core/.*', '2019 - Core'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/Core/.*', '2020 - Core'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx/.*', '2020 - AVX'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx2/.*', '2020 - AVX2'),
-    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx512/.*', '2020 - AVX512'),
-    (r'/cvmfs/.*.computecanada.ca/gentoo/2020/.*', '2020 - Gentoo'),
-]
-
-
 def graph_software_processes(request):
     query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
-    return graph_software(query_str, SOFTWARE_REGEX)
+    return graph_software(query_str, settings.SOFTWARE_REGEX)
 
 
 def graph_software_stack(request):
     query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
-    return graph_software(query_str, SOFTWARE_STACK_REGEX, extract_path=True)
+    return graph_software(query_str, settings.SOFTWARE_STACK_REGEX, extract_path=True)
 
 
 def graph_software(query_str, software_regexes, extract_path=False):
@@ -526,10 +456,14 @@ def graph_software(query_str, software_regexes, extract_path=False):
 
     for line in stats:
         value = statistics.median(line['y'])
-        bin = line['metric']['exe']
+        try:
+            bin = line['metric']['exe']
+        except KeyError:
+            # Somehow the metric is missing the exe label
+            continue
         for regex, name in software_regexes:
             if re.match(regex, bin):
-                if bin in software:
+                if name in software:
                     software[name] += value
                 else:
                     software[name] = value
@@ -564,6 +498,7 @@ def graph_software(query_str, software_regexes, extract_path=False):
         'values': values,
         'labels': labels,
         'type': 'pie',
+        'texttemplate': '%{label}: %{value:.0f}',
     }]}
 
     data['layout'] = {

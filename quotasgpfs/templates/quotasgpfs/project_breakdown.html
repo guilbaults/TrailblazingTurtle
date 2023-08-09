@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}Quotas{% endblock title %}
+
+{% block content %}
+<h1>Usage for Project: {{ quota.name }}</h1>
+
+{% if inaccurate %}
+<div class="alert alert-warning" role="alert">
+    <p>Members of this allocation belong to multiple allocations. Due to filesystem limitations, the data presented will be inaccurate</p>
+</div>
+{% endif %}
+
+<div class="container pb-5" style="max-width: 80rem;">
+    <div class="row">
+        <div class="col-6">
+            <h5>{% translate "Bytes" %}</h5>
+            <p>{{ quota.usage_bytes | filesizeformat }} / {{ quota.quota_bytes | filesizeformat }} ({{ quota.percent_usage_bytes | floatformat }}%)</p>
+            <div class="progress">
+                <div class="progress-bar {% if quota.percent_usage_bytes > 95 %} bg-warning {% endif %}" style="width: {{ quota.percent_usage_bytes }}%" role="progressbar" aria-valuenow="{{ quota.percent_usage_bytes }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <div class="col-6"> 
+            <h5>{% translate "Files" %}</h5>
+            <p>{{ quota.usage_files }} / {{ quota.quota_files }} ({{ quota.percent_usage_files | floatformat }}%)</p>
+            <div class="progress">
+                <div class="progress-bar {% if quota.percent_usage_files > 95 %} bg-warning {% endif %}" style="width: {{ quota.percent_usage_files }}%" role="progressbar" aria-valuenow="{{ quota.percent_usage_files }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6 mt-4">
+            <h5>Bytes Usage by User</h5>
+            <div style="width: 100%; height: 200px" id="graph_breakdown_bytes"></div>
+        </div>
+        <div class="col-6 mt-4">
+            <h5>Files Usage by User</h5>
+            <div style="width: 100%; height: 200px" id="graph_breakdown_files"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function loadPieGraph(container, url){
+        var container_div = '#' + container;
+        const loadingString = gettext('Loading...');
+        $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
+    
+        $.ajax({
+            url : url,
+            type : 'GET',
+            tryCount : 0,
+            retryLimit : 3,
+            dataType    : 'json',
+            contentType : 'application/json',
+            success : function(data) {
+                if(data['data'].length == 0){
+                    replace_div_nodata(container_div);
+                }
+                else{
+                    $(container_div).html('');
+                    var layout = data['layout'];
+                    Plotly.newPlot(container, data['data'], layout, {'responsive': true});
+                }
+            },
+            error : function(xhr, textStatus, errorThrown ) {
+                if (textStatus == 'timeout' || textStatus == 'error') {
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        $.ajax(this);
+                        return;
+                    }
+                    replace_div_alert(container_div);
+                    return;
+                }
+                if (xhr.status == 500) {
+                    replace_div_alert(container_div);
+                } else {
+                    replace_div_alert(container_div);
+                }
+            }
+        });
+    }
+
+    $(document).ready(function(){
+        loadPieGraph("graph_breakdown_bytes", "getgraph?type=bytes");
+        loadPieGraph("graph_breakdown_files", "getgraph?type=files");
+    });
+</script>
+
+{% endblock content %}

@@ -15,6 +15,7 @@ import statistics
 from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
 from django.http import Http404
+import os
 
 GPU_MEMORY = {
     'GRID V100D-4C': 4,
@@ -25,9 +26,49 @@ GPU_MEMORY = {
     'Tesla V100-PCIE-32GB': 32,
     'NVIDIA A100-SXM4-40GB': 40,
     'Quadro RTX 6000': 20,
+    '1g.5gb': 5,
+    '1g.10gb': 10,
+    '2g.10gb': 10,
+    '2g.20gb': 20,
+    '3g.20gb': 20,
+    '3g.40gb': 40,
+    '4g.20gb': 20,
+    '4g.40gb': 40,
+    '7g.40gb': 40,
+    '7g.80gb': 80,
 }
-GPU_FULL_POWER = {'Tesla V100-SXM2-16GB': 300, 'NVIDIA A100-SXM4-40GB': 400, 'Tesla V100-PCIE-32GB': 250, 'Quadro RTX 6000': 250}
-GPU_IDLE_POWER = {'Tesla V100-SXM2-16GB': 55, 'NVIDIA A100-SXM4-40GB': 55, 'Tesla V100-PCIE-32GB': 55, 'Quadro RTX 6000': 50}
+GPU_FULL_POWER = {
+    'Tesla V100-SXM2-16GB': 300,
+    'NVIDIA A100-SXM4-40GB': 400,
+    'Tesla V100-PCIE-32GB': 250,
+    'Quadro RTX 6000': 250,
+    '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
+    '1g.10gb': 400,
+    '2g.10gb': 400,
+    '2g.20gb': 400,
+    '3g.20gb': 400,
+    '3g.40gb': 400,
+    '4g.20gb': 400,
+    '4g.40gb': 400,
+    '7g.40gb': 400,
+    '7g.80gb': 400,
+}
+GPU_IDLE_POWER = {
+    'Tesla V100-SXM2-16GB': 55,
+    'NVIDIA A100-SXM4-40GB': 55,
+    'Tesla V100-PCIE-32GB': 55,
+    'Quadro RTX 6000': 50,
+    '1g.5gb': 55,  # assuming A100 for all MIGs at the moment
+    '1g.10gb': 55,
+    '2g.10gb': 55,
+    '2g.20gb': 55,
+    '3g.20gb': 55,
+    '3g.40gb': 55,
+    '4g.20gb': 55,
+    '4g.40gb': 55,
+    '7g.40gb': 55,
+    '7g.80gb': 55,
+}
 GPU_SHORT_NAME = {
     'GRID V100D-4C': 'V100 4GB',
     'GRID V100D-8C': 'V100 8GB',
@@ -37,6 +78,16 @@ GPU_SHORT_NAME = {
     'Tesla V100-PCIE-32GB': 'V100-32G',
     'Quadro RTX 6000': 'RTX6000',
     'NVIDIA A100-SXM4-40GB': 'A100',
+    '1g.5gb': '1g.5gb',
+    '1g.10gb': '1g.10gb',
+    '2g.10gb': '2g.10gb',
+    '2g.20gb': '2g.20gb',
+    '3g.20gb': '3g.20gb',
+    '3g.40gb': '3g.40gb',
+    '4g.20gb': '4g.20gb',
+    '4g.40gb': '4g.40gb',
+    '7g.40gb': '7g.40gb',
+    '7g.80gb': '7g.80gb',
 }
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -129,6 +180,14 @@ def display_compute_name(lines, line):
         return ""
     else:
         return line['metric']['instance'].split(':')[0]
+
+
+def display_gpu_id(line):
+    if 'MIG' in line['metric']['gpu']:
+        # return a truncated MIG ID
+        return line['metric']['gpu'][4:12]
+    else:
+        return int(line['metric']['gpu'])
 
 
 @login_required
@@ -353,6 +412,17 @@ def job(request, username, job_id):
     except ValueError:
         pass
 
+    try:
+        query_exe = 'sum(deriv(slurm_job_process_usage_total{{slurmjobid=~"{}", {}}}[1m])) by (exe)'.format(job_id, prom.get_filter())
+        stats_exe = prom.query_prometheus_multiple(query_exe, job.time_start_dt(), job.time_end_dt())
+        context['applications'] = []
+        for exe in stats_exe:
+            name = exe['metric']['exe']
+            value = statistics.mean(exe['y'])
+            context['applications'].append({'name': name, 'value': value})
+    except ValueError:
+        pass
+
     context['comments'] = sorted(comments, key=lambda x: x.line_number)
 
     context['graph_div'] = {}
@@ -375,7 +445,7 @@ def graph_cpu(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         core_num = int(line['metric']['core'])
         compute_name = display_compute_name(stats, line)
@@ -385,7 +455,7 @@ def graph_cpu(request, username, job_id):
             name = '{} Core {} {}'.format(line['metric']['slurmjobid'], core_num, compute_name)
         else:
             name = 'Core {} {}'.format(core_num, compute_name)
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -403,7 +473,7 @@ def graph_cpu(request, username, job_id):
             step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -411,24 +481,24 @@ def graph_cpu(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
     else:
-        data['layout'] = {
+        layout = {
             'yaxis': {
                 'title': _('Cores'),
                 'range': [0, context['job'].parse_tres_req()['total_cores']],
             }
         }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @user_or_staff
 def graph_cpu_user(request, username):
-    data = {'lines': []}
+    data = []
     try:
         query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s])) / 1000000000'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
         stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
             'y': stats_used[1],
             'type': 'scatter',
@@ -438,7 +508,7 @@ def graph_cpu_user(request, username):
 
         query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}", {}}}))'.format(username, prom.get_filter())
         stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
             'y': stats_alloc[1],
             'type': 'scatter',
@@ -448,24 +518,24 @@ def graph_cpu_user(request, username):
     except ValueError:
         return JsonResponse(data)
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'range': [0, max(stats_alloc[1])],
             'title': _('Cores'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @user_or_staff
 def graph_mem_user(request, username):
-    data = {'lines': []}
+    data = []
 
     try:
         query_alloc = 'sum(slurm_job_memory_limit{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
             'y': stats_alloc[1],
             'type': 'scatter',
@@ -475,7 +545,7 @@ def graph_mem_user(request, username):
 
         query_max = 'sum(slurm_job_memory_max{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_max = prom.query_prometheus(query_max, datetime.now() - timedelta(hours=6), datetime.now())
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
             'y': stats_max[1],
             'type': 'scatter',
@@ -485,7 +555,7 @@ def graph_mem_user(request, username):
 
         query_used = 'sum(slurm_job_memory_usage{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
             'y': stats_used[1],
             'type': 'scatter',
@@ -495,7 +565,7 @@ def graph_mem_user(request, username):
     except ValueError:
         return JsonResponse(data)
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
             'range': [0, max(stats_alloc[1])],
@@ -503,7 +573,7 @@ def graph_mem_user(request, username):
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -511,7 +581,7 @@ def graph_mem_user(request, username):
 def graph_mem(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
 
     stat_types = [
         ('slurm_job_memory_limit', _('Allocated')),
@@ -541,7 +611,7 @@ def graph_mem(request, username, job_id):
                 name = '{} {} {}'.format(line['metric']['slurmjobid'], stat[1], compute_name)
             else:
                 name = '{} {}'.format(stat[1], compute_name)
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -560,7 +630,7 @@ def graph_mem(request, username, job_id):
             step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -569,7 +639,7 @@ def graph_mem(request, username, job_id):
         })
         maximum = max(y)
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
             'range': [0, maximum],
@@ -577,7 +647,7 @@ def graph_mem(request, username, job_id):
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -585,7 +655,7 @@ def graph_mem(request, username, job_id):
 def graph_thread(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
 
     query_procs = 'slurm_job_process_count{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
     stats_procs = prom.query_prometheus_multiple(
@@ -601,7 +671,7 @@ def graph_thread(request, username, job_id):
             name = '{} {} {}'.format(line['metric']['slurmjobid'], _('Processes'), compute_name)
         else:
             name = '{} {}'.format(_('Processes'), compute_name)
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -633,7 +703,7 @@ def graph_thread(request, username, job_id):
             name = '{} {} {} {}'.format(line['metric']['slurmjobid'], state.capitalize(), _('threads'), compute_name)
         else:
             name = '{} {} {}'.format(state.capitalize(), _('threads'), compute_name)
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -641,13 +711,32 @@ def graph_thread(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    query_exe = 'sum(deriv(slurm_job_process_usage_total{{slurmjobid=~"{}", {}}}[1m])) by (exe)'.format(context['id_regex'], prom.get_filter())
+    stats_exe = prom.query_prometheus_multiple(
+        query_exe,
+        context['job'].time_start_dt(),
+        context['job'].time_end_dt(),
+        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+
+    for line in stats_exe:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        name = os.path.basename(line['metric']['exe'])
+        data.append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    layout = {
         'yaxis': {
             'title': _('Processes and threads'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -665,7 +754,7 @@ def graph_lustre_mdt(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('lustre_exporter')))
 
-    data = {'lines': []}
+    data = []
     for line in stats:
         operation = line['metric']['operation']
         fs = line['metric']['fs']
@@ -675,7 +764,7 @@ def graph_lustre_mdt(request, username, job_id):
             name = '{} {} {}'.format(line['metric']['jobid'], operation.capitalize(), fs)
         else:
             name = '{} {}'.format(operation.capitalize(), fs)
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -684,12 +773,12 @@ def graph_lustre_mdt(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IOPS'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -697,13 +786,13 @@ def graph_lustre_mdt(request, username, job_id):
 def graph_lustre_mdt_user(request, username):
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[{}s])) by (operation, fs) !=0'.format(username, prom.get_filter(), prom.rate('lustre_exporter'))
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
-    data = {'lines': []}
+    data = []
     for line in stats:
         operation = line['metric']['operation']
         fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -712,12 +801,12 @@ def graph_lustre_mdt_user(request, username):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IOPS'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -725,7 +814,7 @@ def graph_lustre_mdt_user(request, username):
 def graph_lustre_ost(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}s])) by (fs, jobid)) / (1024*1024)'.format(
             i=i,
@@ -749,7 +838,7 @@ def graph_lustre_ost(request, username, job_id):
                 name = '{} {} {}'.format(line['metric']['jobid'], i.capitalize(), fs)
             else:
                 name = '{} {}'.format(i.capitalize(), fs)
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -758,19 +847,19 @@ def graph_lustre_ost(request, username, job_id):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' MiB/s',
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @user_or_staff
 def graph_lustre_ost_user(request, username):
-    data = {'lines': []}
+    data = []
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",user=~"{}",target=~".*-OST.*", {}}}[{}s])) by (fs)) / (1024*1024)'.format(
             i,
@@ -786,7 +875,7 @@ def graph_lustre_ost_user(request, username):
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -795,13 +884,13 @@ def graph_lustre_ost_user(request, username):
                 'hovertemplate': '%{y:.1f}',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' MiB/s',
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -809,7 +898,7 @@ def graph_lustre_ost_user(request, username):
 def graph_gpu_utilization(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
 
     queries = [
         ('slurm_job_utilization_gpu', _('SM Active')),
@@ -829,39 +918,39 @@ def graph_gpu_utilization(request, username, job_id):
             step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
         for line in stats:
-            gpu_num = int(line['metric']['gpu'])
+            gpu_id = display_gpu_id(line)
             compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
             if context['multiple_jobs']:
-                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_num, compute_name)
+                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_id, compute_name)
             else:
-                name = '{} GPU {} {}'.format(q[1], gpu_num, compute_name)
-            data['lines'].append({
+                name = '{} GPU {} {}'.format(q[1], gpu_id, compute_name)
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
                 'name': name,
                 'hovertemplate': '%{y:.1f}%',
             })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
             'title': _('GPU Utilization'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @user_or_staff
 def graph_gpu_utilization_user(request, username):
-    data = {'lines': []}
+    data = []
 
     query_alloc = 'count(slurm_job_utilization_gpu{{user="{}", {}}})'.format(username, prom.get_filter())
     stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
+    data.append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
         'y': stats_alloc[1],
         'type': 'scatter',
@@ -871,7 +960,7 @@ def graph_gpu_utilization_user(request, username):
 
     query_used = 'sum(slurm_job_utilization_gpu{{user="{}", {}}})/100'.format(username, prom.get_filter())
     stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), datetime.now())
-    data['lines'].append({
+    data.append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
         'y': stats_used[1],
         'type': 'scatter',
@@ -879,13 +968,13 @@ def graph_gpu_utilization_user(request, username):
         'hovertemplate': '%{y:.1f}',
     })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('GPU Utilization'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -900,31 +989,31 @@ def graph_gpu_memory_utilization(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
-    data = {'lines': []}
+    data = []
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
         else:
-            name = 'GPU {} {}'.format(gpu_num, compute_name)
-        data['lines'].append({
+            name = 'GPU {} {}'.format(gpu_id, compute_name)
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'name': name,
             'hovertemplate': '%{y:.1f}%',
         })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
             'title': _('GPU Memory Utilization'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -939,32 +1028,32 @@ def graph_gpu_memory(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
-    data = {'lines': []}
+    data = []
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_num, compute_name)
+            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
         else:
-            name = 'GPU {} {}'.format(gpu_num, compute_name)
-        data['lines'].append({
+            name = 'GPU {} {}'.format(gpu_id, compute_name)
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'name': name,
             'hovertemplate': '%{y:.1f} GiB',
         })
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' GiB',
             'range': [0, GPU_MEMORY[gpu_type]],
             'title': _('GPU Memory'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -979,18 +1068,18 @@ def graph_gpu_power(request, username, job_id):
         context['job'].time_end_dt(),
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
-    data = {'lines': []}
+    data = []
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
         compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_num, compute_name)
-        data['lines'].append({
+            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -999,7 +1088,7 @@ def graph_gpu_power(request, username, job_id):
         })
 
     if len(stats) > 0:
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': [GPU_IDLE_POWER[gpu_type] for x in y],
             'type': 'scatter',
@@ -1007,20 +1096,20 @@ def graph_gpu_power(request, username, job_id):
             'hovertemplate': '%{y:.1f} W',
         })
 
-        data['layout'] = {
+        layout = {
             'yaxis': {
                 'ticksuffix': ' W',
                 'range': [0, GPU_FULL_POWER[gpu_type]],
                 'title': _('GPU Power'),
             }
         }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @user_or_staff
 def graph_gpu_power_user(request, username):
-    data = {'lines': []}
+    data = []
 
     query_alloc = 'count(slurm_job_power_gpu{{user="{}", {}}}) by (gpu_type)'.format(username, prom.get_filter())
     stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - timedelta(hours=6), datetime.now())
@@ -1028,7 +1117,7 @@ def graph_gpu_power_user(request, username):
         gpu_type = line['metric']['gpu_type']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': [GPU_FULL_POWER[gpu_type] * z for z in y],
             'type': 'scatter',
@@ -1036,7 +1125,7 @@ def graph_gpu_power_user(request, username):
             'hovertemplate': '%{y:.1f} W',
         })
 
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': [GPU_IDLE_POWER[gpu_type] * z for z in y],
             'type': 'scatter',
@@ -1048,7 +1137,7 @@ def graph_gpu_power_user(request, username):
     stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - timedelta(hours=6), datetime.now())
     for line in stats_used:
         gpu_type = line['metric']['gpu_type']
-        data['lines'].append({
+        data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
             'y': line['y'],
             'type': 'scatter',
@@ -1056,14 +1145,14 @@ def graph_gpu_power_user(request, username):
             'hovertemplate': '%{y:.1f} W',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'W',
             'title': _('GPU Power'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1071,7 +1160,7 @@ def graph_gpu_power_user(request, username):
 def graph_gpu_pcie(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
     query = 'slurm_job_pcie_gpu{{slurmjobid=~"{}", {}}} /1024/1024/1024'.format(
         context['id_regex'],
         prom.get_filter())
@@ -1082,7 +1171,7 @@ def graph_gpu_pcie(request, username, job_id):
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
@@ -1091,10 +1180,10 @@ def graph_gpu_pcie(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
-        data['lines'].append({
+            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1102,13 +1191,13 @@ def graph_gpu_pcie(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GB/s',
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1116,7 +1205,7 @@ def graph_gpu_pcie(request, username, job_id):
 def graph_gpu_nvlink(request, username, job_id):
     context = context_job_info(username, job_id)
 
-    data = {'lines': []}
+    data = []
     query = 'slurm_job_nvlink_gpu{{slurmjobid="{}", {}}} /1024/1024/1024'.format(
         context['id_regex'],
         prom.get_filter())
@@ -1127,7 +1216,7 @@ def graph_gpu_nvlink(request, username, job_id):
         step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
 
     for line in stats:
-        gpu_num = int(line['metric']['gpu'])
+        gpu_id = display_gpu_id(line)
         compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
@@ -1136,10 +1225,10 @@ def graph_gpu_nvlink(request, username, job_id):
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_num, compute_name)
+            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
         else:
-            name = '{} GPU {} {}'.format(direction, gpu_num, compute_name)
-        data['lines'].append({
+            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1147,13 +1236,13 @@ def graph_gpu_nvlink(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'GB/s',
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1162,7 +1251,7 @@ def graph_ethernet_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
     query_received = 'rate(node_network_receive_bytes_total{{device!~"ib.*|lo", instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
@@ -1174,7 +1263,7 @@ def graph_ethernet_bdw(request, username, job_id):
         compute_name = display_compute_name(stats_received, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1191,7 +1280,7 @@ def graph_ethernet_bdw(request, username, job_id):
         compute_name = display_compute_name(stats_transmitted, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1199,14 +1288,14 @@ def graph_ethernet_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' Mb/s',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1215,7 +1304,7 @@ def graph_infiniband_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
     query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
@@ -1227,7 +1316,7 @@ def graph_infiniband_bdw(request, username, job_id):
         compute_name = display_compute_name(stats_received, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1244,7 +1333,7 @@ def graph_infiniband_bdw(request, username, job_id):
         compute_name = display_compute_name(stats_transmitted, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1252,14 +1341,14 @@ def graph_infiniband_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' Gb/s',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1268,7 +1357,7 @@ def graph_disk_iops(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
     query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
@@ -1279,7 +1368,7 @@ def graph_disk_iops(request, username, job_id):
             display_compute_name(stats_read, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1295,7 +1384,7 @@ def graph_disk_iops(request, username, job_id):
             display_compute_name(stats_write, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1303,13 +1392,13 @@ def graph_disk_iops(request, username, job_id):
             'hovertemplate': '%{y:.1f} IOPS',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IOPS'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1318,7 +1407,7 @@ def graph_disk_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
     query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
@@ -1332,7 +1421,7 @@ def graph_disk_bdw(request, username, job_id):
             display_compute_name(stats_read, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1351,7 +1440,7 @@ def graph_disk_bdw(request, username, job_id):
             display_compute_name(stats_write, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1359,14 +1448,14 @@ def graph_disk_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': 'B/s',
             'title': _('Bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1375,7 +1464,7 @@ def graph_disk_used(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
 
     query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
         instances=instances,
@@ -1387,7 +1476,7 @@ def graph_disk_used(request, username, job_id):
             display_compute_name(stats_disk, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1395,14 +1484,14 @@ def graph_disk_used(request, username, job_id):
             'hovertemplate': '%{y:.1f} GB',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' GB',
             'title': _('Disk'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1411,7 +1500,7 @@ def graph_mem_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
 
     for direction in ['Reads', 'Writes']:
         query = 'rate(DRAM_{direction}{{instance=~"{instances}", {filter} }}[1m])/1024/1024/1024'.format(
@@ -1428,7 +1517,7 @@ def graph_mem_bdw(request, username, job_id):
                 display_compute_name(stats, line))
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
@@ -1436,14 +1525,14 @@ def graph_mem_bdw(request, username, job_id):
                 'hovertemplate': '%{y:.1f} GB/s',
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' GB/s',
             'title': _('Memory bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1510,7 +1599,7 @@ def map_pcm_cores(request, context):
 
 def filter_stats(stats, used_mapping, reverse_mapping):
     filtered_stats = []
-    data = {'lines': []}
+    data = []
     for line in stats:
         instance = line['metric']['instance'].split(':')[0]
         phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
@@ -1524,7 +1613,7 @@ def filter_stats(stats, used_mapping, reverse_mapping):
             display_compute_name(filtered_stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1556,7 +1645,7 @@ def graph_cache_rate(request, username, job_id, l_cache):
     # from all the L3 cache hits and misses, keep only the ones used by the job
     data = filter_stats(stats_cache, used_mapping, reverse_mapping)
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' %',
             'range': [0, 100],
@@ -1564,7 +1653,7 @@ def graph_cache_rate(request, username, job_id, l_cache):
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 def graph_ipc(request, username, job_id):
@@ -1592,13 +1681,13 @@ def graph_ipc(request, username, job_id):
 
     data = filter_stats(stats_ipc, used_mapping, reverse_mapping)
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'title': _('IPC'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -1607,7 +1696,7 @@ def graph_cpu_interconnect(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
 
-    data = {'lines': []}
+    data = []
 
     # Only measuring the incoming traffic, not the outgoing one since it's only a p2p connection
     query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
@@ -1621,7 +1710,7 @@ def graph_cpu_interconnect(request, username, job_id):
             display_compute_name(stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
@@ -1629,14 +1718,14 @@ def graph_cpu_interconnect(request, username, job_id):
             'hovertemplate': '%{y:.1f} GB/s',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' GB/s',
             'title': _('CPU interconnect bandwidth'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 def power(job, step):
@@ -1678,11 +1767,11 @@ def graph_power(request, username, job_id):
     except JobTable.DoesNotExist:
         return HttpResponseNotFound('Job not found')
 
-    data = {'lines': []}
+    data = []
     for line in power(job, step=sanitize_step(request, minimum=prom.rate('redfish_exporter'))):
         compute_name = "{}".format(line['metric']['instance'])
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': line['y'],
             'type': 'scatter',
@@ -1691,14 +1780,14 @@ def graph_power(request, username, job_id):
             'hovertemplate': '%{y:.1f} W',
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': ' W',
             'title': _('Power'),
         }
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required

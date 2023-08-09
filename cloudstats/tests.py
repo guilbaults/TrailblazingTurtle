@@ -26,7 +26,7 @@ class CloudstatsTestCase(CustomTestCase):
             response = self.admin_client.get('/secure/cloudstats/graph/{i}.json?delta=3600'.format(
                 i=i))
             self.assertEqual(response.status_code, 200)
-            self.assertJSONKeys(response, ['lines', 'layout'])
+            self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_cloudstats_project(self):
         for project in settings.TESTS_CLOUD:
@@ -44,7 +44,7 @@ class CloudstatsTestCase(CustomTestCase):
                     project=project[0],
                     i=i))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_cloudstats_instance(self):
         for project in settings.TESTS_CLOUD:
@@ -62,4 +62,4 @@ class CloudstatsTestCase(CustomTestCase):
                     instance=project[2],
                     i=i))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])

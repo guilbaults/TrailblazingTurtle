@@ -20,15 +20,17 @@ function loadGraph(container, url){
         retryLimit : 3,
         dataType    : 'json',
         contentType : 'application/json',
-        success : function(data) {
-            if(data['lines'].length == 0){
-                replace_div_nodata(container_div);
-            }
-            else{
-                $(container_div).html('');
-                var layout = data['layout'];
-                layout['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
-                Plotly.newPlot(container, data['lines'], layout);
+        success : function(content) {
+            console.log(content);
+            if(content['data']){
+                if(content['data'].length == 0){
+                    replace_div_nodata(container_div);
+                }
+                else{
+                    $(container_div).html('');
+                    content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
+                    Plotly.newPlot(container, content['data'], content['layout']);
+                }
             }
         },
         error : function(xhr, textStatus, errorThrown ) {

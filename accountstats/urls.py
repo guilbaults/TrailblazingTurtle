@@ -4,6 +4,7 @@ from . import views
 urlpatterns = [
     path('', views.index),
     path('<str:account>/', views.account),
+    path('<str:account>/graph/application.json', views.graph_application),
     path('<str:account>/graph/cpu_used.json', views.graph_cpu_used),
     path('<str:account>/graph/cpu_allocated.json', views.graph_cpu_allocated),
     path('<str:account>/graph/cpu_wasted.json', views.graph_cpu_wasted),

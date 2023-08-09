@@ -42,8 +42,8 @@ class TopTestCase(CustomTestCase):
             self.assertContains(response, '<h2>{fs}</h2>'.format(fs=fs))
             json_mdt = self.admin_client.get('/secure/top/lustre/graph/lustre_mdt/{fs}.json'.format(fs=fs))
             self.assertEqual(json_mdt.status_code, 200)
-            self.assertJSONKeys(json_mdt, ['lines', 'layout'])
+            self.assertJSONKeys(json_mdt, ['data', 'layout'])
 
             json_ost = self.admin_client.get('/secure/top/lustre/graph/lustre_ost/{fs}.json'.format(fs=fs))
             self.assertEqual(json_ost.status_code, 200)
-            self.assertJSONKeys(json_ost, ['lines', 'layout'])
+            self.assertJSONKeys(json_ost, ['data', 'layout'])

@@ -42,7 +42,7 @@ class JobstatsTestCase(CustomTestCase):
                 user=settings.TESTS_USER,
                 graph_type=graph_type))
             self.assertEqual(response.status_code, 200)
-            self.assertJSONKeys(response, ['lines', 'layout'])
+            self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_user_jobstats_job_table(self):
         response = self.user_client.get('/api/jobs/?format=datatables&username={user}'.format(
@@ -63,7 +63,7 @@ class JobstatsTestCase(CustomTestCase):
                     jobid=job[1],
                     graph_type=graph_type))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_user_jobstats_job_cost(self):
         for job in settings.TESTS_JOBSTATS:

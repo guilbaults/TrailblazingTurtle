@@ -326,7 +326,7 @@ def graph_lustre_mdt(request, fs):
         fs=fs,
         filter=prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
-    data = {'lines': []}
+    data = []
     for line in stats:
         try:
             user = line['metric']['user']
@@ -334,25 +334,25 @@ def graph_lustre_mdt(request, fs):
             user = 'others'
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        data['lines'].append({
+        data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
             'name': user
         })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': _('IOPS')
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
 @staff
 def graph_lustre_ost(request, fs):
-    data = {'lines': []}
+    data = []
     for rw in ['read', 'write']:
         query = 'topk(5, sum by (user) (rate(lustre_job_{rw}_bytes_total{{target=~"{fs}.*", {filter}}}[5m])))/1024/1024'.format(
             rw=rw,
@@ -371,16 +371,16 @@ def graph_lustre_ost(request, fs):
             else:
                 y = [-x for x in line['y']]
 
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
                 'name': '{} {}'.format(rw, user)
             })
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'ticksuffix': _('MiB/s')
         }
     }
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})

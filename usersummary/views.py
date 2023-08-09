@@ -92,22 +92,21 @@ def graph_inodes(request, username, resource_type, resource_name):
 
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(days=90), datetime.now(), step="6h")
 
-    data = {'lines': []}
+    data = []
     if len(stats) > 0:
         for line in stats:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
                 'name': _('Used inodes'),
             })
     else:
-        # No data in prometheus
-        return JsonResponse(data)
+        return JsonResponse({'data': data})
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'range': [0, max(quota, max(line['y']))],
         },
@@ -123,7 +122,7 @@ def graph_inodes(request, username, resource_type, resource_name):
         'width': 300,
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})
 
 
 @login_required
@@ -141,22 +140,21 @@ def graph_bytes(request, username, resource_type, resource_name):
 
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(days=180), datetime.now(), step="6h")
 
-    data = {'lines': []}
+    data = []
     if len(stats) > 0:
         for line in stats:
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
-            data['lines'].append({
+            data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
                 'name': _('Used bytes'),
             })
     else:
-        # No data in prometheus
-        return JsonResponse(data)
+        return JsonResponse({'data': data})
 
-    data['layout'] = {
+    layout = {
         'yaxis': {
             'range': [0, max(quota, max(line['y']))],
             'ticksuffix': 'B',
@@ -174,4 +172,4 @@ def graph_bytes(request, username, resource_type, resource_name):
         'width': 300,
     }
 
-    return JsonResponse(data)
+    return JsonResponse({'data': data, 'layout': layout})

@@ -27,6 +27,15 @@
   </div>
 </div>
 
+<div class="card">
+  <div class="card-body">
+    <div class="card-text">
+      <h5 class="card-title">{% translate "Applications used (CPUs)" %}</h5>
+      <div id="graph_application"></div>
+    </div>
+  </div>
+</div>
+
 <h2>{% translate "Detailed utilization by user" %}</h2>
 
 {% if gpu %}
@@ -162,6 +171,8 @@ loadGraph('graph_gpu_allocated', 'graph/gpu_allocated.json');
 loadGraph('graph_gpu_used', 'graph/gpu_used.json');
 loadGraph('graph_gpu_wasted', 'graph/gpu_wasted.json');
 {% endif %}
+
+loadGraph('graph_application', 'graph/application.json');
 
 loadGraph('graph_cpu_allocated', 'graph/cpu_allocated.json');
 loadGraph('graph_cpu_used', 'graph/cpu_used.json');

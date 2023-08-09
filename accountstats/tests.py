@@ -46,4 +46,4 @@ class AccountstatsTestCase(CustomTestCase):
                     account=alloc[1],
                     graph_type=graph_type))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])

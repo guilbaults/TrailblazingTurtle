@@ -31,7 +31,7 @@ class PagesTestCase(CustomTestCase):
                     fs=fs,
                     ostmdt=ostmdt))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_logins(self):
         response = self.client.get('/logins/')
@@ -44,7 +44,7 @@ class PagesTestCase(CustomTestCase):
                     graphtype=graphtype,
                     login=login))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_scheduler(self):
         response = self.client.get('/scheduler/')
@@ -55,7 +55,7 @@ class PagesTestCase(CustomTestCase):
             response = self.client.get('/scheduler/graph/{graphtype}.json?delta=3600'.format(
                 graphtype=graphtype))
             self.assertEqual(response.status_code, 200)
-            self.assertJSONKeys(response, ['lines', 'layout'])
+            self.assertJSONKeys(response, ['data', 'layout'])
 
     def test_dtns(self):
         response = self.client.get('/dtns/')
@@ -68,4 +68,4 @@ class PagesTestCase(CustomTestCase):
                     graphtype=graphtype,
                     dtn=dtn))
                 self.assertEqual(response.status_code, 200)
-                self.assertJSONKeys(response, ['lines', 'layout'])
+                self.assertJSONKeys(response, ['data', 'layout'])

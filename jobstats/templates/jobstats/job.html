@@ -59,7 +59,7 @@
     </ul>
   {% endif %}
 
-  {% if comments %}
+  {% if comments or applications %}
     <h3>{% translate "Job analysis" %}</h3>
     <ul class="list-group">
       {% for comment in comments %}
@@ -76,6 +76,10 @@
           <li class="list-group-item {{comment.display_severity}}">{{comment.comment}}</li>
         {% endif %}
       {% endif %}
+      {% endfor %}
+
+      {% for exe in applications %}
+        <li class="list-group-item list-group-item-info">Application {{exe.name}} used {{exe.value | floatformat:1}} cores on average</li>
       {% endfor %}
     </ul>
   {% endif %}

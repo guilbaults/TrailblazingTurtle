@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}Search{% endblock title %}
+
+{% block content %}
+<div class="container">
+    <h1>Search</h1>
+    <input class="form-control form-control-lg" type="text" id="querybox" oninput="debounceQuery()" placeholder="Search for Users or Allocations">
+
+    <div class="spinner-border" id="queryloadingspinner" role="status">
+        <span class="sr-only">Loading...</span>
+    </div>
+
+    <div class="list-group" id="resultslist">
+    </div>
+</div>
+
+<script>
+    let queryDebounceTimer;
+    document.getElementById("queryloadingspinner").style.visibility = "hidden";
+
+    function debounceQuery() {
+        // document.getElementById("queryloadingspinner").style.visibility = "visible";
+        clearTimeout(queryDebounceTimer);
+        queryDebounceTimer = setTimeout(processQuery, 500);
+    }
+
+    function processQuery() {
+        value = document.getElementById('querybox').value;
+
+        document.getElementById("queryloadingspinner").style.visibility = "visible";
+
+        // TODO: Implement error handling, probably switch to $.ajax
+        $.get('query', {'query': value}).done(function(data) {
+            console.log(data);
+            document.getElementById("queryloadingspinner").style.visibility = "hidden";
+            renderResults(data['results']);
+        });
+    }
+
+    function renderResults(results) {
+        l = document.getElementById('resultslist')
+
+        // clear list contents
+        l.innerHTML = "";
+
+        for (var i in results) {         
+            
+            listitem = createListItem(results[i]);
+            
+            l.appendChild(listitem);
+
+            feather.replace();
+        }
+
+    }
+
+    function createListItem(result) {
+        // Template of what we want to create
+        // <a href="#" class="list-group-item list-group-item-action">
+        //     <div class="pl-1 d-flex flex-column">
+        //         <div class="font-weight-light">
+        //             <div data-feather="user"></div> User
+        //         </div>
+        //         <div class="font-weight-bold">John Doe</div>
+        //         <div>jdoe</div>
+        //     </div>
+        // </a>
+
+        console.log('creating list item: ', result);
+
+        listitem = document.createElement('a');
+        listitem.classList.add('list-group-item', 'list-group-item-action');
+        listitem.setAttribute('href', result.hyperlink);
+        
+        coldiv = document.createElement('div');
+        listitem.appendChild(coldiv);
+        coldiv.classList.add('pl-1', 'd-flex', 'flex-column');
+
+        headerdiv = document.createElement('div');
+        coldiv.appendChild(headerdiv);
+        headerdiv.classList.add('font-weight-light');
+        
+        icondiv = document.createElement('div');
+        headerdiv.appendChild(icondiv);
+        icondiv.setAttribute('data-feather', result.typefeathericon);
+        icondiv.classList.add('pr-1');
+        headerdiv.innerHTML += result.typetext;
+        
+        titlediv = document.createElement('div');
+        coldiv.appendChild(titlediv);
+        titlediv.classList.add('font-weight-bold');
+        titlediv.innerHTML = result.name;
+        
+        subtitlediv = document.createElement('div');
+        coldiv.appendChild(subtitlediv);
+        subtitlediv.innerHTML = result.username;
+
+        return listitem
+    }
+</script>
+{% endblock content %}

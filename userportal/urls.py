@@ -75,3 +75,6 @@ if 'top' in settings.INSTALLED_APPS:
 
 if 'usersummary' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/usersummary/', include('usersummary.urls')))
+
+if 'search' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/search/', include('search.urls')))

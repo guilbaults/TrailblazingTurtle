@@ -235,6 +235,16 @@ def project_getgraph(request, project):
 
     data["data"].append(pie)
     
-    data['layout'] = {}
+    data['layout'] = {
+        'margin': {
+            'l': 0,
+            'r': 0,
+            'b': 0,
+            't': 0,
+            'pad': 0
+        },
+        'autosize': True,
+        'useResizeHandler': True
+    }
 
     return JsonResponse(data)

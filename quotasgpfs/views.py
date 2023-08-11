@@ -185,7 +185,7 @@ def project(request, project):
         return HttpResponseNotFound()
 
     # get overall quota
-    context['quota'] = get_quota('group', 'project', str(allocation.gid), f'{_("Project")}: {allocation.name}')
+    context['quota'] = get_quota('group', 'project', str(allocation.gid), allocation.name, f'{_("Project")}: {allocation.name}')
 
     for memberuid in allocation.members:
         user = LdapUser.objects.filter(username=memberuid).get()
@@ -222,7 +222,7 @@ def project_getgraph(request, project):
     for memberuid in allocation.members:
         user = LdapUser.objects.filter(username=memberuid).get()
 
-        quota = get_quota('user', 'project', str(user.uid), "")
+        quota = get_quota('user', 'project', str(user.uid), user.username, "")
         if quota == None:
             continue
 

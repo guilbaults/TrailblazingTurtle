@@ -32,7 +32,7 @@ def user(request, username):
     context['username'] = user.username
 
     # User home quota
-    quota = get_quota('user', 'home', str(user.uid), _('Home'))
+    quota = get_quota('user', 'home', str(user.uid), user.username, _('Home'))
     if quota:
         quotas.append(quota)
 
@@ -44,7 +44,7 @@ def user(request, username):
             quotas.append(quota)
 
     # Get User Scratch Quota
-    quota = get_quota('user', 'scratch', str(user.uid), 'Scratch')
+    quota = get_quota('user', 'scratch', str(user.uid), user.username, 'Scratch')
     if quota:
         quotas.append(quota)
 

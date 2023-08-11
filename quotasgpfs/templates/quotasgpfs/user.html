@@ -11,6 +11,9 @@
     {% for quota in quotas %}
     <div class="row mt-5">
         <h2 class="">{{ quota.name }}</h2>
+        {% if quota.fs == 'project' %}
+            <a href="/secure/quotasgpfs/project/{{ quota.name }}" class="btn btn-link" role="button">{% translate 'Show Project Breakdown' %}</a>
+        {% if endif %}
     </div>
     <div class="row">
         <div class="col-6">

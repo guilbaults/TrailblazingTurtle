@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from rest_framework import viewsets
 from rest_framework import permissions
-from jobstats.models import JobScript
+from jobstats.models import JobScript, SharingAgreement
 from jobstats.serializers import JobSerializer, JobScriptSerializer
 from notes.models import Note
 import statistics
@@ -16,6 +16,9 @@ from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
 from django.http import Http404
 import os
+import functools
+from django.http import HttpResponseForbidden
+from django.db.models import Q
 
 GPU_MEMORY = {
     'GRID V100D-4C': 4,
@@ -190,6 +193,31 @@ def display_gpu_id(line):
         return int(line['metric']['gpu'])
 
 
+def user_or_staff_or_shared(func):
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        check = user_or_staff(request)
+        if isinstance(check, HttpResponseForbidden) is False:
+            # we can skip the sharing check since the user is either the owner or staff
+            return func(request, *args, **kwargs)
+
+        allocations = AssocTable.objects.filter(user=request.user.get_username()).all()
+        account_names = [a.acct for a in allocations]
+        # we need to check if this job is shared with the user
+        if 'job_id' in kwargs:
+            try:
+                SharingAgreement.objects.filter(
+                    Q(shared_with=request.user.get_username()) | Q(account__in=account_names) | Q(job_id=kwargs['job_id'])) \
+                    .filter(created_by=kwargs['username']).get()
+            except SharingAgreement.DoesNotExist:
+                # This job is not shared with this user
+                return HttpResponseForbidden()
+        else:
+            # TODO
+            pass
+    return wrapper
+
+
 @login_required
 def index(request):
     return redirect('{}/'.format(request_to_username(request)))
@@ -241,7 +269,7 @@ def user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def job(request, username, job_id):
     context = context_job_info(username, job_id)
 

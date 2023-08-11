@@ -10,7 +10,39 @@ import datetime
 from django.conf import settings
 import re
 import time
-from userportal.common import uid_to_username
+from userportal.common import uid_to_username, username_to_uid
+from django.core.exceptions import ValidationError
+
+
+def validate_valid_username(username):
+    if username is None or username == '':
+        # we allow empty username, validation will be done in the clean method
+        return
+    try:
+        username_to_uid(username)
+    except:  # noqa
+        raise ValidationError('Invalid username')
+
+
+def validate_job_id(job_id):
+    if job_id is None or job_id == '':
+        # we allow empty job_id, validation will be done in the clean method
+        return
+    try:
+        JobTable.objects.get(id_job=job_id)
+        return
+    except JobTable.DoesNotExist:
+        raise ValidationError('Invalid job_id')
+
+
+def validate_account(account):
+    if account is None or account == '':
+        # we allow empty account, validation will be done in the clean method
+        return
+    exist = AssocTable.objects.filter(acct=account).exists()
+    if not exist:
+        raise ValidationError('Invalid account')
+    return
 
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py

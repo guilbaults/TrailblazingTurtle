@@ -7,6 +7,7 @@ from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user
 import yaml
 from django.conf import settings
 import os
+from django.core.exceptions import ValidationError
 
 
 # How many points in the X axis of the graphs
@@ -145,6 +146,16 @@ def uid_to_username(uid):
 def request_to_username(request):
     """return the username of a request"""
     return request.user.username.split('@')[0]
+
+
+def validate_valid_username(username):
+    if username is None or username == '':
+        # we allow empty username, validation will be done in the clean method
+        return
+    try:
+        username_to_uid(username)
+    except:  # noqa
+        raise ValidationError('Invalid username')
 
 
 def query_time(request, exporter_name=None):

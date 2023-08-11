@@ -1,40 +1,8 @@
 from django.db import models
 from django.core.exceptions import ValidationError
-from userportal.common import username_to_uid
-from slurm.models import JobTable, AssocTable
 from django.contrib.auth.models import User
 from django.conf import settings
-
-
-def validate_valid_username(username):
-    if username is None or username == '':
-        # we allow empty usernames in the note
-        return
-    try:
-        username_to_uid(username)
-    except:  # noqa
-        raise ValidationError('Invalid username')
-
-
-def validate_job_id(job_id):
-    if job_id is None or job_id == '':
-        # we allow empty job_id in the note
-        return
-    try:
-        JobTable.objects.get(id_job=job_id)
-        return
-    except JobTable.DoesNotExist:
-        raise ValidationError('Invalid job_id')
-
-
-def validate_account(account):
-    if account is None or account == '':
-        # we allow empty account in the note
-        return
-    exist = AssocTable.objects.filter(acct=account).exists()
-    if not exist:
-        raise ValidationError('Invalid account')
-    return
+from slurm.models import validate_job_id, validate_account, validate_valid_username
 
 
 class Note(models.Model):

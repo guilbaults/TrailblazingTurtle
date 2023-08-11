@@ -129,17 +129,17 @@ def user_getgraph(request, username):
 
 def graph_prometheus_result(stats, quota, metric):
     data = {
-        'lines': []
+        'data': []
     }
 
-    data['lines'].append({
+    data['data'].append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
         'y': stats[1],
         'type': 'scatter',
         'fill': 'tozeroy',
     })
 
-    data['lines'].append({
+    data['data'].append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats[0])),
         'y': quota[1],
         'type': 'scatter',

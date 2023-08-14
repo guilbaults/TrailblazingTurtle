@@ -1,14 +1,14 @@
 from django.contrib import admin
-from jobstats.models import JobScript, SharingAgreement
+from jobstats.models import JobScript, Sharing
 
 
 class JobScriptAdmin(admin.ModelAdmin):
     pass
 
 
-class SharingAgreementAdmin(admin.ModelAdmin):
+class SharingAdmin(admin.ModelAdmin):
     pass
 
 
 admin.site.register(JobScript, JobScriptAdmin)
-admin.site.register(SharingAgreement, SharingAgreementAdmin)
+admin.site.register(Sharing, SharingAdmin)

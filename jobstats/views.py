@@ -1,14 +1,14 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable, AssocTable
-from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step
+from userportal.common import user_or_staff, user_or_staff_check, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from rest_framework import viewsets
 from rest_framework import permissions
-from jobstats.models import JobScript, SharingAgreement
+from jobstats.models import JobScript, Sharing
 from jobstats.serializers import JobSerializer, JobScriptSerializer
 from notes.models import Note
 import statistics
@@ -196,25 +196,23 @@ def display_gpu_id(line):
 def user_or_staff_or_shared(func):
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        check = user_or_staff(request)
-        if isinstance(check, HttpResponseForbidden) is False:
-            # we can skip the sharing check since the user is either the owner or staff
+        if user_or_staff_check(request, kwargs['username']):
             return func(request, *args, **kwargs)
-
         allocations = AssocTable.objects.filter(user=request.user.get_username()).all()
         account_names = [a.acct for a in allocations]
         # we need to check if this job is shared with the user
         if 'job_id' in kwargs:
             try:
-                SharingAgreement.objects.filter(
+                Sharing.objects.filter(
                     Q(shared_with=request.user.get_username()) | Q(account__in=account_names) | Q(job_id=kwargs['job_id'])) \
                     .filter(created_by=kwargs['username']).get()
-            except SharingAgreement.DoesNotExist:
+            except Sharing.DoesNotExist:
                 # This job is not shared with this user
                 return HttpResponseForbidden()
         else:
-            # TODO
-            pass
+            # TODO sharing all the jobstats of a user
+            return HttpResponseForbidden()
+        return func(request, *args, **kwargs)
     return wrapper
 
 
@@ -462,7 +460,7 @@ def job(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_cpu(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -605,7 +603,7 @@ def graph_mem_user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_mem(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -679,7 +677,7 @@ def graph_mem(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_thread(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -768,7 +766,7 @@ def graph_thread(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_lustre_mdt(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -838,7 +836,7 @@ def graph_lustre_mdt_user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_lustre_ost(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -922,7 +920,7 @@ def graph_lustre_ost_user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_utilization(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1006,7 +1004,7 @@ def graph_gpu_utilization_user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_memory_utilization(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1045,7 +1043,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_memory(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1085,7 +1083,7 @@ def graph_gpu_memory(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_power(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1184,7 +1182,7 @@ def graph_gpu_power_user(request, username):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_pcie(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1229,7 +1227,7 @@ def graph_gpu_pcie(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_gpu_nvlink(request, username, job_id):
     context = context_job_info(username, job_id)
 
@@ -1274,7 +1272,7 @@ def graph_gpu_nvlink(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_ethernet_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1327,7 +1325,7 @@ def graph_ethernet_bdw(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_infiniband_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1380,7 +1378,7 @@ def graph_infiniband_bdw(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_disk_iops(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1430,7 +1428,7 @@ def graph_disk_iops(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_disk_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1487,7 +1485,7 @@ def graph_disk_bdw(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_disk_used(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1523,7 +1521,7 @@ def graph_disk_used(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_mem_bdw(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1564,13 +1562,13 @@ def graph_mem_bdw(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_l2_rate(request, username, job_id):
     return graph_cache_rate(request, username, job_id, 'L2')
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_l3_rate(request, username, job_id):
     return graph_cache_rate(request, username, job_id, 'L3')
 
@@ -1651,6 +1649,8 @@ def filter_stats(stats, used_mapping, reverse_mapping):
     return data
 
 
+@login_required
+@user_or_staff_or_shared
 def graph_cache_rate(request, username, job_id, l_cache):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1684,6 +1684,8 @@ def graph_cache_rate(request, username, job_id, l_cache):
     return JsonResponse({'data': data, 'layout': layout})
 
 
+@login_required
+@user_or_staff_or_shared
 def graph_ipc(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1719,7 +1721,7 @@ def graph_ipc(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_cpu_interconnect(request, username, job_id):
     context = context_job_info(username, job_id)
     instances = instances_regex(context)
@@ -1787,7 +1789,7 @@ def power(job, step):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def graph_power(request, username, job_id):
     uid = username_to_uid(username)
     try:
@@ -1819,7 +1821,7 @@ def graph_power(request, username, job_id):
 
 
 @login_required
-@user_or_staff
+@user_or_staff_or_shared
 def value_cost(request, username, job_id):
     uid = username_to_uid(username)
     try:
@@ -1923,6 +1925,9 @@ class JobsViewSet(viewsets.ReadOnlyModelViewSet):
             return queryset
         else:
             # Normal user can only see his own jobs and jobs of his accounts
+
+            # TODO handle sharing
+
             if self.request.query_params.get('account'):
                 # Was previously filtered by account, so we can just return the queryset
                 return queryset

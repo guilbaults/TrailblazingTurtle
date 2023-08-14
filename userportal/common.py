@@ -14,14 +14,19 @@ from django.core.exceptions import ValidationError
 RESOLUTION = 500
 
 
+def user_or_staff_check(request, username):
+    """Check if the user is the same as the one in the url or if the user is staff"""
+    if request.user.get_username() == username or request.user.is_staff:
+        return True
+    else:
+        return False
+
+
 def user_or_staff(func):
     """Decorator to allow access only to staff members or to the user"""
     @functools.wraps(func)
     def wrapper(request, *args, **kwargs):
-        if request.user.get_username() == kwargs['username']:
-            # own info
-            return func(request, *args, **kwargs)
-        elif request.user.is_staff:
+        if user_or_staff_check(request, kwargs['username']):
             return func(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()

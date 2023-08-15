@@ -64,9 +64,9 @@ def query(request):
             results.append({
                 'typetext': _('Project Filesystem Quota'),
                 'typefeathericon': 'hard-drive',
-                'name': user.full_name,
-                'username': user.username,
-                'hyperlink': f'{settings.BASE_URL}secure/quotasgpfs/project/{user.username}'
+                'name': group.name,
+                'username': '',
+                'hyperlink': f'{settings.BASE_URL}secure/quotasgpfs/project/{group.name}'
             })
 
     if len(results) > 50:

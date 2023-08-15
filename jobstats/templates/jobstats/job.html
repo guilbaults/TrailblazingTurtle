@@ -50,6 +50,8 @@
     {% endif%}
   </div>
 
+  <p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{job_id}}/sharing">{% translate "Share this job" %}</a></p>
+
   {% if loaded_modules %}
     <h3>{% translate "Loaded modules" %}</h3>
     <ul class="list-group d-inline-block">

@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Sharing this job" %}{% endblock title %}
+
+{% block content %}
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>{% translate "Shared with user" %}</th>
+            <th>{% translate "Shared with account" %}</th>
+            <th>{% translate "Delete" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for share in shared %}
+        <tr>
+            <td>{{ share.shared_with | default_if_none:'' }}</td>
+            <td>{{ share.account | default_if_none:'' }}</td>
+            <td>
+                <form action="" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="id" value="{{ share.id }}">
+                    <button type="submit" class="btn btn-danger" name="send" value="delete">{% translate "Delete" %}</button>
+                </form>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+
+<p>{% translate "You can share this job with another specific user or with an entire slurm account" %}</p>
+<form action="" method="post">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="username">{% translate "Username" %}</label>
+        <input type="text" class="form-control" name="username" placeholder="{% translate "Optional" %}" value="">
+    </div>
+    <div class="form-group">
+        <label for="account">{% translate "Account" %}</label>
+        <input type="text" class="form-control" name="account" placeholder="{% translate "Optional" %}" value="">
+    </div>
+    <button type="submit" class="btn btn-primary" name="send" value="new">{% translate "New sharing" %}</button>
+</form>
+
+{% endblock content %}

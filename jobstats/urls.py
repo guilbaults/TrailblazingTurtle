@@ -34,4 +34,5 @@ urlpatterns = [
     path('<str:username>/<str:job_id>/graph/ipc.json', views.graph_ipc),
     path('<str:username>/<str:job_id>/graph/power.json', views.graph_power),
     path('<str:username>/<str:job_id>/value/cost.json', views.value_cost),
+    path('<str:username>/<str:job_id>/sharing', views.job_sharing),
 ]

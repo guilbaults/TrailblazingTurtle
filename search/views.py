@@ -51,8 +51,26 @@ def query(request):
             'hyperlink': f'{settings.BASE_URL}secure/accountstats/{account.name}'
         })
 
-    if len(results) > 25:
-        results = results[0:25]
+    # Query GPFS Project Filesystem Quotas
+    if 'quotasgpfs' in settings.INSTALLED_APPS:
+        groups = LdapAllocation.objects.filter(name__contains=querystring).all()
+        metrics = prom.query_last("gpfs_group_quota_bytes{fs=\"project\"}")
+        gids_with_quotas = [int(metric['metric']['group']) for metric in metrics if metric['metric']['group'].isnumeric()]
+
+        for group in groups:
+            if group.gid not in gids_with_quotas:
+                continue
+
+            results.append({
+                'typetext': _('Project Filesystem Quota'),
+                'typefeathericon': 'hard-drive',
+                'name': user.full_name,
+                'username': user.username,
+                'hyperlink': f'{settings.BASE_URL}secure/quotasgpfs/project/{user.username}'
+            })
+
+    if len(results) > 50:
+        results = results[0:50]
         results_truncated = True
     else:
         results_truncated = False

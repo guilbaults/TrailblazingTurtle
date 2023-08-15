@@ -9,6 +9,7 @@ Django==3.2.20
 django-auth-ldap==2.3.0
 django-bootstrap-pagination==1.7.1
 django-debug-toolbar==3.2.4
+django-crispy-forms==1.13.0
 django-ldapdb==1.5.1
 django-settings-export==1.2.1
 djangorestframework==3.12.4

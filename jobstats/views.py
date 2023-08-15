@@ -20,6 +20,8 @@ import functools
 from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django import forms
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Submit
 
 GPU_MEMORY = {
     'GRID V100D-4C': 4,
@@ -1937,29 +1939,43 @@ class JobsViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class SharingForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_method = 'POST'
+        self.helper.form_action = 'add'
+        self.helper.form_show_errors = True
+
+        self.helper.add_input(Submit('submit', _('Share')))
+
     class Meta:
         model = Sharing
-        fields = ['username', 'account']
-    username = forms.CharField(max_length=64, label=_('Username'), required=False)
-    account = forms.CharField(max_length=64, label=_('Account'), required=False)
+        fields = ['shared_with', 'account']
+    shared_with = forms.CharField(max_length=64, label=_('Shared with user'), required=False, help_text=_('Optional'))
+    account = forms.CharField(max_length=64, label=_('Shared with account'), required=False, help_text=_('Optional'))
 
 
 @login_required
 @user_or_staff
 def job_sharing(request, username, job_id):
     context = {}
+    context['shared'] = Sharing.objects.filter(job_id=job_id, created_by=username).all()
 
     if request.method == 'GET':
-        context['shared'] = Sharing.objects.filter(job_id=job_id, created_by=username).all()
+        form = SharingForm()
+        context['form'] = form
         return render(request, 'jobstats/sharing.html', context)
 
     elif request.method == 'POST':
         form = SharingForm(request.POST)
+        context['form'] = form
         if form.is_valid():
             sharing = form.save(commit=False)
             sharing.job_id = job_id
             sharing.created_by = username
-            sharing.shared_with = form.cleaned_data['username']
+            sharing.shared_with = form.cleaned_data['shared_with']
             sharing.account = form.cleaned_data['account']
             sharing.save()
             return redirect(request.path_info)
+        else:
+            return render(request, 'jobstats/sharing.html', context)

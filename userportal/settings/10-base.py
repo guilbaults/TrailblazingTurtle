@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'bootstrap_pagination',
+    'crispy_forms',
 ]
 
 MIDDLEWARE = []
@@ -208,3 +209,5 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework_datatables.pagination.DatatablesPageNumberPagination',
     'PAGE_SIZE': 100,
 }
+
+CRISPY_TEMPLATE_PACK = 'bootstrap4'

@@ -1718,7 +1718,8 @@ def graph_cpu_interconnect(request, username, job_id):
     data = []
 
     # Only measuring the incoming traffic, not the outgoing one since it's only a p2p connection
-    query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
+    query = '(rate(Incoming_Data_Traffic_On_Link_0{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         rate=prom.rate('pcm-sensor-server'))

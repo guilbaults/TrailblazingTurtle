@@ -1364,7 +1364,11 @@ def graph_disk_iops(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_reads_completed_total{{{}=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(settings.PROM_NODE_HOSTNAME_LABEL, instances, prom.get_filter(), step)
+    query_read = 'rate(node_disk_reads_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
     stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
@@ -1380,7 +1384,11 @@ def graph_disk_iops(request, username, job_id):
             'hovertemplate': '%{y:.1f} IOPS',
         })
 
-    query_write = 'rate(node_disk_writes_completed_total{{{}=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(settings.PROM_NODE_HOSTNAME_LABEL, instances, prom.get_filter(), step)
+    query_write = 'rate(node_disk_writes_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
     stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
@@ -1747,10 +1755,11 @@ def power(job, step):
         # * (multiply that by the ratio of GPUs used in that node)
         # + (add the power of the gpu allocated to the job)
         # results is not perfect when the node is shared between jobs
-        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") \
-- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*"))\
-* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )\
-+ ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") )'.format(
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{{hostname_label}=~"({nodes})-oob", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*)-oob") \
+- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*"))\
+* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )\
++ ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
@@ -1759,8 +1768,9 @@ def power(job, step):
         # ( take the node power)
         # * (the ratio of cpu cores allocated in that node)
         nodes_node_exporter = '|'.join([s + '(:.*)?' for s in nodes])
-        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") ) \
-            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{instance=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )'.format(
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{{hostname_label}=~"({nodes})-oob", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*)-oob") ) \
+            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{{hostname_label}=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,

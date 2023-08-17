@@ -4,4 +4,4 @@ PROMETHEUS = {
     'filter': "cluster='narval'",
 }
 
-PROM_NODE_HOSTNAME_LABEL = 'name'
+PROM_NODE_HOSTNAME_LABEL = 'instance'

@@ -16,24 +16,35 @@ def send_job(jobid):
                 mod=jobid % 10,
                 jobid=jobid), 'r') as f:
             content = f.read()[:script_length].strip('\x00')
-            logging.debug('Job script {}: {}'.format(jobid, content[:100]))  # Only log first 100 characters into DEBUG log
-            r = requests.post('{}/api/jobscripts/'.format(host),
-                              json={'id_job': int(jobid), 'submit_script': content},
-                              headers={'Authorization': 'Token ' + token})
-            if r.status_code != 201:
-                if r.status_code == 401:
-                    logging.error('Token is invalid')
-                elif 'job script with this id job already exists' in r.text:
-                    logging.debug('Job script already exists')
-                else:
-                    logging.error('Job script {} not saved: {}'.format(jobid, r.text))
-
     except UnicodeDecodeError:
         # Ignore problems with wrong file encoding
-        pass
+        return
     except FileNotFoundError:
         # The script disappeared before we could read it
-        pass
+        return
+
+    # Only log first 100 characters into DEBUG log
+    logging.debug('Job script {}: {}'.format(jobid, content[:100]))
+
+    try:
+        r = requests.post(
+            '{}/api/jobscripts/'.format(host),
+            json={'id_job': int(jobid), 'submit_script': content},
+            headers={'Authorization': 'Token ' + token}
+        )
+    except requests.exceptions.ConnectionError:
+        logging.error('Job script {} not saved - API is unreachable'.format(jobid))
+        return
+
+    if r.status_code != 201:
+        if r.status_code == 401:
+            logging.error('Token is invalid')
+        elif r.status_code == 503:
+            logging.error('Job script {} not saved - API is unreachable'.format(jobid))
+        elif 'job script with this id job already exists' in r.text:
+            logging.debug('Job script already exists')
+        else:
+            logging.error('Job script {} not saved: {}'.format(jobid, r.text))
 
 
 if __name__ == '__main__':

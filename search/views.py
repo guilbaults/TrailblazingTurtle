@@ -37,7 +37,7 @@ def query(request):
 
             filter = True
             if settings.SEARCH_USER_FILTER_CCSERVICEACCESS:
-                for serviceaccess in users.ccServiceAccess:
+                for serviceaccess in user.ccServiceAccess:
                     if serviceaccess in settings.SEARCH_USER_FILTER_CCSERVICEACCESS:
                         filter = False
             else:

@@ -42,6 +42,7 @@ class LdapCCAccount(ldapdb.models.Model):
     group = fields.IntegerField(db_column='gidNumber')
     preferredLanguage = fields.CharField(db_column='preferredLanguage')
     ccCertSubject = fields.CharField(db_column='ccCertSubject')
+    ccServiceAccess = fields.CharField(db_column='ccServiceAccess')
     SSHPUBLICKEY = fields.CharField(db_column='SSHPUBLICKEY')
     employeeType = fields.CharField(db_column='employeeType')
     home_directory = fields.CharField(db_column='homeDirectory')

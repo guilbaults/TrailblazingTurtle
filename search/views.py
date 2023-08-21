@@ -28,31 +28,46 @@ def query(request):
     if len(querystring.split()) == 0:
         return JsonResponse({'query': querystring, 'results': results})
 
-    # Query LDAP for users
-    users = (LdapUser.objects.filter(username__contains=querystring).all()) | (LdapUser.objects.filter(full_name__contains=querystring).all())
 
-    for user in users:
-        results.append({
-            'typetext': _('User'),
-            'typefeathericon': 'user',
-            'name': user.full_name,
-            'username': user.username,
-            'hyperlink': f'{settings.BASE_URL}secure/usersummary/{user.username}'
-        })
+    if settings.SEARCH_INCLUDE_USERS:
+        # Query LDAP for users
+        users = (LdapCCAccount.objects.filter(username__contains=querystring).all()) | (LdapCCAccount.objects.filter(full_name__contains=querystring).all())
+
+        for user in users:
+
+            filter = True
+            if settings.SEARCH_USER_FILTER_CCSERVICEACCESS:
+                for serviceaccess in users.ccServiceAccess:
+                    if serviceaccess in settings.SEARCH_USER_FILTER_CCSERVICEACCESS:
+                        filter = False
+            else:
+                filter = False
+
+            if filter:
+                continue
+
+            results.append({
+                'typetext': _('User'),
+                'typefeathericon': 'user',
+                'name': user.full_name,
+                'username': user.username,
+                'hyperlink': f'{settings.BASE_URL}secure/usersummary/{user.username}'
+            })
 
     # Query SlurmDB for accounts
-    slurmaccounts = AcctTable.objects.filter(name__contains=querystring).all()
-    for account in slurmaccounts:
-        results.append({
-            'typetext': _('Slurm Account'),
-            'typefeathericon': 'users',
-            'name': account.name,
-            'username': account.description,
-            'hyperlink': f'{settings.BASE_URL}secure/accountstats/{account.name}'
-        })
+    if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS:
+        slurmaccounts = AcctTable.objects.filter(name__contains=querystring).all()
+        for account in slurmaccounts:
+            results.append({
+                'typetext': _('Slurm Account'),
+                'typefeathericon': 'users',
+                'name': account.name,
+                'username': account.description,
+                'hyperlink': f'{settings.BASE_URL}secure/accountstats/{account.name}'
+            })
 
     # Query GPFS Project Filesystem Quotas
-    if 'quotasgpfs' in settings.INSTALLED_APPS:
+    if ('quotasgpfs' in settings.INSTALLED_APPS) and settings.SEARCH_INCLUDE_GPFS_QUOTAS:
         groups = LdapAllocation.objects.filter(name__contains=querystring).all()
         metrics = prom.query_last("gpfs_group_quota_bytes{fs=\"project\"}")
         gids_with_quotas = [int(metric['metric']['group']) for metric in metrics if metric['metric']['group'].isnumeric()]
@@ -69,8 +84,8 @@ def query(request):
                 'hyperlink': f'{settings.BASE_URL}secure/quotasgpfs/project/{group.name}'
             })
 
-    if len(results) > 50:
-        results = results[0:50]
+    if len(results) > settings.SEARCH_MAX_RETURNED:
+        results = results[0:settings.SEARCH_MAX_RETURNED]
         results_truncated = True
     else:
         results_truncated = False

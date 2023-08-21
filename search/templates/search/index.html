@@ -6,12 +6,48 @@
 
 {% block content %}
 <div class="container">
-    <h1>Search</h1>
-    <input class="form-control form-control-lg" type="text" id="querybox" oninput="debounceQuery()" placeholder="Search for Users or Allocations">
 
-    <div class="spinner-border" id="queryloadingspinner" role="status">
-        <span class="sr-only">Loading...</span>
+    <div class="row">
+        <h1>Search</h1>
     </div>
+
+    <div class="row">
+        <input class="form-control form-control-lg" type="text" id="querybox" oninput="debounceQuery()"
+            placeholder="Search">
+    </div>
+
+    <div class="row mt-1">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-all" value="all" checked
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-all">All</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-users" value="users"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-users">Users</label>
+        </div>
+
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-slurm" value="slurm"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-slurm">Slurm Accounts</label>
+        </div>
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-quotas" value="quotas"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-quotas">Storage Quotas</label>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="spinner-border" id="queryloadingspinner" role="status">
+            <span class="sr-only">Loading...</span>
+        </div>
+    </div>
+
+
 
     <div class="list-group" id="resultslist">
     </div>
@@ -29,11 +65,12 @@
 
     function processQuery() {
         value = document.getElementById('querybox').value;
+        filter = document.querySelector('input[name="SearchTypeFilter"]:checked').value;
 
         document.getElementById("queryloadingspinner").style.visibility = "visible";
 
         // TODO: Implement error handling, probably switch to $.ajax
-        $.get('query', {'query': value}).done(function(data) {
+        $.get('query', { 'query': value, 'filtertype': filter }).done(function (data) {
             console.log(data);
             document.getElementById("queryloadingspinner").style.visibility = "hidden";
             renderResults(data['results']);
@@ -46,10 +83,10 @@
         // clear list contents
         l.innerHTML = "";
 
-        for (var i in results) {         
-            
+        for (var i in results) {
+
             listitem = createListItem(results[i]);
-            
+
             l.appendChild(listitem);
 
             feather.replace();
@@ -74,7 +111,7 @@
         listitem = document.createElement('a');
         listitem.classList.add('list-group-item', 'list-group-item-action');
         listitem.setAttribute('href', result.hyperlink);
-        
+
         coldiv = document.createElement('div');
         listitem.appendChild(coldiv);
         coldiv.classList.add('pl-1', 'd-flex', 'flex-column');
@@ -82,18 +119,18 @@
         headerdiv = document.createElement('div');
         coldiv.appendChild(headerdiv);
         headerdiv.classList.add('font-weight-light');
-        
+
         icondiv = document.createElement('div');
         headerdiv.appendChild(icondiv);
         icondiv.setAttribute('data-feather', result.typefeathericon);
         icondiv.classList.add('pr-1');
         headerdiv.innerHTML += result.typetext;
-        
+
         titlediv = document.createElement('div');
         coldiv.appendChild(titlediv);
         titlediv.classList.add('font-weight-bold');
         titlediv.innerHTML = result.name;
-        
+
         subtitlediv = document.createElement('div');
         coldiv.appendChild(subtitlediv);
         subtitlediv.innerHTML = result.username;

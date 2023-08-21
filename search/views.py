@@ -22,6 +22,7 @@ def index(request):
 @staff
 def query(request):
     querystring = request.GET.get('query')
+    filtertype = request.GET.get('filtertype')
     results = []
 
     # Return early for empty string or only whitespace
@@ -29,8 +30,10 @@ def query(request):
         return JsonResponse({'query': querystring, 'results': results})
 
 
-    if settings.SEARCH_INCLUDE_USERS:
-        # Query LDAP for users
+
+    # Query LDAP for users
+    if settings.SEARCH_INCLUDE_USERS and (filtertype == "all" or filtertype == "users"):
+        print("users")
         users = (LdapCCAccount.objects.filter(username__contains=querystring).all()) | (LdapCCAccount.objects.filter(full_name__contains=querystring).all())
 
         for user in users:
@@ -55,7 +58,8 @@ def query(request):
             })
 
     # Query SlurmDB for accounts
-    if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS:
+    if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS  and (filtertype == "all" or filtertype == "slurm"):
+        print("slurm")
         slurmaccounts = AcctTable.objects.filter(name__contains=querystring).all()
         for account in slurmaccounts:
             results.append({
@@ -67,7 +71,8 @@ def query(request):
             })
 
     # Query GPFS Project Filesystem Quotas
-    if ('quotasgpfs' in settings.INSTALLED_APPS) and settings.SEARCH_INCLUDE_GPFS_QUOTAS:
+    if ('quotasgpfs' in settings.INSTALLED_APPS) and settings.SEARCH_INCLUDE_GPFS_QUOTAS and (filtertype == "all" or filtertype == "quotas"):
+        print("quotas")
         groups = LdapAllocation.objects.filter(name__contains=querystring).all()
         metrics = prom.query_last("gpfs_group_quota_bytes{fs=\"project\"}")
         gids_with_quotas = [int(metric['metric']['group']) for metric in metrics if metric['metric']['group'].isnumeric()]

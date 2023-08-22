@@ -46,6 +46,12 @@
             <span class="sr-only">Loading...</span>
         </div>
     </div>
+    
+    <div class="row" id="truncate-warning-row">
+        <div class="col p-0">
+            <div class="alert alert-warning" id="truncate-warning" role="alert"></div>
+        </div>
+    </div>
 
     <div class="row">
         <div class="col p-0">
@@ -53,20 +59,13 @@
         </div>
     </div>
 
-    <div class="row">
-        <div class="col p-0">
-            <div class="alert alert-warning" id="truncate-warning" role="alert">
-                Result limit reached, please refine your search
-            </div>
-        </div>
-    </div>
 
 </div>
 
 <script>
     let queryDebounceTimer;
     document.getElementById("queryloadingspinner").style.visibility = "hidden";
-    document.getElementById("truncate-warning").style.visibility = "hidden";
+    document.getElementById("truncate-warning-row").style.display = "none";
 
     function debounceQuery() {
         // document.getElementById("queryloadingspinner").style.visibility = "visible";
@@ -86,9 +85,10 @@
             document.getElementById("queryloadingspinner").style.visibility = "hidden";
             renderResults(data['results']);
             if (data['truncated']) {
-                document.getElementById("truncate-warning").style.visibility = "visible";
+                document.getElementById("truncate-warning").innerText = "Result display limit (" + data['results'].length + ") reached, please refine your search";
+                document.getElementById("truncate-warning-row").style.display = "block";
             } else {
-                document.getElementById("truncate-warning").style.visibility = "hidden";
+                document.getElementById("truncate-warning-row").style.display = "none";
             }
         });
     }

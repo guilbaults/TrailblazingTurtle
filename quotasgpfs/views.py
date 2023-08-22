@@ -20,7 +20,7 @@ def index(request):
 @user_or_staff
 def user(request, username):
     context = {}
-    quotas = [] 
+    quotas = []
 
     # get LdapUser
     user = LdapUser.objects.get(username=username)
@@ -43,6 +43,17 @@ def user(request, username):
         if quota:
             quotas.append(quota)
 
+    # Get users personal group Quota
+
+    # This is a special case, usage should be zero. Files end up in this quota if the user moves
+    # files from their home directory to project, without changing the group to the project.
+
+    quota = get_quota('group', 'project', str(user.group), user.username, f'Project: {user.username}', settings.GPFS_PERSONAL_GROUP_USAGE_NOTE)
+    if quota:
+        if quota['usage_files'] > 0:
+            quotas.append(quota)
+
+
     # Get User Scratch Quota
     quota = get_quota('user', 'scratch', str(user.uid), user.username, 'Scratch')
     if quota:
@@ -52,7 +63,7 @@ def user(request, username):
     return render(request, 'quotasgpfs/user.html', context)
 
 
-def get_quota(quota_type, fs, name, allocation_name, friendly_name):
+def get_quota(quota_type, fs, name, allocation_name, friendly_name, note=""):
     '''
     Params:
     -------
@@ -88,7 +99,8 @@ def get_quota(quota_type, fs, name, allocation_name, friendly_name):
         'percent_usage_bytes': min((usage_bytes / quota_bytes * 100), 100) if quota_bytes else 0,
         'usage_files': usage_files,
         'quota_files': quota_files,
-        'percent_usage_files': min((usage_files / quota_files * 100), 100) if quota_files else 0
+        'percent_usage_files': min((usage_files / quota_files * 100), 100) if quota_files else 0,
+        'note': note
     }
 
 @login_required

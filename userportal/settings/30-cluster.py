@@ -180,3 +180,5 @@ SOFTWARE_STACK_REGEX = [
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx512/.*', '2020 - AVX512'),
     (r'/cvmfs/.*.computecanada.ca/gentoo/2020/.*', '2020 - Gentoo'),
 ]
+
+GPFS_PERSONAL_GROUP_USAGE_NOTE = 'Files should not be stored on the project filesystem with a personal group. <a href="https://wiki.ace-net.ca">Learn More</a>'

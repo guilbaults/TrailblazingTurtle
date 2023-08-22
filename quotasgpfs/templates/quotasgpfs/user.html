@@ -12,9 +12,17 @@
     <div class="row mt-5">
         <h2 class="">{{ quota.name }}</h2>
         {% if quota.fs == 'project' %}
-            <a href="{{settings.BASE_URL}}secure/quotasgpfs/project/{{ quota.allocation_name }}" class="btn btn-link" role="button">{% translate 'Show Project Breakdown' %}</a>
+        <a href="{{settings.BASE_URL}}secure/quotasgpfs/project/{{ quota.allocation_name }}" class="btn btn-link"
+            role="button">{% translate 'Show Project Breakdown' %}</a>
         {% endif %}
     </div>
+    {% if quota.note != "" %}
+    <div class="row">
+        <div class="alert alert-warning col" role="alert">
+            {{ quota.note|safe }}
+        </div>
+    </div>
+    {% endif %}
     <div class="row">
         <div class="col-6">
             <h5>Bytes</h5>
@@ -63,23 +71,23 @@
 
 
 <script>
-    $(document).ready(function(){
+    $(document).ready(function () {
 
         {% for quota in quotas %}
         $('#graph_{{ quota.fs }}_{{ quota.quota_name }}_tabs a').click(function (e) {
-            if($(this).attr('href') == '#last_month'){
-                delta = 60*60*24*30;
+            if ($(this).attr('href') == '#last_month') {
+                delta = 60 * 60 * 24 * 30;
             }
-            if($(this).attr('href') == '#last_week'){
-                delta = 60*60*24*7;
+            if ($(this).attr('href') == '#last_week') {
+                delta = 60 * 60 * 24 * 7;
             }
-            if($(this).attr('href') == '#last_day'){
-                delta = 60*60*24;
+            if ($(this).attr('href') == '#last_day') {
+                delta = 60 * 60 * 24;
             }
-            if($(this).attr('href') == '#last_hour'){
-                delta = 60*60;
+            if ($(this).attr('href') == '#last_hour') {
+                delta = 60 * 60;
             }
-            
+
             loadGraph('graph_{{ quota.fs }}_{{ quota.quota_name }}_bytes', 'getgraph?fs={{ quota.fs }}&name={{ quota.quota_name }}&metric=bytes&delta=' + delta);
             loadGraph('graph_{{ quota.fs }}_{{ quota.quota_name }}_files', 'getgraph?fs={{ quota.fs }}&name={{ quota.quota_name }}&metric=files&delta=' + delta);
         })

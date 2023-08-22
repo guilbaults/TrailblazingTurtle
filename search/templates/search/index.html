@@ -53,12 +53,20 @@
         </div>
     </div>
 
+    <div class="row">
+        <div class="col p-0">
+            <div class="alert alert-warning" id="truncate-warning" role="alert">
+                Result limit reached, please refine your search
+            </div>
+        </div>
+    </div>
 
 </div>
 
 <script>
     let queryDebounceTimer;
     document.getElementById("queryloadingspinner").style.visibility = "hidden";
+    document.getElementById("truncate-warning").style.visibility = "hidden";
 
     function debounceQuery() {
         // document.getElementById("queryloadingspinner").style.visibility = "visible";
@@ -77,6 +85,11 @@
             console.log(data);
             document.getElementById("queryloadingspinner").style.visibility = "hidden";
             renderResults(data['results']);
+            if (results['truncated']) {
+                document.getElementById("truncate-warning").style.visibility = "visible";
+            } else {
+                document.getElementById("truncate-warning").style.visibility = "hidden";
+            }
         });
     }
 

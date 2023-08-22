@@ -85,7 +85,7 @@
             console.log(data);
             document.getElementById("queryloadingspinner").style.visibility = "hidden";
             renderResults(data['results']);
-            if (results['truncated']) {
+            if (data['truncated']) {
                 document.getElementById("truncate-warning").style.visibility = "visible";
             } else {
                 document.getElementById("truncate-warning").style.visibility = "hidden";

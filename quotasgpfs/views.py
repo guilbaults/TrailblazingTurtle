@@ -62,7 +62,7 @@ def user(request, username):
         str(user.group),
         user.username,
         f"Project: {user.username}",
-        settings.GPFS_PERSONAL_GROUP_USAGE_NOTE,
+        settings.POSIX_PERSONAL_GROUP_USAGE_NOTE,
     )
     if quota:
         if quota["usage_files"] > 0:

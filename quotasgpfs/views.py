@@ -39,7 +39,7 @@ def user(request, username):
     # Get Group Project Quotas
     allocations = LdapAllocation.objects.filter(members=username, status='active').all()
     for allocation in allocations:
-        quota = get_quota('group', 'project', str(allocation.gid), allocation.name, f'Project: {allocation.name}', show_breakdown=True)
+        quota = get_quota('group', 'project', str(allocation.gid), allocation.name, f'Project: {allocation.name}', show_breakdown=request.user.is_staff)
         if quota:
             quotas.append(quota)
 

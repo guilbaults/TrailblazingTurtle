@@ -2,6 +2,7 @@
 
 `quotasgpfs` is a optional module for TrailblazingTurtle, developed by [ACENET](https://www.ace-net.ca) for use on their [Siku](https://wiki.ace-net.ca/wiki/Siku) cluster.
 
+To enable, you must add `quotasgpfs` to `INSTALLED_APPS`
 
 ## gpfs_exporter
 

@@ -125,9 +125,10 @@ def user_getgraph(request, username):
         quota_type = 'user'
     elif fs == 'project':
         # Check the user is a member of the allocation
-        alloc = LdapAllocation.objects.get(gid=name)
-        if username not in alloc.members:
-            return HttpResponseForbidden()
+        if name != user.uid:
+            alloc = LdapAllocation.objects.get(gid=name)
+            if username not in alloc.members:
+                return HttpResponseForbidden()
         quota_type = 'group'
     else:
         return HttpResponseNotFound()

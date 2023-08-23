@@ -39,7 +39,7 @@ def user(request, username):
     # Get Group Project Quotas
     allocations = LdapAllocation.objects.filter(members=username, status='active').all()
     for allocation in allocations:
-        quota = get_quota('group', 'project', str(allocation.gid), allocation.name, f'Project: {allocation.name}')
+        quota = get_quota('group', 'project', str(allocation.gid), allocation.name, f'Project: {allocation.name}', show_breakdown=True)
         if quota:
             quotas.append(quota)
 
@@ -63,7 +63,7 @@ def user(request, username):
     return render(request, 'quotasgpfs/user.html', context)
 
 
-def get_quota(quota_type, fs, name, allocation_name, friendly_name, note=""):
+def get_quota(quota_type, fs, name, allocation_name, friendly_name, note="", show_breakdown=False):
     '''
     Params:
     -------
@@ -100,7 +100,8 @@ def get_quota(quota_type, fs, name, allocation_name, friendly_name, note=""):
         'usage_files': usage_files,
         'quota_files': quota_files,
         'percent_usage_files': min((usage_files / quota_files * 100), 100) if quota_files else 0,
-        'note': note
+        'note': note,
+        'show_breakdown': show_breakdown
     }
 
 @login_required

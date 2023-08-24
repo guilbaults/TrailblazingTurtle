@@ -21,14 +21,19 @@ function loadGraph(container, url){
         dataType    : 'json',
         contentType : 'application/json',
         success : function(content) {
-            console.log(content);
             if(content['data']){
                 if(content['data'].length == 0){
                     replace_div_nodata(container_div);
                 }
                 else{
                     $(container_div).html('');
-                    content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
+                    if(content['layout'] == undefined){
+                        content['layout'] = {};
+                    }
+                    if(content['layout']['margin'] == undefined){
+                        // set a default margin
+                        content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
+                    }
                     Plotly.newPlot(container, content['data'], content['layout']);
                 }
             }

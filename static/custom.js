@@ -27,6 +27,9 @@ function loadGraph(container, url){
                 }
                 else{
                     $(container_div).html('');
+                    if(content['layout'] == undefined){
+                        content['layout'] = {};
+                    }
                     if(content['layout']['margin'] == undefined){
                         // set a default margin
                         content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};

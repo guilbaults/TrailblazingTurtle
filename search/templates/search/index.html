@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Search" %}{% endblock title %}
+
+{% block content %}
+<div class="container">
+
+    <div class="row">
+        <h1>{% translate "Search" %}</h1>
+    </div>
+
+    <div class="row">
+        <input class="form-control form-control-lg" type="text" id="querybox" oninput="debounceQuery()"
+            placeholder="{% translate "Search" %}">
+    </div>
+
+    <div class="row mt-1">
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-all" value="all" checked
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-all">{% translate "All" %}</label>
+        </div>
+
+        {% if settings.SEARCH_INCLUDE_USERS %}
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-users" value="users"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-users">{% translate "Users" %}</label>
+        </div>
+        {% endif %}
+
+        {% if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS %}
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-slurm" value="slurm"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-slurm">{% translate "Slurm Accounts" %}</label>
+        </div>
+        {% endif %}
+
+        {% if settings.SEARCH_INCLUDE_GPFS_QUOTAS %}
+        <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-quotas" value="quotas"
+                onclick="processQuery()">
+            <label class="form-check-label" for="typefilter-quotas">{% translate "Storage Quotas" %}</label>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="row">
+        <div class="spinner-border" id="queryloadingspinner" role="status">
+            <span class="sr-only">{% translate "Loading" %}...</span>
+        </div>
+    </div>
+    
+    <div class="row" id="truncate-warning-row">
+        <div class="col p-0">
+            <div class="alert alert-warning" id="truncate-warning" role="alert"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col p-0">
+            <div class="list-group" id="resultslist"></div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    let queryDebounceTimer;
+    document.getElementById("queryloadingspinner").style.visibility = "hidden";
+    document.getElementById("truncate-warning-row").style.display = "none";
+
+    function debounceQuery() {
+        // document.getElementById("queryloadingspinner").style.visibility = "visible";
+        clearTimeout(queryDebounceTimer);
+        queryDebounceTimer = setTimeout(processQuery, 500);
+    }
+
+    function processQuery() {
+        value = document.getElementById('querybox').value;
+        filter = document.querySelector('input[name="SearchTypeFilter"]:checked').value;
+
+        document.getElementById("queryloadingspinner").style.visibility = "visible";
+
+        // TODO: Implement error handling, probably switch to $.ajax
+        $.get('query', { 'query': value, 'filtertype': filter }).done(function (data) {
+            document.getElementById("queryloadingspinner").style.visibility = "hidden";
+            renderResults(data['results']);
+            if (data['truncated']) {
+                document.getElementById("truncate-warning").innerText = "{% translate "Result display limit" %} (" + data['results'].length + ") {% translate "reached, please refine your search" %}";
+                document.getElementById("truncate-warning-row").style.display = "block";
+            } else {
+                document.getElementById("truncate-warning-row").style.display = "none";
+            }
+        });
+    }
+
+    function renderResults(results) {
+        l = document.getElementById('resultslist')
+
+        // clear list contents
+        l.innerHTML = "";
+
+        for (var i in results) {
+
+            listitem = createListItem(results[i]);
+
+            l.appendChild(listitem);
+
+            feather.replace();
+        }
+
+    }
+
+    function createListItem(result) {
+        // Template of what we want to create
+        // <a href="#" class="list-group-item list-group-item-action">
+        //     <div class="pl-1 d-flex flex-column">
+        //         <div class="font-weight-light">
+        //             <div data-feather="user"></div> User
+        //         </div>
+        //         <div class="font-weight-bold">John Doe</div>
+        //         <div>jdoe</div>
+        //     </div>
+        // </a>
+
+        listitem = document.createElement('a');
+        listitem.classList.add('list-group-item', 'list-group-item-action');
+        listitem.setAttribute('href', result.hyperlink);
+
+        coldiv = document.createElement('div');
+        listitem.appendChild(coldiv);
+        coldiv.classList.add('pl-1', 'd-flex', 'flex-column');
+
+        headerdiv = document.createElement('div');
+        coldiv.appendChild(headerdiv);
+        headerdiv.classList.add('font-weight-light');
+
+        icondiv = document.createElement('div');
+        headerdiv.appendChild(icondiv);
+        icondiv.setAttribute('data-feather', result.typefeathericon);
+        icondiv.classList.add('pr-1');
+        headerdiv.innerHTML += result.typetext;
+
+        titlediv = document.createElement('div');
+        coldiv.appendChild(titlediv);
+        titlediv.classList.add('font-weight-bold');
+        titlediv.innerHTML = result.name;
+
+        subtitlediv = document.createElement('div');
+        coldiv.appendChild(subtitlediv);
+        subtitlediv.innerHTML = result.username;
+
+        return listitem
+    }
+</script>
+{% endblock content %}

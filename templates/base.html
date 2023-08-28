@@ -67,6 +67,13 @@
                   <span data-feather="home"></span>{% translate "Home" %}
                 </a>
               </li>
+              {% if request.user.is_staff and 'search' in settings.INSTALLED_APPS %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/search">
+                  <span data-feather="search"></span>{% translate "Search" %}
+                </a>
+              </li>
+              {% endif %}
               {% if 'usersummary' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="{{settings.BASE_URL}}secure/usersummary/">

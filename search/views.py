@@ -1,22 +1,23 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponseNotFound, HttpResponseForbidden, JsonResponse, HttpResponse
+from django.shortcuts import render
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from django.contrib.admin.views.decorators import staff_member_required
 from django.conf import settings
 from django.utils.translation import gettext as _
 
 
-from userportal.common import user_or_staff, username_to_uid, query_time, staff
-from ccldap.models import LdapUser, LdapCCAccount, LdapAllocation
+from userportal.common import staff
+from ccldap.models import LdapCCAccount, LdapAllocation
 from slurm.models import AcctTable
 from userportal.common import Prometheus
 
 prom = Prometheus(settings.PROMETHEUS)
 
+
 @login_required
 @staff
 def index(request):
     return render(request, 'search/index.html')
+
 
 @login_required
 @staff
@@ -28,8 +29,6 @@ def query(request):
     # Return early for empty string or only whitespace
     if len(querystring.split()) == 0:
         return JsonResponse({'query': querystring, 'results': results})
-
-
 
     # Query LDAP for users
     if settings.SEARCH_INCLUDE_USERS and (filtertype == "all" or filtertype == "users"):
@@ -57,7 +56,7 @@ def query(request):
             })
 
     # Query SlurmDB for accounts
-    if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS  and (filtertype == "all" or filtertype == "slurm"):
+    if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS and (filtertype == "all" or filtertype == "slurm"):
         slurmaccounts = AcctTable.objects.filter(name__contains=querystring).all()
         for account in slurmaccounts:
             results.append({

@@ -180,3 +180,5 @@ SOFTWARE_STACK_REGEX = [
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx512/.*', '2020 - AVX512'),
     (r'/cvmfs/.*.computecanada.ca/gentoo/2020/.*', '2020 - Gentoo'),
 ]
+
+POSIX_PERSONAL_GROUP_USAGE_NOTE = 'Files should not be stored on the project filesystem with a personal group. <a href="https://docs.alliancecan.ca/wiki/Frequently_Asked_Questions#Disk_quota_exceeded_error_on_/project_filesystems">Learn More</a>'

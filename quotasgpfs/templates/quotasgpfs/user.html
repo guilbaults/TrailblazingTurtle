@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}Quotas{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Quotas for" %} {{ full_name }} ({{ username }})</h1>
+
+<div class="container pb-5" style="max-width: 80rem;">
+    {% for quota in quotas %}
+    <div class="row mt-5">
+        <h2 class="">{{ quota.name }}</h2>
+        {% if quota.show_breakdown %}
+        <a href="{{settings.BASE_URL}}secure/quotasgpfs/project/{{ quota.allocation_name }}" class="btn btn-link"
+            role="button">{% translate 'Show Project Breakdown' %}</a>
+        {% endif %}
+    </div>
+    {% if quota.note != "" %}
+    <div class="row">
+        <div class="alert alert-warning col" role="alert">
+            {{ quota.note|safe }}
+        </div>
+    </div>
+    {% endif %}
+    <div class="row">
+        <div class="col-6">
+            <h5>Bytes</h5>
+            <p>{{ quota.usage_bytes | filesizeformat }} / {{ quota.quota_bytes | filesizeformat }} ({{ quota.percent_usage_bytes | floatformat }}%)</p>
+            <div class="progress">
+                <div class="progress-bar {% if quota.percent_usage_bytes > 95 %} bg-warning {% endif %}" style="width: {{ quota.percent_usage_bytes }}%" role="progressbar" aria-valuenow="{{ quota.percent_usage_bytes }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+        <div class="col-6"> 
+            <h5>Files</h5>           
+            <p>{{ quota.usage_files }} / {{ quota.quota_files }} ({{ quota.percent_usage_files | floatformat }}%)</p>
+            <div class="progress">
+                <div class="progress-bar {% if quota.percent_usage_files > 95 %} bg-warning {% endif %}" style="width: {{ quota.percent_usage_files }}%" role="progressbar" aria-valuenow="{{ quota.percent_usage_files }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <a class="btn btn-link btn-sm mt-1" data-toggle="collapse" href="#graph_{{ quota.fs }}_{{ quota.quota_name }}_collapse" role="button" aria-expanded="false" aria-controls="graph_{{ quota.fs }}_{{ quota.quota_name }}_collapse">{% translate "Show / Hide Graphs" %}</a>
+    </div>
+    <div class="row collapse pt-3" id="graph_{{ quota.fs }}_{{ quota.quota_name }}_collapse">
+        <ul class="nav nav-tabs w-100" id="graph_{{ quota.fs }}_{{ quota.quota_name }}_tabs" role="tablist">
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#last_month" role="tab">{% translate "Last month" %}</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" data-toggle="tab" href="#last_week" role="tab">{% translate "Last week" %}</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#last_day" role="tab">{% translate "Last day" %}</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" data-toggle="tab" href="#last_hour" role="tab">{% translate "Last hour" %}</a>
+            </li>
+        </ul>
+    </div>
+    <div class="row collapse" id="graph_{{ quota.fs }}_{{ quota.quota_name }}_collapse">
+        <div class="col-6">
+            <div style="width: 100%; height: 300px" id="graph_{{ quota.fs }}_{{ quota.quota_name }}_bytes"></div>
+        </div>
+        <div class="col-6">
+            <div style="width: 100%; height: 300px" id="graph_{{ quota.fs }}_{{ quota.quota_name }}_files"></div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+
+<script>
+    $(document).ready(function () {
+
+        {% for quota in quotas %}
+        $('#graph_{{ quota.fs }}_{{ quota.quota_name }}_tabs a').click(function (e) {
+            if ($(this).attr('href') == '#last_month') {
+                delta = 60 * 60 * 24 * 30;
+            }
+            if ($(this).attr('href') == '#last_week') {
+                delta = 60 * 60 * 24 * 7;
+            }
+            if ($(this).attr('href') == '#last_day') {
+                delta = 60 * 60 * 24;
+            }
+            if ($(this).attr('href') == '#last_hour') {
+                delta = 60 * 60;
+            }
+
+            loadGraph('graph_{{ quota.fs }}_{{ quota.quota_name }}_bytes', 'getgraph?fs={{ quota.fs }}&name={{ quota.quota_name }}&metric=bytes&delta=' + delta);
+            loadGraph('graph_{{ quota.fs }}_{{ quota.quota_name }}_files', 'getgraph?fs={{ quota.fs }}&name={{ quota.quota_name }}&metric=files&delta=' + delta);
+        })
+
+        $('#graph_{{ quota.fs }}_{{ quota.quota_name }}_collapse').on('show.bs.collapse', function () {
+            $('#graph_{{ quota.fs }}_{{ quota.quota_name }}_tabs a[href="#last_week"]').trigger('click');
+        })
+        {% endfor %}
+    });
+</script>
+
+{% endblock content %}

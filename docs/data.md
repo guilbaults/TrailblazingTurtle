@@ -80,6 +80,10 @@ groups:
     expr: sum by (user,fs,cluster,account) (rate(lustre_job_stats_total{}[3m]))
 ```
 
+## gpfs_exporter
+
+[gpfs\_exporter](https://github.com/treydock/gpfs_exporter) is used to gather quotas from a GPFS filesystem. Learn more in [quotasgpfs.md](./quotasgpfs.md)
+
 ## redfish\_exporter
 [redfish\_exporter](https://github.com/jenningsloy318/redfish_exporter) is used to gather the power usage of the nodes. This information is used to compute the energy used by a job and related metrics like CO2 emissions.
 

@@ -102,6 +102,13 @@
                 </a>
               </li>
               {% endif %}
+              {% if 'quotasgpfs' in settings.INSTALLED_APPS %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/quotasgpfs/">
+                  <span data-feather="hard-drive"></span>{% translate "Filesystem quotas" %}
+                </a>
+              </li>
+              {% endif %}
               {% if 'cloudstats' in settings.INSTALLED_APPS %}
               <li class="nav-item">
                 <a class="nav-link" href="{{settings.BASE_URL}}secure/cloudstats/">

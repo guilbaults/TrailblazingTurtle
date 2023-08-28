@@ -130,13 +130,15 @@ def graph_login_cpu(request, login):
         return JsonResponse({'error': 'Unknown login node'})
     timing = query_time(request)
 
-    core_count_query = 'count(node_cpu_seconds_total{{mode="system",instance=~"{login}(:.*)?", {filter} }})'.format(
+    core_count_query = 'count(node_cpu_seconds_total{{mode="system",{hostname_label}=~"{login}(:.*)?", {filter} }})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         login=login,
         filter=prom.get_filter(),
     )
     core_count = max(prom.query_prometheus(core_count_query, timing[0], step=timing[1])[1])
     data = []
-    query = 'sum by (mode)(rate(node_cpu_seconds_total{{mode=~"system|user|iowait",instance=~"{login}(:.*)?", {filter} }}[{step}s]))'.format(
+    query = 'sum by (mode)(rate(node_cpu_seconds_total{{mode=~"system|user|iowait",{hostname_label}=~"{login}(:.*)?", {filter} }}[{step}s]))'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         login=login,
         filter=prom.get_filter(),
         step=timing[1],
@@ -187,7 +189,8 @@ def graph_login_memory(request, login):
     )
     total_mem = max(prom.query_prometheus(total_mem_query, timing[0], step=timing[1])[1])
     data = []
-    query = 'node_memory_MemTotal_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_MemFree_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_Buffers_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_Cached_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_Slab_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_PageTables_bytes{{instance=~"{login}(:.*)?", {filter} }} - node_memory_SwapCached_bytes{{instance=~"{login}(:.*)?", {filter} }}'.format(
+    query = 'node_memory_MemTotal_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_MemFree_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_Buffers_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_Cached_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_Slab_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_PageTables_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }} - node_memory_SwapCached_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }}'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         login=login,
         filter=prom.get_filter(),
     )
@@ -226,7 +229,8 @@ def graph_login_load(request, login):
     timing = query_time(request)
     data = []
 
-    query = 'node_load1{{instance=~"{login}(:.*)?", {filter} }}'.format(
+    query = 'node_load1{{{hostname_label}=~"{login}(:.*)?", {filter} }}'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         login=login,
         filter=prom.get_filter(),
     )
@@ -275,7 +279,8 @@ def graph_dtn_network(request, dtn):
 def graph_network(request, node, device):
     timing = query_time(request)
     data = []
-    query_rx = 'rate(node_network_receive_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
+    query_rx = 'rate(node_network_receive_bytes_total{{{hostname_label}=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         node=node,
         filter=prom.get_filter(),
         device=device,
@@ -291,7 +296,8 @@ def graph_network(request, node, device):
         'name': '{}'.format('Receive'),
     })
 
-    query_tx = 'rate(node_network_transmit_bytes_total{{instance=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
+    query_tx = 'rate(node_network_transmit_bytes_total{{{hostname_label}=~"{node}(:.*)?", device="{device}", {filter} }}[{step}s]) * 8'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         node=node,
         filter=prom.get_filter(),
         device=device,

@@ -174,12 +174,12 @@ def instances_regex(context):
 
 def display_compute_name(lines, line):
     # Display compute name as needed, only if multiple nodes are used
-    names = [entry['metric']['instance'].split(':')[0] for entry in lines]
+    names = [entry['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0] for entry in lines]
     if len(set(names)) == 1:
         # if its a single node job, don't return anything
         return ""
     else:
-        return line['metric']['instance'].split(':')[0]
+        return line['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
 
 
 def display_gpu_id(line):
@@ -290,11 +290,11 @@ def job(request, username, job_id):
         context['cpu_used'] = None
 
     try:
-        query_cpu_bynode = 'count(slurm_job_core_usage_total{{slurmjobid="{}", {}}}) by (instance)'.format(job_id, prom.get_filter())
+        query_cpu_bynode = 'count(slurm_job_core_usage_total{{slurmjobid="{}", {}}}) by ({})'.format(job_id, prom.get_filter(), settings.PROM_NODE_HOSTNAME_LABEL)
         stats_cpu_bynode = prom.query_prometheus_multiple(query_cpu_bynode, job.time_start_dt(), job.time_end_dt())
         cpu_bynode = []
         for node in stats_cpu_bynode:
-            node_name = node['metric']['instance'].split(':')[0]
+            node_name = node['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
             cpu_bynode.append({'name': node_name, 'count': int(node['y'][0])})
         context['cpu_bynode'] = cpu_bynode
         context['nb_nodes'] = len(cpu_bynode)
@@ -1254,7 +1254,8 @@ def graph_ethernet_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_received = 'rate(node_network_receive_bytes_total{{device!~"ib.*|lo", instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
+    query_received = 'rate(node_network_receive_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1271,7 +1272,8 @@ def graph_ethernet_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_transmitted = '-rate(node_network_transmit_bytes_total{{device!~"ib.*|lo", instance=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000)'.format(
+    query_transmitted = '-rate(node_network_transmit_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1307,7 +1309,8 @@ def graph_infiniband_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
+    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1324,7 +1327,8 @@ def graph_infiniband_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{instance=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000*1000)'.format(
+    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1360,7 +1364,11 @@ def graph_disk_iops(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_reads_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
+    query_read = 'rate(node_disk_reads_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
     stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_read:
         compute_name = "{} {}".format(
@@ -1376,7 +1384,11 @@ def graph_disk_iops(request, username, job_id):
             'hovertemplate': '%{y:.1f} IOPS',
         })
 
-    query_write = 'rate(node_disk_writes_completed_total{{instance=~"{}",device=~"nvme.n.|sd.|vd.", {}}}[{}s])'.format(instances, prom.get_filter(), step)
+    query_write = 'rate(node_disk_writes_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        instances=instances,
+        filter=prom.get_filter(),
+        step=step)
     stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
     for line in stats_write:
         compute_name = "{} {}".format(
@@ -1410,7 +1422,8 @@ def graph_disk_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_read_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+    query_read = 'rate(node_disk_read_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1429,7 +1442,8 @@ def graph_disk_bdw(request, username, job_id):
             'hovertemplate': '%{y:.1f}',
         })
 
-    query_write = '-rate(node_disk_written_bytes_total{{instance=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+    query_write = '-rate(node_disk_written_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         step=step)
@@ -1466,7 +1480,8 @@ def graph_disk_used(request, username, job_id):
 
     data = []
 
-    query_disk = '(node_filesystem_size_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{instance=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
+    query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter())
     stats_disk = prom.query_prometheus_multiple(query_disk, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
@@ -1503,7 +1518,8 @@ def graph_mem_bdw(request, username, job_id):
     data = []
 
     for direction in ['Reads', 'Writes']:
-        query = 'rate(DRAM_{direction}{{instance=~"{instances}", {filter} }}[1m])/1024/1024/1024'.format(
+        query = 'rate(DRAM_{direction}{{{hostname_label}=~"{instances}", {filter} }}[1m])/1024/1024/1024'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             direction=direction,
             instances=instances,
             filter=prom.get_filter())
@@ -1550,7 +1566,8 @@ def graph_l3_rate(request, username, job_id):
 def map_pcm_cores(request, context):
     instances = instances_regex(context)
     # get the OS core mapping to the physical cores since they don't match
-    query_mapping = 'OS_ID{{instance=~"{instances}", {filter}}}'.format(
+    query_mapping = 'OS_ID{{{hostname_label}=~"{instances}", {filter}}}'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter())
     stats_mapping = prom.query_prometheus_multiple(
@@ -1631,7 +1648,8 @@ def graph_cache_rate(request, username, job_id, l_cache):
 
     # get all the L3 cache hits and misses, we will discard the ones not used
     # by the job since we can't easily filter them out with a regex in the query
-    query_cache = 'rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])/(rate({l_cache}_Cache_Hits{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s]) + rate({l_cache}_Cache_Misses{{instance=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])) * 100'.format(
+    query_cache = 'rate({l_cache}_Cache_Hits{{{hostname_label}=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])/(rate({l_cache}_Cache_Hits{{{hostname_label}=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s]) + rate({l_cache}_Cache_Misses{{{hostname_label}=~"{instances}", core=~"[0-9]+", {filter}}}[{rate}s])) * 100'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         l_cache=l_cache,
         instances=instances,
         filter=prom.get_filter(),
@@ -1669,7 +1687,8 @@ def graph_ipc(request, username, job_id):
     # We compute the IPC instead of the CPI to show a graph with "higher is better"
     # so read that documentation and invert their formula and ratio
     # https://www.intel.com/content/www/us/en/develop/documentation/vtune-help/top/reference/cpu-metrics-reference.html#cpu-metrics-reference_CLOCKTICKS-PER-INSTRUCTIONS-RETIRED-CPI
-    query_ipc = 'rate(Instructions_Retired_Any{{instance=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s]) / rate(Clock_Unhalted_Ref{{instance=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s])'.format(
+    query_ipc = 'rate(Instructions_Retired_Any{{{hostname_label}=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s]) / rate(Clock_Unhalted_Ref{{{hostname_label}=~"{instances}",core=~"[0-9]+", {filter} }}[{rate}s])'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         rate=prom.rate('pcm-sensor-server'))
@@ -1699,7 +1718,8 @@ def graph_cpu_interconnect(request, username, job_id):
     data = []
 
     # Only measuring the incoming traffic, not the outgoing one since it's only a p2p connection
-    query = '(rate(Incoming_Data_Traffic_On_Link_0{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{instance=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{instance=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
+    query = '(rate(Incoming_Data_Traffic_On_Link_0{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_1{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]) + rate(Incoming_Data_Traffic_On_Link_2{{{hostname_label}=~"{instances}", {filter} }}[{rate}s]))/1024/1024/1024'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
         filter=prom.get_filter(),
         rate=prom.rate('pcm-sensor-server'))
@@ -1736,10 +1756,11 @@ def power(job, step):
         # * (multiply that by the ratio of GPUs used in that node)
         # + (add the power of the gpu allocated to the job)
         # results is not perfect when the node is shared between jobs
-        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") \
-- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*"))\
-* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{instance=~"({nodes}):9445", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )\
-+ ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") )'.format(
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{{hostname_label}=~"({nodes})-oob", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*)-oob") \
+- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*"))\
+* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )\
++ ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
@@ -1748,8 +1769,9 @@ def power(job, step):
         # ( take the node power)
         # * (the ratio of cpu cores allocated in that node)
         nodes_node_exporter = '|'.join([s + '(:.*)?' for s in nodes])
-        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{instance=~"({nodes})-oob", {filter} }}) by (instance), "instance", "$1", "instance", "(.*)-oob") ) \
-            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by (instance),"instance", "$1", "instance", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{instance=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by (instance)), "instance", "$1", "instance", "(.*):.*") )'.format(
+        query = '(label_replace(sum(redfish_chassis_power_average_consumed_watts{{{hostname_label}=~"({nodes})-oob", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*)-oob") ) \
+            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{{hostname_label}=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
@@ -1769,7 +1791,7 @@ def graph_power(request, username, job_id):
 
     data = []
     for line in power(job, step=sanitize_step(request, minimum=prom.rate('redfish_exporter'))):
-        compute_name = "{}".format(line['metric']['instance'])
+        compute_name = "{}".format(line['metric'][settings.PROM_NODE_HOSTNAME_LABEL])
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         data.append({
             'x': x,

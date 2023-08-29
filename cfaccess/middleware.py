@@ -1,8 +1,7 @@
-from django.http import HttpResponse, JsonResponse, HttpResponseForbidden, HttpRequest
+from django.http import HttpResponseForbidden, HttpRequest
 from django.conf import settings
 
 from django.contrib.auth import login, logout, authenticate
-from django.contrib.auth.models import User
 
 from cfaccess.backends import CloudflareAccessLDAPBackend
 
@@ -10,7 +9,6 @@ import requests
 import jwt
 import json
 
-import time
 
 class CloudflareAccessLDAPMiddleware:
     def __init__(self, get_response):
@@ -19,7 +17,7 @@ class CloudflareAccessLDAPMiddleware:
     def clean_username(self, username):
         backend = CloudflareAccessLDAPBackend()
         return backend.clean_username(username)
-    
+
     def __call__(self, request: HttpRequest):
         """
         This middleware will check for a valid Cloudflare Access JWT.
@@ -33,7 +31,7 @@ class CloudflareAccessLDAPMiddleware:
 
         If a valid JWT is presented, and matches the currently authenticated
         user, the session is allowed to continue.
-        
+
         If a valid JWT is presented, and the user is not currently
         authenticated, this middleware will attempt to authenticate the
         user.
@@ -46,21 +44,19 @@ class CloudflareAccessLDAPMiddleware:
         # check for no JWT
         if "CF_Authorization" not in request.COOKIES:
             return self._handle_no_token(request)
-        
+
         # validate presented JWT
-        # ts = time.time()
         token = request.COOKIES["CF_Authorization"]
         keys = self._get_public_keys()
         policy_aud = settings.CF_ACCESS_CONFIG['policy_aud']
 
         jwt_data = self._validate_JWT(token, keys, policy_aud)
-        
+
         # handle as no / invalid token
         if not jwt_data:
             return self._handle_no_token(request)
 
         jwt_username = jwt_data[settings.CF_ACCESS_CONFIG['username_attribute']]
-
 
         # if the user is authenticated, but does not match the token, logout the previous
         # user and login the new session
@@ -77,18 +73,16 @@ class CloudflareAccessLDAPMiddleware:
         # The user is already authenticated as the correct user, proceed with session
         return self.get_response(request)
 
-
     def _handle_no_token(self, request):
         if settings.CF_ACCESS_CONFIG['enforce_cloudflare_access']:
             return HttpResponseForbidden()
         else:
             return self.get_response(request)
-            
 
     def _validate_JWT(self, jwt_token, keys, aud):
         """
         Checks if provided Cloudflare Access JWT is valid. A JWT is determined
-        to be valid if it is signed by any of the provided keys and the JWT 
+        to be valid if it is signed by any of the provided keys and the JWT
         "aud" matches the provided "aud".
 
         if the JWT is valid, it's payload is returned.
@@ -100,7 +94,7 @@ class CloudflareAccessLDAPMiddleware:
                 # decode returns the claims that has the email when needed
                 token_data = jwt.decode(jwt_token, key=key, audience=aud, algorithms=['RS256'])
                 return token_data
-            except:
+            except Exception:
                 pass
 
     def _get_public_keys(self):
@@ -117,4 +111,3 @@ class CloudflareAccessLDAPMiddleware:
             public_key = jwt.algorithms.RSAAlgorithm.from_jwk(json.dumps(key_dict))
             public_keys.append(public_key)
         return public_keys
-

@@ -1,15 +1,16 @@
-from typing import Any, Optional, Union
-from django.contrib.auth.backends import RemoteUserBackend, ModelBackend
-from django.contrib.auth.base_user import AbstractBaseUser
+from typing import Union
+from django.contrib.auth.backends import ModelBackend
 from django.contrib.auth.models import User
 from django.http.request import HttpRequest
 
 from django.conf import settings
 
 from django.contrib.auth import get_user_model
-UserModel = get_user_model()
 
 from ccldap.models import LdapUser
+
+UserModel = get_user_model()
+
 
 class CloudflareAccessLDAPBackend(ModelBackend):
 
@@ -18,7 +19,7 @@ class CloudflareAccessLDAPBackend(ModelBackend):
     def authenticate(self, request: HttpRequest, cloudflare_user: str, jwt_data=None, **kwargs) -> Union[User, None]:
         if not cloudflare_user:
             return
-        
+
         user = None
         created = False
         username = self.clean_username(cloudflare_user)
@@ -45,12 +46,12 @@ class CloudflareAccessLDAPBackend(ModelBackend):
 
         try:
             user.first_name = ldapuser.given_name
-        except:
+        except Exception:
             user.first_name = ''
-        
+
         try:
             user.last_name = ldapuser.surname
-        except:
+        except Exception:
             user.last_name = ''
 
         if jwt_data:

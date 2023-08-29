@@ -23,9 +23,9 @@ class CloudflareAccessLDAPBackend(ModelBackend):
         created = False
         username = self.clean_username(cloudflare_user)
 
-        # Temporary fix to restrict CILogon
-        if cloudflare_user.split('@')[1] != 'alliancecan.ca':
-            return
+        if settings.CF_ACCESS_CONFIG['require_trusted_suffix']:
+            if cloudflare_user.split('@')[1] not in settings.CF_ACCESS_CONFIG['trusted_suffix']:
+                return
 
         if self.create_unknown_user:
             user, created = UserModel._default_manager.get_or_create(

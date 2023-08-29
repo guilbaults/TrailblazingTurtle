@@ -5,8 +5,9 @@ CF_ACCESS_CONFIG = {
     'team_domain': 'https://<your-org>.cloudflareaccess.com',
     'policy_aud': 'get-this-from-cloudflare-dashboard',
 
-    'username_attribute': 'email',
-    ''
+    'username_attribute': 'eduPersonPrincipalName',
+    'require_trusted_suffix': True,
+    'trusted_suffix': ["alliancecan.ca"],
 
     # if this option is true, all requests that do not contain a valid JWT will get a 403 Forbidden
     'enforce_cloudflare_access': False,

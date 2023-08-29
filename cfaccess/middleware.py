@@ -60,26 +60,19 @@ class CloudflareAccessLDAPMiddleware:
             return self._handle_no_token(request)
 
         jwt_username = jwt_data[settings.CF_ACCESS_CONFIG['username_attribute']]
-        # print(f'token validation took: {time.time() - ts}')
 
 
         # if the user is authenticated, but does not match the token, logout the previous
         # user and login the new session
         if request.user.get_username() != self.clean_username(jwt_username):
-            # print("Logging out")
-            # ts = time.time()
             logout(request)
-            # print(f'logout took: {time.time() - ts}')
 
         # We have a valid JWT, check if the user is not currently authenticated, if so,
         # login the user to their session
         if not request.user.is_authenticated:
-            # ts = time.time()
             user = authenticate(request, cloudflare_user=jwt_username, jwt_data=jwt_data)
             request.user = user
             login(request, user)
-            # print(f'login took: {time.time() - ts}')
-            print(user, request.user.is_authenticated)
 
         # The user is already authenticated as the correct user, proceed with session
         return self.get_response(request)

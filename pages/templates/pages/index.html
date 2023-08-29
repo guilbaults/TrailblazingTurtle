@@ -7,21 +7,21 @@
 {% block content %}
 <h2>{% translate "Cluster and services description" %}</h2>
 
-{{ settings.CLUSTER_INTRO | safe }}
+{{ cluster_intro | safe }}
 
 
 <ul class="list-group">
 {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='filesystems/'><span data-feather="hard-drive"></span> {% translate "Filesystems performance" %}</a></li>
 {% endif %}
-{% if 'node_exporter' in settings.EXPORTER_INSTALLED and settings.LOGINS %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED and logins %}
     <li class="list-group-item"><a href='logins/'><span data-feather="monitor"></span> {% translate "Logins nodes" %}</a></li>
 {% endif %}
 {% if 'slurm_exporter' in settings.EXPORTER_INSTALLED %}
     <li class="list-group-item"><a href='scheduler/'><span data-feather="file-text"></span> {% translate "Scheduler" %}</a></li>
     <li class="list-group-item"><a href='software/'><span data-feather="tool"></span> {% translate "Scientific software" %}</a></li>
 {% endif %}
-{% if 'node_exporter' in settings.EXPORTER_INSTALLED  and settings.DTNS %}
+{% if 'node_exporter' in settings.EXPORTER_INSTALLED and dtns %}
     <li class="list-group-item"><a href='dtns/'><span data-feather="globe"></span> {% translate "Data transfer nodes" %}</a></li>
 {% endif %}
 </ul>

@@ -16,7 +16,11 @@ prom = Prometheus(settings.PROMETHEUS)
 @login_required
 @staff
 def index(request):
-    return render(request, 'search/index.html')
+    context = {}
+    context['SEARCH_INCLUDE_USERS'] = settings.SEARCH_INCLUDE_USERS
+    context['SEARCH_INCLUDE_SLURM_ACCOUNTS'] = settings.SEARCH_INCLUDE_SLURM_ACCOUNTS
+    context['SEARCH_INCLUDE_GPFS_QUOTAS'] = settings.SEARCH_INCLUDE_GPFS_QUOTAS
+    return render(request, 'search/index.html', context)
 
 
 @login_required

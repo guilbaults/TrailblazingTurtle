@@ -203,7 +203,7 @@
           </div>
         </td>
       </tr>
-      {% if settings.ELECTRIC_CAR_RANGE_KM_PER_KWH %}
+      {% if ELECTRIC_CAR_RANGE_KM_PER_KWH %}
         <tr>
           <td>{% translate "Electric car range equivalent" %}</td>
           <td></td>
@@ -216,7 +216,7 @@
           </td>
         </tr>
       {% endif %}
-      {% if settings.CO2_KG_PER_MWH %}
+      {% if CO2_KG_PER_MWH %}
         <tr>
           <td>{% translate "CO2 emissions" %}</td>
           <td></td>
@@ -229,7 +229,7 @@
           </td>
         </tr>
       {% endif %}
-      {% if settings.CPU_CORE_COST_PER_HOUR or settings.GPU_COST_PER_HOUR%}
+      {% if CPU_CORE_COST_PER_HOUR or GPU_COST_PER_HOUR%}
         <tr>
           <td>{% translate "Internal cost" %}</td>
           <td></td>
@@ -243,7 +243,7 @@
         </tr>
       {% endif %}
     {% endif %}
-    {% if settings.CLOUD_CPU_CORE_COST_PER_HOUR and settings.CLOUD_GPU_COST_PER_HOUR %}
+    {% if CLOUD_CPU_CORE_COST_PER_HOUR or CLOUD_GPU_COST_PER_HOUR %}
       <tr>
         <td>{% translate "Cloud cost equivalent" %}</td>
         <td></td>

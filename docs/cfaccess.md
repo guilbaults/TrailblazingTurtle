@@ -35,7 +35,7 @@ Custom attributes from the identity provider can also be passed in the JWT, such
 
 ## Configuration
 
-You must configure your application to be accessable to Cloudflare. Cloudflare provides [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/), a daemon which connects out to the Cloudflare Network and tunnels traffic back to your application, no Public IP address required.
+You must configure your application to be accessible to Cloudflare. Cloudflare provides [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/), a daemon which connects out to the Cloudflare Network and tunnels traffic back to your application, no Public IP address required.
 
 Configure your IDP(s) and Enable Cloudflare Access for your application.
 

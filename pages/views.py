@@ -12,6 +12,9 @@ prom = Prometheus(settings.PROMETHEUS)
 
 def index(request):
     context = {}
+    context['cluster_intro'] = settings.CLUSTER_INTRO
+    context['logins'] = settings.LOGINS.keys()
+    context['dtns'] = settings.DTNS.keys()
     return render(request, 'pages/index.html', context)
 
 

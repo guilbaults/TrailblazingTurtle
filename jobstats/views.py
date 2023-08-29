@@ -430,6 +430,16 @@ def job(request, username, job_id):
         for graph in comment.graph_ids:
             context['graph_div'][graph] = comment.display_card_class()
 
+    # export some settings to the template
+    context['CLOUD_CPU_CORE_COST_PER_HOUR'] = settings.CLOUD_CPU_CORE_COST_PER_HOUR
+    context['CLOUD_GPU_COST_PER_HOUR'] = settings.CLOUD_GPU_COST_PER_HOUR
+    context['ELECTRICITY_COST_PER_KWH'] = settings.ELECTRICITY_COST_PER_KWH
+    context['ELECTRIC_CAR_RANGE_KM_PER_KWH'] = settings.ELECTRIC_CAR_RANGE_KM_PER_KWH
+    context['CO2_KG_PER_MWH'] = settings.CO2_KG_PER_MWH
+    context['AMORTIZATION_YEARS'] = settings.AMORTIZATION_YEARS
+    context['CPU_CORE_COST_PER_HOUR'] = settings.CPU_CORE_COST_PER_HOUR
+    context['GPU_COST_PER_HOUR'] = settings.GPU_COST_PER_HOUR
+
     return render(request, 'jobstats/job.html', context)
 
 

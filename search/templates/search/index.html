@@ -23,7 +23,7 @@
             <label class="form-check-label" for="typefilter-all">{% translate "All" %}</label>
         </div>
 
-        {% if settings.SEARCH_INCLUDE_USERS %}
+        {% if SEARCH_INCLUDE_USERS %}
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-users" value="users"
                 onclick="processQuery()">
@@ -31,7 +31,7 @@
         </div>
         {% endif %}
 
-        {% if settings.SEARCH_INCLUDE_SLURM_ACCOUNTS %}
+        {% if SEARCH_INCLUDE_SLURM_ACCOUNTS %}
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-slurm" value="slurm"
                 onclick="processQuery()">
@@ -39,7 +39,7 @@
         </div>
         {% endif %}
 
-        {% if settings.SEARCH_INCLUDE_GPFS_QUOTAS %}
+        {% if SEARCH_INCLUDE_GPFS_QUOTAS %}
         <div class="form-check form-check-inline">
             <input class="form-check-input" type="radio" name="SearchTypeFilter" id="typefilter-quotas" value="quotas"
                 onclick="processQuery()">

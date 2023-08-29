@@ -58,9 +58,9 @@ class CloudflareAccessLDAPBackend(ModelBackend):
             has_staff_attr = False
             for attribute, value in settings.CF_ACCESS_CONFIG['staff_attributes']:
                 if (attribute in jwt_data['custom']):
-                    if (type(jwt_data['custom'][attribute]) == list) and (value in jwt_data['custom'][attribute]):
+                    if (type(jwt_data['custom'][attribute]) is list) and (value in jwt_data['custom'][attribute]):
                         has_staff_attr = True
-                    elif (type(jwt_data['custom'][attribute]) == str) and (value == jwt_data['custom'][attribute]):
+                    elif (type(jwt_data['custom'][attribute]) is str) and (value == jwt_data['custom'][attribute]):
                         has_staff_attr = True
 
             user.is_staff = has_staff_attr

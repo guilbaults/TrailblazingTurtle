@@ -456,12 +456,34 @@ def graph_gpu_priority(request, account):
 
 # auth done in functions above
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
+    if 'start' in request.GET:
+        try:
+            start = datetime.fromtimestamp(int(request.GET['start']))
+        except ValueError:
+            start = datetime.now() - LONG_PERIOD
+    else:
+        start = datetime.now() - LONG_PERIOD
+
+    if 'end' in request.GET:
+        try:
+            end = datetime.fromtimestamp(int(request.GET['end']))
+        except ValueError:
+            end = datetime.now()
+    else:
+        end = datetime.now()
+
+    # start and end can't be in the future
+    if start > datetime.now():
+        start = datetime.now()
+    if end > datetime.now():
+        end = datetime.now()
+
     data = []
     if gpu_or_cpu == 'gpu':
         query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
         query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
-    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_alloc = prom.query_prometheus(query_alloc, start, end, step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0]))
     y = stats_alloc[1]
@@ -500,7 +522,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         query_used = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
         query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
-    stats_used = prom.query_prometheus(query_used, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_used = prom.query_prometheus(query_used, start, end, step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0]))
     y = stats_used[1]
@@ -517,7 +539,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data.append(used)
 
     query_levelfs = 'slurm_account_levelfs{{account="{}", {}}}'.format(account, prom.get_filter())
-    stats_levelfs = prom.query_prometheus(query_levelfs, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_levelfs = prom.query_prometheus(query_levelfs, start, end, step='1h')
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_levelfs[0]))
     y = stats_levelfs[1]

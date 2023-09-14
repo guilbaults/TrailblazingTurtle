@@ -8,10 +8,15 @@ function replace_div_nodata(container_div){
     $(container_div).html('<div class="alert alert-primary" role="alert">' + nodataString + '</div>');
 }
 
-function loadGraph(container, url, show_loading = true){
+var debounce_loadGraph = _.debounce(function(container, url){
+    loadGraph(container, url);
+}, 100);
+
+function loadGraph(container, url){
     var container_div = '#' + container;
     const loadingString = gettext('Loading...');
-    if(show_loading){
+    //if content of div is empty, show loading spinner
+    if($('#' + container).html().trim().length == 0){
         $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
     }
 
@@ -51,7 +56,7 @@ function loadGraph(container, url, show_loading = true){
 
                         // get the new range and reload the graph
                         var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
-                        loadGraph(container, newurl, false);
+                        debounce_loadGraph(container, newurl);
                     });
                 }
             }

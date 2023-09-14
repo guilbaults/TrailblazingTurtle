@@ -178,6 +178,41 @@ def get_step(start, end=None):
         return int(delta.total_seconds() / RESOLUTION)
 
 
+def parse_start_end(func):
+    """Decorator to parse start and end parameters"""
+    @functools.wraps(func)
+    def wrapper(request, *args, **kwargs):
+        if 'start' in request.GET:
+            try:
+                start = datetime.fromtimestamp(int(request.GET['start']))
+            except ValueError:
+                start = datetime.now() - timedelta(days=14)
+        else:
+            start = datetime.now() - timedelta(days=14)
+
+        if 'end' in request.GET:
+            try:
+                end = datetime.fromtimestamp(int(request.GET['end']))
+            except ValueError:
+                end = datetime.now()
+        else:
+            end = datetime.now()
+
+        # start and end can't be in the future
+        if start > datetime.now():
+            start = datetime.now()
+        if end > datetime.now():
+            end = datetime.now()
+
+        request.start = start
+        request.end = end
+
+        request.step = get_step(start, end)
+
+        return func(request, *args, **kwargs)
+    return wrapper
+
+
 class Prometheus:
     def __init__(self, config):
         self.prom = PrometheusConnect(

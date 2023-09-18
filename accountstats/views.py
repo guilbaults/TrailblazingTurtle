@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
-from userportal.common import account_or_staff, Prometheus
+from userportal.common import account_or_staff, Prometheus, parse_start_end
 from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account
 from notes.models import Note
 
@@ -44,10 +44,11 @@ def account(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_cpu_allocated(request, account):
     data = []
     query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, request.start, request.end, step=request.step)
 
     for line in stats_alloc:
         user = line['metric']['user']
@@ -68,10 +69,11 @@ def graph_cpu_allocated(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_application(request, account):
     data = []
     query_alloc = 'slurm_job:process_usage:sum_account{{account="{}", {}}}'.format(account, prom.get_filter())
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, request.start, request.end, step=request.step)
 
     for line in stats_alloc:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -91,10 +93,11 @@ def graph_application(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_cpu_used(request, account):
     data = []
     query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
-    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_used = prom.query_prometheus_multiple(query_used, request.start, request.end, step=request.step)
 
     for line in stats_used:
         user = line['metric']['user']
@@ -115,10 +118,11 @@ def graph_cpu_used(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_cpu_wasted(request, account):
     data = []
     query_alloc = 'clamp_min(sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user), 0)'.format(account, prom.get_filter(), account, prom.get_filter())
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, request.start, request.end, step=request.step)
 
     for line in stats_alloc:
         user = line['metric']['user']
@@ -138,10 +142,11 @@ def graph_cpu_wasted(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_mem_allocated(request, account):
     data = []
     query_alloc = 'sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, request.start, request.end, step=request.step)
 
     for line in stats_alloc:
         user = line['metric']['user']
@@ -168,10 +173,11 @@ def graph_mem_allocated(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_mem_used(request, account):
     data = []
     query_used = 'sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
-    stats_used = prom.query_prometheus_multiple(query_used, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_used = prom.query_prometheus_multiple(query_used, request.start, request.end, step=request.step)
 
     for line in stats_used:
         user = line['metric']['user']
@@ -198,10 +204,11 @@ def graph_mem_used(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_mem_wasted(request, account):
     data = []
     query_alloc = 'clamp_min(sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user), 0) /(1024*1024*1024)'.format(account, prom.get_filter(), account, prom.get_filter())
-    stats_alloc = prom.query_prometheus_multiple(query_alloc, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, request.start, request.end, step=request.step)
 
     for line in stats_alloc:
         user = line['metric']['user']
@@ -289,9 +296,10 @@ def graph_lustre_ost(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_gpu_allocated(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     for line in stats:
@@ -312,9 +320,10 @@ def graph_gpu_allocated(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_gpu_used(request, account):
     query = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     for line in stats:
@@ -335,9 +344,10 @@ def graph_gpu_used(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 def graph_gpu_wasted(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter(), account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - SHORT_PERIOD, datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     for line in stats:
@@ -357,10 +367,11 @@ def graph_gpu_wasted(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_allocated(request, account):
     query = 'count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300'.format(account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     for line in stats:
@@ -386,10 +397,11 @@ def graph_gpu_power_allocated(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_used(request, account):
     query = 'sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000'.format(account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     for line in stats:
@@ -415,10 +427,11 @@ def graph_gpu_power_used(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=30))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_wasted(request, account):
     query = '(count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300) - (sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000)'.format(account, prom.get_filter(), account, prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.ste)
 
     data = []
     for line in stats:
@@ -455,13 +468,14 @@ def graph_gpu_priority(request, account):
 
 
 # auth done in functions above
+@parse_start_end(default_start=datetime.now() - timedelta(days=90))
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data = []
     if gpu_or_cpu == 'gpu':
         query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
         query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
-    stats_alloc = prom.query_prometheus(query_alloc, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_alloc = prom.query_prometheus(query_alloc, request.start, request.end, step=request.step)
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0]))
     y = stats_alloc[1]
@@ -500,7 +514,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
         query_used = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
     else:
         query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) or vector(0)'.format(account, prom.get_filter())
-    stats_used = prom.query_prometheus(query_used, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_used = prom.query_prometheus(query_used, request.start, request.end, step=request.step)
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0]))
     y = stats_used[1]
@@ -517,7 +531,7 @@ def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data.append(used)
 
     query_levelfs = 'slurm_account_levelfs{{account="{}", {}}}'.format(account, prom.get_filter())
-    stats_levelfs = prom.query_prometheus(query_levelfs, datetime.now() - LONG_PERIOD, datetime.now(), step='1h')
+    stats_levelfs = prom.query_prometheus(query_levelfs, request.start, request.end, step=request.step)
 
     x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_levelfs[0]))
     y = stats_levelfs[1]

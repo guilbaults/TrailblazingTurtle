@@ -8,10 +8,17 @@ function replace_div_nodata(container_div){
     $(container_div).html('<div class="alert alert-primary" role="alert">' + nodataString + '</div>');
 }
 
+var debounce_loadGraph = _.debounce(function(container, url){
+    loadGraph(container, url);
+}, 100);
+
 function loadGraph(container, url){
     var container_div = '#' + container;
     const loadingString = gettext('Loading...');
-    $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
+    //if content of div is empty, show loading spinner
+    if($('#' + container).html().trim().length == 0){
+        $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
+    }
 
     $.ajax({
         url : url,
@@ -35,6 +42,22 @@ function loadGraph(container, url){
                         content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
                     }
                     Plotly.newPlot(container, content['data'], content['layout']);
+
+                    $(container_div).on('plotly_relayout', function(self, relayout_data){
+                        var end_date = new Date(relayout_data['xaxis.range[1]']);
+                        var end_date_unix = Math.round(end_date.getTime() / 1000);
+
+                        var start_date = new Date(relayout_data['xaxis.range[0]']);
+                        var start_date_unix = Math.round(start_date.getTime() / 1000);
+
+                        // remove the old parameters from the url string
+                        var url_splitted = url.split('?');
+                        url = url_splitted[0];
+
+                        // get the new range and reload the graph
+                        var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
+                        debounce_loadGraph(container, newurl);
+                    });
                 }
             }
         },

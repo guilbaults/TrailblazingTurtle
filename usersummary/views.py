@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from userportal.common import user_or_staff, Prometheus, username_to_uid
+from userportal.common import user_or_staff, Prometheus, username_to_uid, parse_start_end
 from userportal.common import storage_allocations
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
@@ -79,6 +79,7 @@ def user(request, username):
 
 @login_required
 @user_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=90))
 def graph_inodes(request, username, resource_type, resource_name):
     allocs = storage_allocations(username)
     for alloc in allocs:
@@ -89,8 +90,7 @@ def graph_inodes(request, username, resource_type, resource_name):
         return HttpResponseForbidden
 
     query = get_quota_prometheus_request(resource_type, resource_name, 'inodes')
-
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(days=90), datetime.now(), step="6h")
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     if len(stats) > 0:
@@ -127,6 +127,7 @@ def graph_inodes(request, username, resource_type, resource_name):
 
 @login_required
 @user_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=90))
 def graph_bytes(request, username, resource_type, resource_name):
     allocs = storage_allocations(username)
     for alloc in allocs:
@@ -137,8 +138,7 @@ def graph_bytes(request, username, resource_type, resource_name):
         return HttpResponseForbidden
 
     query = get_quota_prometheus_request(resource_type, resource_name, 'bytes')
-
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(days=180), datetime.now(), step="6h")
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
     data = []
     if len(stats) > 0:

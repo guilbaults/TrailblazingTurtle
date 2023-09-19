@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from userportal.common import account_or_staff, Prometheus, parse_start_end
 from userportal.common import compute_allocations_by_user, compute_allocations_by_slurm_account
+from userportal.common import anonymize as a
 from notes.models import Note
 
 
@@ -78,7 +79,7 @@ def graph(request, query, stacked=True, unit=None):
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': user,
+            'name': a(user),
             'hovertemplate': '%{y:.1f}',
         }
         if stacked:
@@ -157,7 +158,7 @@ def graph_lustre_ost(request, account):
 
         for line in stats:
             fs = line['metric']['fs']
-            user = line['metric']['user']
+            user = a(line['metric']['user'])
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             if i == 'read':
                 y = line['y']

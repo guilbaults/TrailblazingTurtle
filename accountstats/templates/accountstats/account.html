@@ -2,7 +2,7 @@
 {% load humanize %}
 {% load i18n %}
 
-{% block title %}{% translate "Account use of" %} {{ account }}{% endblock title %}
+{% block title %}{% translate "Account use of" %} {{ account | anonymize }}{% endblock title %}
 
 {% block content %}
 {% include "notes_header.html" %}
@@ -10,7 +10,7 @@
 <p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new?account={{account}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
-<h1>{% translate "Account use of" %} {{ account }}</h1>
+<h1>{% translate "Account use of" %} {{ account | anonymize}}</h1>
 <div class="card">
   <div class="card-body">
     <div class="card-text">
@@ -222,6 +222,13 @@ $(document).ready(function() {
       { data: 'username', 
         orderable: false,
         searchable: false,
+        render: function(date, type, row, meta){
+          if(document.getElementById("demo")){
+            return '[redacted]';
+          } else {
+            return row.username;
+          }
+        }
       },
       { data: 'id_job',
         render: function ( data, type, row ) {
@@ -235,7 +242,15 @@ $(document).ready(function() {
           return '<span class="badge badge-' + state_to_badge(data) + '">' + data + '</span>';
         }
       },
-      { data: 'job_name' },
+      { data: 'job_name',
+        render: function(date, type, row, meta){
+          if(document.getElementById("demo")){
+            return '[redacted]';
+          } else {
+            return row.job_name;
+          }
+        }
+      },
       { data: 'time_submit',
         render: parse_time,
       },

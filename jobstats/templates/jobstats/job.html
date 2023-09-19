@@ -39,11 +39,7 @@
   </table>
 
 {% else %}
-  {% if settings.DEMO %}
-  <h1>{% translate "Details on job" %} [redacted] ({{job_id}})</h1>
-  {% else %}
-  <h1>{% translate "Details on job" %} {{job.job_name}} ({{job_id}})</h1>
-  {% endif %}
+  <h1>{% translate "Details on job" %} {{job.job_name | anonymize}} ({{job_id}})</h1>
   <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
   <div class="progress">
     {% if job.time_start != 0 and job.time_end == 0 %}
@@ -128,19 +124,10 @@
       <tr>
         <td>
           {% if 'accountstats' in settings.INSTALLED_APPS %}
-            <a href="{{settings.BASE_URL}}secure/accountstats/{{ job.account }}">
-              {% if settings.DEMO %}
-              [redacted]
-              {% else %}
-              {{job.account}}
-              {% endif %}
+            <a href="{{settings.BASE_URL}}secure/accountstats/{{ job.account }}">{{job.account | anonymize}}
             </a>
           {% else %}
-            {% if settings.DEMO %}
-            [redacted]
-            {% else %}
-            {{job.account}}
-            {% endif %}
+            {{job.account | anonymize}}
           {% endif %}
         </td>
         <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>

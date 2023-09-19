@@ -429,6 +429,10 @@ def job(request, username, job_id):
         for exe in stats_exe:
             name = exe['metric']['exe']
             value = statistics.mean(exe['y'])
+            if settings.DEMO:
+                if not name.startswith('/cvmfs'):
+                    # skip non-cvmfs applications in demo mode
+                    name = '[redacted]'
             context['applications'].append({'name': name, 'value': value})
     except ValueError:
         pass

@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from userportal.common import staff, Prometheus, uid_to_username
+from userportal.common import anonymize as a
 from slurm.models import JobTable
 from notes.models import Note
 from django.conf import settings
@@ -329,9 +330,10 @@ def graph_lustre_mdt(request, fs):
     data = []
     for line in stats:
         try:
-            user = line['metric']['user']
+            user = a(line['metric']['user'])
         except KeyError:
             user = 'others'
+
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data.append({
@@ -362,9 +364,10 @@ def graph_lustre_ost(request, fs):
 
         for line in stats:
             try:
-                user = line['metric']['user']
+                user = a(line['metric']['user'])
             except KeyError:
                 user = 'others'
+
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             if rw == 'read':
                 y = line['y']

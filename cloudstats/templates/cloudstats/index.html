@@ -36,7 +36,7 @@
     <tbody>
   {% for project in all_projects %}
     <tr>
-      <td><a href="{{ project.name }}">{{project.name}}</a></td>
+      <td><a href="{{ project.id }}">{{project.name | anonymize }}</a></td>
       <td>{{project.cores}}</td>
     </tr>
   {% endfor %}

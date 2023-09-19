@@ -2,10 +2,10 @@
 {% load humanize %}
 {% load i18n %}
 
-{% block title %}{% translate "Your instance use" %}{% endblock title %}
+{% block title %}{% translate "Your instance " %}{{instance_name | anonymize }}{% endblock title %}
 
 {% block content %}
-<h1>{% translate "Your instance use" %}</h1>
+<h1>{% translate "Your instance " %}{{instance_name | anonymize }}</h1>
 
 {% include "nav_last_month.html" %}
 

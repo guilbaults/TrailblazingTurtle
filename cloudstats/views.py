@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import JsonResponse
 from userportal.common import openstackproject_or_staff, cloud_projects_by_user, request_to_username, staff, Prometheus, query_time
+from userportal.common import anonymize as a
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -21,7 +22,11 @@ def index(request):
             filter=prom.get_filter(),
         )
         for project in prom.query_last(query_projects):
-            context['all_projects'].append({'name': project['metric']['project_name'], 'cores': int(project['value'][1])})
+            context['all_projects'].append({
+                'id': project['metric']['project_name'],
+                'name': project['metric']['project_name'],
+                'cores':
+                int(project['value'][1])})
 
     return render(request, 'cloudstats/index.html', context)
 
@@ -46,6 +51,12 @@ def project(request, project):
 @openstackproject_or_staff
 def instance(request, project, uuid):
     context = {}
+    query_instances = 'libvirtd_domain_domain_state{{project_name="{project}", uuid="{uuid}", {filter}}}'.format(
+        project=project,
+        uuid=uuid,
+        filter=prom.get_filter())
+    stats_instances = prom.query_prometheus_multiple(query_instances, datetime.now() - timedelta(days=7), datetime.now())
+    context['instance_name'] = stats_instances[0]['metric']['instance_name']
 
     return render(request, 'cloudstats/instance.html', context)
 
@@ -70,9 +81,9 @@ def project_graph_cpu(request, project):
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if instance_counter[line['metric']['instance_name']] > 1:
-            name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
+            name = '{0} {1}'.format(a(line['metric']['instance_name']), line['metric']['uuid'])
         else:
-            name = line['metric']['instance_name']
+            name = a(line['metric']['instance_name'])
         data.append({
             'x': x,
             'y': y,
@@ -121,7 +132,7 @@ def projects_graph_cpu(request):
             'y': line['y'],
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['project_name'],
+            'name': a(line['metric']['project_name']),
             'hovertemplate': '%{y:.1f}',
         })
 
@@ -214,9 +225,9 @@ def project_graph_memory(request, project):
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         if instance_counter[line['metric']['instance_name']] > 1:
-            name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
+            name = '{0} {1}'.format(a(line['metric']['instance_name']), line['metric']['uuid'])
         else:
-            name = line['metric']['instance_name']
+            name = a(line['metric']['instance_name'])
         data.append({
             'x': x,
             'y': y,
@@ -313,7 +324,7 @@ def projects_graph_mem(request):
             'y': line['y'],
             'type': 'scatter',
             'stackgroup': 'one',
-            'name': line['metric']['project_name'],
+            'name': a(line['metric']['project_name']),
             'hovertemplate': '%{y:.1f}',
         })
 
@@ -365,9 +376,9 @@ def project_graph_disk_bandwidth(request, project):
             else:
                 y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
-                name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
+                name = '{0} {1}'.format(a(line['metric']['instance_name']), line['metric']['uuid'])
             else:
-                name = line['metric']['instance_name']
+                name = a(line['metric']['instance_name'])
             data.append({
                 'x': x,
                 'y': y,
@@ -451,9 +462,9 @@ def project_graph_disk_iops(request, project):
             else:
                 y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
-                name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
+                name = '{0} {1}'.format(a(line['metric']['instance_name']), line['metric']['uuid'])
             else:
-                name = line['metric']['instance_name']
+                name = a(line['metric']['instance_name'])
             data.append({
                 'x': x,
                 'y': y,
@@ -534,9 +545,9 @@ def project_graph_network_bandwidth(request, project):
             else:
                 y = [-x for x in line['y']]
             if instance_counter[line['metric']['instance_name']] > 1:
-                name = '{0} {1}'.format(line['metric']['instance_name'], line['metric']['uuid'])
+                name = '{0} {1}'.format(a(line['metric']['instance_name']), line['metric']['uuid'])
             else:
-                name = line['metric']['instance_name']
+                name = a(line['metric']['instance_name'])
             data.append({
                 'x': x,
                 'y': y,

@@ -95,6 +95,7 @@ TEMPLATES = [
                 'django_settings_export.settings_export',
                 'django.template.context_processors.request',
             ],
+            'builtins': ['userportal.templatetags'],
         },
     },
 ]
@@ -163,6 +164,11 @@ LDAP_BASE_DN = 'dc=computecanada,dc=ca'
 
 LOGIN_REDIRECT_URL = '/'
 
+# Set to DEMO to True to enable demo mode with anonymized data
+# This is partially done in javascript, so its only safe in a presentation in fullscreen
+# The URLs still contains the real usernames
+DEMO = False
+
 SETTINGS_EXPORT = [
     'CLUSTER_NAME_TITLE',
     'FAVICON',
@@ -171,6 +177,7 @@ SETTINGS_EXPORT = [
     'EXTERNAL_LINKS',
     'OTHER_PORTALS',
     'BASE_URL',
+    'DEMO',
 ]
 
 INTERNAL_IPS = [

@@ -27,7 +27,7 @@
     {% for alloc in allocs %}
     <tr>
       <td>{{alloc.type}}</td>
-      <td>{{alloc.name}}</td>
+      <td>{{alloc.name | anonymize }}</td>
       <td>{{ alloc.inodes | intword | default_if_none:less_than_50 }} on {{ alloc.quota_inodes | intword }} {% translate "inodes" %}
         {% if alloc.inodes > alloc.quota_inodes %}
         <br /><span class="text-danger">{% translate "Over quota" %}</span>
@@ -69,7 +69,7 @@
     <tr>
       <th scope="row"><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{job.id_job}}">{{job.id_job}}</a></th>
       <td><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></td>
-      <td>{{job.job_name}}</td>
+      <td>{{job.job_name | anonymize }}</td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_submit_dt}}">{{job.time_submit_dt | naturaltime}} <span data-feather="info"></span></span></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_start_dt}}">{{job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{job.time_end_dt}}">{{job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span></td>

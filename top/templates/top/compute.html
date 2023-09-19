@@ -36,7 +36,7 @@
   <tbody>
 {% for user in cpu_users %}
     <tr>
-      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{user.user}}">{{user.user}}
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{user.user}}">{{user.user | anonymize}}
         {% if user.note_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>

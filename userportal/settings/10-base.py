@@ -163,6 +163,8 @@ LDAP_BASE_DN = 'dc=computecanada,dc=ca'
 
 LOGIN_REDIRECT_URL = '/'
 
+DEMO = False # Set to True to enable demo mode with anonymized data, this is done on the browser side, so only safe when showing with a browser
+
 SETTINGS_EXPORT = [
     'CLUSTER_NAME_TITLE',
     'FAVICON',
@@ -171,6 +173,7 @@ SETTINGS_EXPORT = [
     'EXTERNAL_LINKS',
     'OTHER_PORTALS',
     'BASE_URL',
+    'DEMO',
 ]
 
 INTERNAL_IPS = [

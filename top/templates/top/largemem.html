@@ -41,7 +41,12 @@
   <tbody>
 {% for job in jobs %}
     <tr>
-      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}">{{job.user}}
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}">
+        {% if settings.DEMO %}
+          [redacted]
+        {% else %}
+          {{job.user}}
+        {% endif %}
         {% if job.user_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>

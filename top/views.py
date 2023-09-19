@@ -332,6 +332,10 @@ def graph_lustre_mdt(request, fs):
             user = line['metric']['user']
         except KeyError:
             user = 'others'
+
+        if settings.DEMO:
+            user = '[redacted]'
+
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
         data.append({
@@ -365,6 +369,10 @@ def graph_lustre_ost(request, fs):
                 user = line['metric']['user']
             except KeyError:
                 user = 'others'
+
+            if settings.DEMO:
+                user = '[redacted]'
+
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             if rw == 'read':
                 y = line['y']

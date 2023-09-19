@@ -51,7 +51,12 @@
   <tbody>
 {% for user in gpu_users %}
     <tr>
-      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{user.user}}">{{user.user}}
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{user.user}}">
+        {% if settings.DEMO %}
+          [redacted]
+        {% else %}
+          {{user.user}}
+        {% endif %}
         {% if user.note_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>

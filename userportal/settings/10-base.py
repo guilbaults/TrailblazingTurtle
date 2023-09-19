@@ -164,7 +164,10 @@ LDAP_BASE_DN = 'dc=computecanada,dc=ca'
 
 LOGIN_REDIRECT_URL = '/'
 
-DEMO = False # Set to True to enable demo mode with anonymized data, this is done on the browser side, so only safe when showing with a browser
+# Set to DEMO to True to enable demo mode with anonymized data
+# This is partially done in javascript, so its only safe in a presentation in fullscreen
+# The URLs still contains the real usernames
+DEMO = False
 
 SETTINGS_EXPORT = [
     'CLUSTER_NAME_TITLE',

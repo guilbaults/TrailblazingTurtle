@@ -95,6 +95,7 @@ TEMPLATES = [
                 'django_settings_export.settings_export',
                 'django.template.context_processors.request',
             ],
+            'builtins': ['userportal.templatetags'],
         },
     },
 ]

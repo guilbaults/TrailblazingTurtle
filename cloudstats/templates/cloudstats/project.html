@@ -19,7 +19,7 @@
   <tbody>
 {% for instance in instances %}
     <tr>
-      <td><a href="{{ instance.uuid }}">{{ instance.instance_name }}</a></td>
+      <td><a href="{{ instance.uuid }}">{{ instance.instance_name | anonymize }}</a></td>
       <td>{{ instance.instance_type }}</td>
       <td>{{ instance.uuid }}</td>
     </tr>

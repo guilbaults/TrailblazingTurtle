@@ -7,10 +7,13 @@ from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user
 import yaml
 from django.conf import settings
 import os
+import userportal.petname as petname
 
 
 # How many points in the X axis of the graphs
 RESOLUTION = 500
+
+PET = petname.petname('roh8evuLohRohgheesoh')
 
 
 def user_or_staff(func):
@@ -212,6 +215,14 @@ def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_en
 
 def fixed_zoom_config():
     return {'modeBarButtonsToRemove': ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'lasso2d', 'select2d']}
+
+
+def anonymize(name):
+    # return an anonymized name if running in demo mode
+    if settings.DEMO:
+        return PET.anonymize(name)
+    else:
+        return name
 
 
 class Prometheus:

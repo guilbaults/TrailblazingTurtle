@@ -36,13 +36,13 @@ groups:
   - record: slurm_job:used_gpu:sum
     expr: sum(slurm_job_utilization_gpu) by (cluster)/ 100
   - record: slurm_job:used_gpu:sum_user_account
-    expr: sum(slurm_job_utilization_gpu) by (user,account,cluster) / 100
+    expr: sum(slurm_job_utilization_gpu) by (gpu_type,user,account,cluster) / 100
   - record: slurm_job:non_idle_gpu:sum_user_account
-    expr: count(slurm_job_utilization_gpu > 0) by (user,account,cluster)
+    expr: count(slurm_job_utilization_gpu > 0) by (gpu_type,user,account,cluster)
   - record: slurm_job:power_gpu:sum
-    expr: sum(slurm_job_power_gpu) by (cluster)
+    expr: sum(slurm_job_power_gpu) by (gpu_type,cluster)
   - record: slurm_job:power_gpu:sum_user_account
-    expr: sum(slurm_job_power_gpu) by (user,account,cluster)
+    expr: sum(slurm_job_power_gpu) by (gpu_type,user,account,cluster)
   - record: slurm_job:process_usage:sum_account
     expr: sum(label_replace(deriv(slurm_job_process_usage_total{}[1m]) > 0, "bin", "$1", "exe", ".*/(.*)")) by (cluster, account, bin)
 ```

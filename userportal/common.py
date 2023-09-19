@@ -210,6 +210,10 @@ def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_en
     return decorator_wrapper
 
 
+def fixed_zoom_config():
+    return {'modeBarButtonsToRemove': ['zoom2d', 'pan2d', 'zoomIn2d', 'zoomOut2d', 'lasso2d', 'select2d']}
+
+
 class Prometheus:
     def __init__(self, config):
         self.prom = PrometheusConnect(

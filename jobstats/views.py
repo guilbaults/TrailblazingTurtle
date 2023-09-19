@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
 from slurm.models import JobTable, AssocTable
-from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step, parse_start_end
+from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step, parse_start_end, fixed_zoom_config
 from django.conf import settings
 from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
@@ -95,7 +95,17 @@ prom = Prometheus(settings.PROMETHEUS)
 
 def sanitize_step(request, minimum=30):
     # all in seconds, will return the smallest interval allowed to drap a graph
-    return max(int(request.GET.get('step')), minimum)
+    try:
+        step = int(request.GET.get('step'))
+    except ValueError:
+        step = minimum
+    except TypeError:
+        step = minimum
+
+    if step < minimum:
+        return minimum
+    else:
+        return step
 
 
 def jobid_str_to_list(jobid_str):
@@ -498,16 +508,16 @@ def graph_cpu(request, username, job_id):
             }
         }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=2))
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
 def graph_cpu_user(request, username):
     data = []
     try:
-        query_used = 'sum(rate(slurm_job_core_usage_total{{user="{}", {}}}[{}s])) / 1000000000'.format(username, prom.get_filter(), prom.rate('slurm-job-exporter'))
+        query_used = 'sum(slurm_job:used_core:sum_user_account{{user="{}", {}}})'.format(username, prom.get_filter())
         stats_used = prom.query_prometheus(query_used, request.start, request.end, step=request.step)
         data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
@@ -517,7 +527,7 @@ def graph_cpu_user(request, username):
             'hovertemplate': '%{y:.1f}',
         })
 
-        query_alloc = 'sum(count(slurm_job_core_usage_total{{user="{}", {}}}))'.format(username, prom.get_filter())
+        query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{user="{}", {}}})'.format(username, prom.get_filter())
         stats_alloc = prom.query_prometheus(query_alloc, request.start, request.end, step=request.step)
         data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
@@ -540,11 +550,11 @@ def graph_cpu_user(request, username):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=2))
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
 def graph_mem_user(request, username):
     data = []
     try:
-        query_alloc = 'sum(slurm_job_memory_limit{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
+        query_alloc = 'sum(slurm_job:allocated_memory:sum_user_account{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_alloc = prom.query_prometheus(query_alloc, request.start, request.end, step=request.step)
         data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
@@ -554,7 +564,7 @@ def graph_mem_user(request, username):
             'hovertemplate': '%{y:.1f}',
         })
 
-        query_max = 'sum(slurm_job_memory_max{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
+        query_max = 'sum(slurm_job:max_memory:sum_user_account{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_max = prom.query_prometheus(query_max, request.start, request.end, step=request.step)
         data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_max[0])),
@@ -564,7 +574,7 @@ def graph_mem_user(request, username):
             'hovertemplate': '%{y:.1f}',
         })
 
-        query_used = 'sum(slurm_job_memory_usage{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
+        query_used = 'sum(slurm_job:rss_memory:sum_user_account{{user="{}", {}}})/(1024*1024*1024)'.format(username, prom.get_filter())
         stats_used = prom.query_prometheus(query_used, request.start, request.end, step=request.step)
         data.append({
             'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
@@ -658,7 +668,7 @@ def graph_mem(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -747,7 +757,7 @@ def graph_thread(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -789,7 +799,7 @@ def graph_lustre_mdt(request, username, job_id):
             'title': _('IOPS'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -865,7 +875,7 @@ def graph_lustre_ost(request, username, job_id):
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -953,16 +963,16 @@ def graph_gpu_utilization(request, username, job_id):
             'title': _('GPU Utilization'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=2))
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
 def graph_gpu_utilization_user(request, username):
     data = []
 
-    query_alloc = 'count(slurm_job_utilization_gpu{{user="{}", {}}})'.format(username, prom.get_filter())
+    query_alloc = 'sum(slurm_job:allocated_gpu:count_user_account{{user="{}", {}}})'.format(username, prom.get_filter())
     stats_alloc = prom.query_prometheus(query_alloc, request.start, request.end, step=request.step)
     data.append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_alloc[0])),
@@ -972,7 +982,7 @@ def graph_gpu_utilization_user(request, username):
         'hovertemplate': '%{y:.1f}',
     })
 
-    query_used = 'sum(slurm_job_utilization_gpu{{user="{}", {}}})/100'.format(username, prom.get_filter())
+    query_used = 'sum(slurm_job:used_gpu:sum_user_account{{user="{}", {}}})'.format(username, prom.get_filter())
     stats_used = prom.query_prometheus(query_used, request.start, request.end, step=request.step)
     data.append({
         'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), stats_used[0])),
@@ -1027,7 +1037,7 @@ def graph_gpu_memory_utilization(request, username, job_id):
             'title': _('GPU Memory Utilization'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1067,7 +1077,7 @@ def graph_gpu_memory(request, username, job_id):
             'title': _('GPU Memory'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1117,7 +1127,7 @@ def graph_gpu_power(request, username, job_id):
                 'title': _('GPU Power'),
             }
         }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1212,7 +1222,7 @@ def graph_gpu_pcie(request, username, job_id):
             'title': _('Bandwidth'),
         }
     }
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1312,7 +1322,7 @@ def graph_ethernet_bdw(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1367,7 +1377,7 @@ def graph_infiniband_bdw(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1425,7 +1435,7 @@ def graph_disk_iops(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1484,7 +1494,7 @@ def graph_disk_bdw(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1521,7 +1531,7 @@ def graph_disk_used(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1563,7 +1573,7 @@ def graph_mem_bdw(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1686,7 +1696,7 @@ def graph_cache_rate(request, username, job_id, l_cache):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 def graph_ipc(request, username, job_id):
@@ -1721,7 +1731,7 @@ def graph_ipc(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required
@@ -1760,7 +1770,7 @@ def graph_cpu_interconnect(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 def power(job, step):
@@ -1824,7 +1834,7 @@ def graph_power(request, username, job_id):
         }
     }
 
-    return JsonResponse({'data': data, 'layout': layout})
+    return JsonResponse({'data': data, 'layout': layout, 'config': fixed_zoom_config()})
 
 
 @login_required

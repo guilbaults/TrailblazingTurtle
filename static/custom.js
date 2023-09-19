@@ -41,7 +41,12 @@ function loadGraph(container, url){
                         // set a default margin
                         content['layout']['margin'] = {l: 80, r: 0, b: 50, t: 50, pad: 0};
                     }
-                    Plotly.newPlot(container, content['data'], content['layout']);
+
+                    if(content['config'] == undefined) {
+                        content['config'] = {};
+                    }
+
+                    Plotly.newPlot(container, content['data'], content['layout'], content['config']);
 
                     $(container_div).on('plotly_relayout', function(self, relayout_data){
                         var end_date = new Date(relayout_data['xaxis.range[1]']);

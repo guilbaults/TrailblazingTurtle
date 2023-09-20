@@ -41,7 +41,7 @@ def node_gantt(request, node):
         cores = line['y'][0]
         user = line['metric']['user']
         jobid = line['metric']['slurmjobid']
-        if(start == end):
+        if start == end:
             # skip short jobs
             continue
 

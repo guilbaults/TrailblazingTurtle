@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Node" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Node" %}</h1>
+
+<div id="gantt_div">
+</div>
+
+<script>
+    var container_div = '#gantt_div';
+    $.ajax({
+        url : 'gantt.json',
+        type : 'GET',
+        tryCount : 0,
+        retryLimit : 3,
+        dataType    : 'json',
+        contentType : 'application/json',
+        success : function(content) {
+            if(content['data']){
+                if(content['data'].length == 0){
+                    replace_div_nodata(container_div);
+                }
+                else{
+                    const myChart = TimelinesChart()(container_div);
+                    myChart.data(content['data']);
+                }
+            }
+        },
+        error : function(xhr, textStatus, errorThrown ) {
+            if (textStatus == 'timeout' || textStatus == 'error') {
+                this.tryCount++;
+                if (this.tryCount <= this.retryLimit) {
+                    //try again
+                    $.ajax(this);
+                    return;
+                }
+                replace_div_alert(container_div);
+                return;
+            }
+            if (xhr.status == 500) {
+                replace_div_alert(container_div);
+            } else {
+                replace_div_alert(container_div);
+            }
+        }
+    });
+</script>
+{% endblock content %}

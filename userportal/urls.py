@@ -81,3 +81,6 @@ if 'quotasgpfs' in settings.INSTALLED_APPS:
 
 if 'search' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/search/', include('search.urls')))
+
+if 'nodes' in settings.INSTALLED_APPS:
+    urlpatterns.append(path('secure/nodes/', include('nodes.urls')))

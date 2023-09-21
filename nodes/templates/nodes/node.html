@@ -5,64 +5,85 @@
 {% block title %}{% translate "Node" %}{% endblock title %}
 
 {% block content %}
-<h1>{% translate "Node" %}</h1>
+<h1>{% translate "Node" %} {{node}}</h1>
 
-<div id="gantt_div">
+<h2>CPU</h2>
+
+<h2>Memory</h2>
+
+<h2>Jobs</h2>
+
+{% if gpu %}
+<h3>GPUs</h3>
+<div id="gantt_div_gpu">
+{% else %}
+<h3>Cores</h3>
+<div id="gantt_div_cpu">
+{% endif %}
+
 </div>
 
 <script>
-    var container_div = '#gantt_div';
-    const loadingString = gettext('Loading...');
-    if($(container_div).html().trim().length == 0){
-        $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
-    }
-
-    $.ajax({
-        url : 'gantt.json',
-        type : 'GET',
-        tryCount : 0,
-        retryLimit : 3,
-        dataType    : 'json',
-        contentType : 'application/json',
-        success : function(content) {
-            if(content['data']){
-                if(content['data'].length == 0){
-                    replace_div_nodata(container_div);
+    function gantt(url, gantt_div){
+        var container_div = '#' + gantt_div;
+        console.log(container_div);
+        $.ajax({
+            url : url,
+            type : 'GET',
+            tryCount : 0,
+            retryLimit : 3,
+            dataType    : 'json',
+            contentType : 'application/json',
+            success : function(content) {
+                if(content['data']){
+                    if(content['data'].length == 0){
+                        replace_div_nodata(container_div);
+                    }
+                    else{
+                        $(container_div).html('');
+                        const myChart = TimelinesChart()(container_div);
+                        myChart.data(content['data']);
+                        myChart.zDataLabel(content['unit']);
+                        myChart.zQualitative(false);
+                        myChart.maxHeight(content['maxHeight']);
+                        myChart.sortAlpha(true);
+                        myChart.zColorScale(d3.scaleSequential(d3.interpolate("blue", "red"))
+                        .domain([0,content['maxUnit']]));
+                        myChart.width($(container_div).width());
+                        myChart.onSegmentClick(function (d) {
+                            window.location.href = "{{settings.BASE_URL}}secure/jobstats/" + d['group'] + "/" + d['label'] + "/";
+                        });
+                    }
                 }
-                else{
-                    $(container_div).html('');
-                    const myChart = TimelinesChart()(container_div);
-                    myChart.data(content['data']);
-                    myChart.zDataLabel('cores');
-                    myChart.zQualitative(false);
-                    myChart.maxHeight(content['maxHeight']);
-                    myChart.sortAlpha(true);
-                    myChart.zColorScale(d3.scaleSequential(d3.interpolate("blue", "red"))
-                    .domain([0,content['maxCores']]));
-                    myChart.width($(container_div).width());
-                    myChart.onSegmentClick(function (d) {
-                        window.location.href = "{{settings.BASE_URL}}secure/jobstats/" + d['group'] + "/" + d['label'] + "/";
-                    });
-                }
-            }
-        },
-        error : function(xhr, textStatus, errorThrown ) {
-            if (textStatus == 'timeout' || textStatus == 'error') {
-                this.tryCount++;
-                if (this.tryCount <= this.retryLimit) {
-                    //try again
-                    $.ajax(this);
+            },
+            error : function(xhr, textStatus, errorThrown ) {
+                if (textStatus == 'timeout' || textStatus == 'error') {
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        $.ajax(this);
+                        return;
+                    }
+                    replace_div_alert(container_div);
                     return;
                 }
-                replace_div_alert(container_div);
-                return;
+                if (xhr.status == 500) {
+                    replace_div_alert(container_div);
+                } else {
+                    replace_div_alert(container_div);
+                }
             }
-            if (xhr.status == 500) {
-                replace_div_alert(container_div);
-            } else {
-                replace_div_alert(container_div);
-            }
+        });
+        const loadingString = gettext('Loading...');
+        if($(container_div).html().trim().length == 0){
+            $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
         }
-    });
+    }
+
+    {% if gpu %}
+        gantt('gantt_gpu.json', 'gantt_div_gpu');
+    {% else %}
+        gantt('gantt_cpu.json', 'gantt_div_cpu');
+    {% endif %}
 </script>
 {% endblock content %}

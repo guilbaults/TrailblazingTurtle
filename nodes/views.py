@@ -8,6 +8,8 @@ from datetime import datetime, timedelta
 
 
 prom = Prometheus(settings.PROMETHEUS)
+START = datetime.now() - timedelta(days=2)
+END = datetime.now()
 
 
 @login_required
@@ -23,28 +25,43 @@ def index(request):
 def node(request, node):
     context = {}
     context['node'] = node
+
+    query_gpu = 'count(slurm_job_utilization_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats_gpu = prom.query_prometheus_multiple(query_gpu, START, END)
+    context['gpu'] = len(stats_gpu) > 0
+
     return render(request, 'nodes/node.html', context)
 
 
-@login_required
-@staff
-def node_gantt(request, node):
-    start = datetime.now() - timedelta(days=2)
-    end = datetime.now()
+def node_gantt(node, gpu=False):
+    if gpu:
+        query_alloc = 'count(slurm_job_utilization_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}})'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        query_used = 'count(slurm_job_utilization_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        unit = 'gpu'
+    else:
+        query_alloc = 'count(node_cpu_seconds_total{{{hostname_label}=~"{node}(:.*)", mode="idle", {filter}}})'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        query_used = 'count(slurm_job_core_usage_total{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        unit = 'cores'
 
-    query_cores = 'count(node_cpu_seconds_total{{{hostname_label}=~"{node}(:.*)", mode="idle", {filter}}})'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        node=node,
-        filter=prom.get_filter())
-    stats_cores = prom.query_prometheus_multiple(query_cores, start, end)
+    stats_alloc = prom.query_prometheus_multiple(query_alloc, START, END)
 
-    node_cores = stats_cores[0]['y'][0]
-
-    query_used = 'count(slurm_job_core_usage_total{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        node=node,
-        filter=prom.get_filter())
-    stats_used = prom.query_prometheus_multiple(query_used, start, end)
+    node_alloc = max(stats_alloc[0]['y'])
+    stats_used = prom.query_prometheus_multiple(query_used, START, END)
 
     users = {}
     for line in stats_used:
@@ -76,6 +93,19 @@ def node_gantt(request, node):
         })
     return JsonResponse({
         'data': groups,
-        'maxCores': node_cores,
+        'maxUnit': node_alloc,
+        'unit': unit,
         'maxHeight': len(stats_used) * 30,
     })
+
+
+@login_required
+@staff
+def node_gantt_cpu(request, node):
+    return node_gantt(node, gpu=False)
+
+
+@login_required
+@staff
+def node_gantt_gpu(request, node):
+    return node_gantt(node, gpu=True)

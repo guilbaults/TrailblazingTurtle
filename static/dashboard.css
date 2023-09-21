@@ -120,3 +120,8 @@ body {
 .hljs-ln-code {
   padding-left: 10px;
 }
+
+.sparkline {
+  stroke: green;
+  fill: rgba(0, 255, 42, 0.3);
+}

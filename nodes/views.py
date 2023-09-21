@@ -16,6 +16,34 @@ END = datetime.now()
 @staff
 def index(request):
     context = {}
+    # slice of nodes to show in the table
+    start = request.GET.get('start', 0)
+    end = request.GET.get('end', 100)
+
+    query = 'slurm_node_state_info{{ {filter} }}'.format(
+        filter=prom.get_filter()
+    )
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=1), datetime.now())
+    nodes = []
+    for line in stats:
+        nodes.append(line['metric']['node'])
+
+    # pagination
+    nodes = nodes[start:end]
+
+    query_cpu = 'sum(rate(node_cpu_seconds_total{{ {hostname_label}=~"({nodes})(:.*)", mode!="idle", {filter} }}[1m])) by ({hostname_label})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        nodes='|'.join(nodes),
+        filter=prom.get_filter())
+
+    node_stats = {}
+
+    stats_cpu = prom.query_prometheus_multiple(query_cpu, datetime.now() - timedelta(hours=1), datetime.now(), step="1m")
+    for cpu in stats_cpu:
+        node_name = cpu['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
+        node_stats[node_name] = {'cpu': cpu['y']}
+
+    context['node_stats'] = node_stats
 
     return render(request, 'nodes/index.html', context)
 

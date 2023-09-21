@@ -12,6 +12,11 @@
 
 <script>
     var container_div = '#gantt_div';
+    const loadingString = gettext('Loading...');
+    if($(container_div).html().trim().length == 0){
+        $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
+    }
+
     $.ajax({
         url : 'gantt.json',
         type : 'GET',
@@ -25,6 +30,7 @@
                     replace_div_nodata(container_div);
                 }
                 else{
+                    $(container_div).html('');
                     const myChart = TimelinesChart()(container_div);
                     myChart.data(content['data']);
                     myChart.zDataLabel('cores');
@@ -33,6 +39,10 @@
                     myChart.sortAlpha(true);
                     myChart.zColorScale(d3.scaleSequential(d3.interpolate("blue", "red"))
                     .domain([0,content['maxCores']]));
+                    myChart.width($(container_div).width());
+                    myChart.onSegmentClick(function (d) {
+                        window.location.href = "{{settings.BASE_URL}}secure/jobstats/" + d['group'] + "/" + d['label'] + "/";
+                    });
                 }
             }
         },

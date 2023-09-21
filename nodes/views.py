@@ -3,6 +3,7 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import JsonResponse
 from userportal.common import staff, Prometheus
+from userportal.common import anonymize as a
 from datetime import datetime, timedelta
 
 
@@ -31,14 +32,16 @@ def node_gantt(request, node):
     start = datetime.now() - timedelta(days=2)
     end = datetime.now()
 
-    query_cores = 'count(node_cpu_seconds_total{{instance=~"{node}(:.*)", mode="idle", {filter}}})'.format(
+    query_cores = 'count(node_cpu_seconds_total{{{hostname_label}=~"{node}(:.*)", mode="idle", {filter}}})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         node=node,
         filter=prom.get_filter())
     stats_cores = prom.query_prometheus_multiple(query_cores, start, end)
 
     node_cores = stats_cores[0]['y'][0]
 
-    query_used = 'count(slurm_job_core_usage_total{{instance=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+    query_used = 'count(slurm_job_core_usage_total{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         node=node,
         filter=prom.get_filter())
     stats_used = prom.query_prometheus_multiple(query_used, start, end)
@@ -48,13 +51,13 @@ def node_gantt(request, node):
         start = min(line['x'])
         end = max(line['x'])
         cores = line['y'][0]
-        user = line['metric']['user']
+        user = a(line['metric']['user'])
         jobid = line['metric']['slurmjobid']
         if start == end:
             # skip short jobs
             continue
 
-        if line['metric']['user'] not in users:
+        if user not in users:
             users[user] = []
 
         users[user].append({

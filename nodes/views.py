@@ -28,14 +28,23 @@ def node(request, node):
 @login_required
 @staff
 def node_gantt(request, node):
-    now = datetime.now()
-    query = 'count(slurm_job_core_usage_total{{instance=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+    start = datetime.now() - timedelta(days=2)
+    end = datetime.now()
+
+    query_cores = 'count(node_cpu_seconds_total{{instance=~"{node}(:.*)", mode="idle", {filter}}})'.format(
         node=node,
         filter=prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, now - timedelta(days=2), now)
+    stats_cores = prom.query_prometheus_multiple(query_cores, start, end)
+
+    node_cores = stats_cores[0]['y'][0]
+
+    query_used = 'count(slurm_job_core_usage_total{{instance=~"{node}(:.*)", {filter}}}) by (account,user,slurmjobid)'.format(
+        node=node,
+        filter=prom.get_filter())
+    stats_used = prom.query_prometheus_multiple(query_used, start, end)
 
     users = {}
-    for line in stats:
+    for line in stats_used:
         start = min(line['x'])
         end = max(line['x'])
         cores = line['y'][0]
@@ -62,4 +71,8 @@ def node_gantt(request, node):
             'group': user,
             'data': users[user],
         })
-    return JsonResponse({'data': groups})
+    return JsonResponse({
+        'data': groups,
+        'maxCores': node_cores,
+        'maxHeight': len(stats_used) * 30,
+    })

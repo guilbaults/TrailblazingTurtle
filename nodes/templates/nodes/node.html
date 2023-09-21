@@ -27,6 +27,12 @@
                 else{
                     const myChart = TimelinesChart()(container_div);
                     myChart.data(content['data']);
+                    myChart.zDataLabel('cores');
+                    myChart.zQualitative(false);
+                    myChart.maxHeight(content['maxHeight']);
+                    myChart.sortAlpha(true);
+                    myChart.zColorScale(d3.scaleSequential(d3.interpolate("blue", "red"))
+                    .domain([0,content['maxCores']]));
                 }
             }
         },

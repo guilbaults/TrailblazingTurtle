@@ -23,27 +23,44 @@ def index(request):
     query = 'slurm_node_state_info{{ {filter} }}'.format(
         filter=prom.get_filter()
     )
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=1), datetime.now())
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(minutes=10), datetime.now())
     nodes = []
+    node_states = {}
     for line in stats:
-        nodes.append(line['metric']['node'])
+        name = line['metric']['node']
+        nodes.append(name)
+        node_states[name] = {'state': line['metric']['state']}
 
     # pagination
     nodes = nodes[start:end]
+    node_stats = {}
+
+    query_cpu_count = 'count(node_cpu_seconds_total{{ {hostname_label}=~"({nodes})(:.*)", mode="idle", {filter} }}) by ({hostname_label})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        nodes='|'.join(nodes),
+        filter=prom.get_filter())
+
+    stats_cpu_count = prom.query_prometheus_multiple(query_cpu_count, datetime.now() - timedelta(hours=1), datetime.now(), step="5m")
+    for cpu in stats_cpu_count:
+        node_name = cpu['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
+        node_stats[node_name] = {
+            'name': node_name,
+            'cpu_count': max(cpu['y']),
+            'state': node_states[node_name]['state'],
+        }
 
     query_cpu = 'sum(rate(node_cpu_seconds_total{{ {hostname_label}=~"({nodes})(:.*)", mode!="idle", {filter} }}[1m])) by ({hostname_label})'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         nodes='|'.join(nodes),
         filter=prom.get_filter())
-
-    node_stats = {}
-
     stats_cpu = prom.query_prometheus_multiple(query_cpu, datetime.now() - timedelta(hours=1), datetime.now(), step="1m")
+
     for cpu in stats_cpu:
         node_name = cpu['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
-        node_stats[node_name] = {'cpu': cpu['y']}
+        node_stats[node_name]['cpu_used'] = cpu['y']
+        node_stats[node_name]['cpu_used_avg'] = sum(cpu['y']) / len(cpu['y'])
 
-    context['node_stats'] = node_stats
+    context['node_stats'] = list(node_stats.values())
 
     return render(request, 'nodes/index.html', context)
 

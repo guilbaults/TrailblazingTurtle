@@ -11,15 +11,17 @@
     <thead class="thead-dark">
         <tr>
             <th>{% translate "Node" %}</th>
+            <th>{% translate "State" %}</th>
             <th>{% translate "Cores used" %}</th>
             <th>{% translate "Cores trend" %}</th>
         </tr>
     </thead>
-    {% for node in node_stats.keys %}
+    {% for node in node_stats %}
     <tr>
-        <td><a href="{{ node }}">{{ node }}</a></td>
-        <td><span id="{{node}}_cpu_number"></span></td>
-        <td><svg class="sparkline" id="{{node}}_cpu" width="100" height="30" stroke-width="3"></svg></td>
+        <td><a href="{{ node.name }}">{{ node.name }}</a></td>
+        <td>{{node.state}}</td>
+        <td>{{node.cpu_used_avg|floatformat:1}}</td>
+        <td><span id="{{node.name}}_cpu" class="line">{{node.cpu_used|join:','}}</span></td>
     </tr>
     {% endfor %}
 </table>
@@ -29,8 +31,10 @@
 <script>
     var node_stats = JSON.parse(document.getElementById('node_stats').textContent);
     Object.keys(node_stats).forEach(function(key){
-        sparkline.sparkline(document.getElementById(key + '_cpu'), node_stats[key].cpu);
-        document.getElementById(key + '_cpu_number').innerHTML = _.mean(node_stats[key].cpu).toFixed(2);
+        peity(document.getElementById(node_stats[key].name + '_cpu'), "line", {
+            'max': node_stats[key].cpu_count,
+            'width': 100,
+        })
     });
 </script>
 {% endblock content %}

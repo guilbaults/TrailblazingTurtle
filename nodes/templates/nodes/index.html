@@ -34,6 +34,8 @@
     {% endfor %}
 </table>
 
+<a href="?start={{next_start}}&end={{next_end}}" class="btn btn-primary">{% translate "Next page" %}</a>
+
 {{node_stats|json_script:"node_stats"}}
 
 <script>

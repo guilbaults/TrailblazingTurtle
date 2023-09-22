@@ -17,8 +17,9 @@ END = datetime.now()
 def index(request):
     context = {}
     # slice of nodes to show in the table
-    start = request.GET.get('start', 0)
-    end = request.GET.get('end', 10)
+    start = int(request.GET.get('start', 0))
+    step = 100
+    end = int(request.GET.get('end', step))
 
     query = 'slurm_node_state_info{{ {filter} }}'.format(
         filter=prom.get_filter()
@@ -106,6 +107,8 @@ def index(request):
         node_stats[node_name]['disk_used_avg'] = sum(disk['y']) / len(disk['y'])
 
     context['node_stats'] = list(node_stats.values())
+    context['next_start'] = end
+    context['next_end'] = end + step
 
     return render(request, 'nodes/index.html', context)
 

@@ -6,4 +6,5 @@ urlpatterns = [
     path('<str:node>/', views.node),
     path('<str:node>/gantt_cpu.json', views.node_gantt_cpu),
     path('<str:node>/gantt_gpu.json', views.node_gantt_gpu),
+    path('<str:node>/disk_used.json', views.graph_disk_used),
 ]

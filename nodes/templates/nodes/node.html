@@ -7,17 +7,21 @@
 {% block content %}
 <h1>{% translate "Node" %} {{node}}</h1>
 
-<h2>CPU</h2>
+<h2>{% translate "Cores" %}</h2>
 
-<h2>Memory</h2>
+<h2>{% translate "Memory" %}</h2>
 
-<h2>Jobs</h2>
+<h2>{% translate "Storage" %}</h2>
+<h3>{% translate "Space used" %}</h3>
+<div id="graph_disk_used"></div>
+
+<h2>{% translate "Jobs" %}</h2>
 
 {% if gpu %}
-<h3>GPUs</h3>
+<h3>{% translate "Gpus" %}</h3>
 <div id="gantt_div_gpu">
 {% else %}
-<h3>Cores</h3>
+<h3>{% translate "Cores" %}</h3>
 <div id="gantt_div_cpu">
 {% endif %}
 
@@ -85,5 +89,7 @@
     {% else %}
         gantt('gantt_cpu.json', 'gantt_div_cpu');
     {% endif %}
+
+    loadGraph('graph_disk_used', 'disk_used.json');
 </script>
 {% endblock content %}

@@ -2,9 +2,10 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.http import JsonResponse
-from userportal.common import staff, Prometheus
+from userportal.common import staff, Prometheus, parse_start_end
 from userportal.common import anonymize as a
 from datetime import datetime, timedelta
+from django.utils.translation import gettext as _
 
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -202,3 +203,35 @@ def node_gantt_cpu(request, node):
 @staff
 def node_gantt_gpu(request, node):
     return node_gantt(node, gpu=True)
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_disk_used(request, node):
+    data = []
+
+    query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}})/(1000*1000*1000)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats_disk = prom.query_prometheus_multiple(query_disk, request.start, request.end, step=request.step)
+    for line in stats_disk:
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        data.append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': line['metric']['mountpoint'],
+            'hovertemplate': '%{y:.1f} GB',
+        })
+
+    layout = {
+        'yaxis': {
+            'ticksuffix': ' GB',
+            'title': _('Disk'),
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})

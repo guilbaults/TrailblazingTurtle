@@ -182,3 +182,5 @@ SOFTWARE_STACK_REGEX = [
 ]
 
 POSIX_PERSONAL_GROUP_USAGE_NOTE = 'Files should not be stored on the project filesystem with a personal group. <a href="https://docs.alliancecan.ca/wiki/Frequently_Asked_Questions#Disk_quota_exceeded_error_on_/project_filesystems">Learn More</a>'
+
+LOCALSCRATCH = '/localscratch'

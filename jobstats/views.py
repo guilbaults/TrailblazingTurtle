@@ -1509,9 +1509,10 @@ def graph_disk_used(request, username, job_id):
 
     data = []
 
-    query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{instances}",mountpoint="/localscratch", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{instances}",mountpoint="/localscratch", {filter}}})/(1000*1000*1000)'.format(
+    query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{instances}",mountpoint="{localscratch}", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{instances}",mountpoint="{localscratch}", {filter}}})/(1000*1000*1000)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         instances=instances,
+        localscratch=settings.LOCALSCRATCH,
         filter=prom.get_filter())
     stats_disk = prom.query_prometheus_multiple(query_disk, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
     for line in stats_disk:

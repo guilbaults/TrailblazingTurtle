@@ -320,6 +320,37 @@ def graph_cpu_node(request, node):
 @login_required
 @staff
 @parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_memory_jobstats(request, node):
+    query = '(sum(slurm_job_memory_usage{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (user, slurmjobid))/(1024*1024*1024)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+    data = []
+    for line in stats:
+        data.append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'name': '{} {}'.format(a(line['metric']['user']), line['metric']['slurmjobid']),
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    layout = {
+        'yaxis': {
+            'title': _('Memory'),
+            'ticksuffix': 'GiB',
+            'range': [0, memory(node) / (1024 * 1024 * 1024)],
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
 def graph_memory_node(request, node):
     data = []
     query_apps = '(node_memory_MemTotal_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
@@ -365,6 +396,151 @@ def graph_memory_node(request, node):
             'title': _('Memory'),
             'ticksuffix': 'GiB',
             'range': [0, memory(node) / (1024 * 1024 * 1024)],
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_ethernet_bdw(request, node):
+    data = []
+
+    for direction in ['receive', 'transmit']:
+        query = 'rate(node_network_{direction}_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{node}(:.*)", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter(),
+            step=prom.rate('node_exporter'))
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+        for line in stats:
+            if direction == 'receive':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, line['metric']['device']),
+                'hovertemplate': '%{y:.1f}',
+            })
+
+    layout = {
+        'yaxis': {
+            'ticksuffix': ' Mb/s',
+            'title': _('Bandwidth'),
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_infiniband_bdw(request, node):
+    data = []
+    for direction in ['received', 'transmitted']:
+        query = 'rate(node_infiniband_port_data_{direction}_bytes_total{{{hostname_label}=~"{node}(:.*)", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter(),
+            step=prom.rate('node_exporter'))
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+        for line in stats:
+            if direction == 'received':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': direction,
+                'hovertemplate': '%{y:.1f}',
+            })
+
+    layout = {
+        'yaxis': {
+            'ticksuffix': ' Gb/s',
+            'title': _('Bandwidth'),
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_disk_iops(request, node):
+    data = []
+    for direction in ['reads', 'writes']:
+        query = 'rate(node_disk_{direction}_completed_total{{{hostname_label}=~"{node}(:.*)",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter(),
+            step=prom.rate('node_exporter'))
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+        for line in stats:
+            y = line['y']
+            if direction == 'reads':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, line['metric']['device']),
+                'hovertemplate': '%{y:.1f} IOPS',
+            })
+
+    layout = {
+        'yaxis': {
+            'title': _('IOPS'),
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_disk_bdw(request, node):
+    data = []
+    for direction in ['read', 'written']:
+        query = 'rate(node_disk_{direction}_bytes_total{{{hostname_label}=~"{node}(:.*)",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter(),
+            step=prom.rate('node_exporter'))
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+        for line in stats:
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, line['metric']['device']),
+                'hovertemplate': '%{y:.1f}',
+            })
+
+    layout = {
+        'yaxis': {
+            'ticksuffix': 'B/s',
+            'title': _('Bandwidth'),
         }
     }
 

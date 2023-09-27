@@ -1291,41 +1291,27 @@ def graph_ethernet_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_received = 'rate(node_network_receive_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_received:
-        compute_name = display_compute_name(stats_received, line)
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Received {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
-
-    query_transmitted = '-rate(node_network_transmit_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000)'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_transmitted:
-        compute_name = display_compute_name(stats_transmitted, line)
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Transmitted {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
+    for direction in ['receive', 'transmit']:
+        query = 'rate(node_network_{direction}_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            instances=instances,
+            filter=prom.get_filter(),
+            step=step)
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        for line in stats:
+            compute_name = display_compute_name(stats, line)
+            if direction == 'receive':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, compute_name),
+                'hovertemplate': '%{y:.1f}',
+            })
 
     layout = {
         'yaxis': {
@@ -1346,41 +1332,27 @@ def graph_infiniband_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_received = 'rate(node_infiniband_port_data_received_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_received = prom.query_prometheus_multiple(query_received, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_received:
-        compute_name = display_compute_name(stats_received, line)
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Received {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
-
-    query_transmitted = '-rate(node_infiniband_port_data_transmitted_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 /(1000*1000*1000)'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_transmitted = prom.query_prometheus_multiple(query_transmitted, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_transmitted:
-        compute_name = display_compute_name(stats_transmitted, line)
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Transmitted {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
+    for direction in ['received', 'transmitted']:
+        query = 'rate(node_infiniband_port_data_{direction}_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            instances=instances,
+            filter=prom.get_filter(),
+            step=step)
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        for line in stats:
+            compute_name = display_compute_name(stats, line)
+            if direction == 'received':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, compute_name),
+                'hovertemplate': '%{y:.1f}',
+            })
 
     layout = {
         'yaxis': {
@@ -1401,45 +1373,30 @@ def graph_disk_iops(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_reads_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_read:
-        compute_name = "{} {}".format(
-            line['metric']['device'],
-            display_compute_name(stats_read, line))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Read {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f} IOPS',
-        })
-
-    query_write = 'rate(node_disk_writes_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_write:
-        compute_name = "{} {}".format(
-            line['metric']['device'],
-            display_compute_name(stats_write, line))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Write {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f} IOPS',
-        })
+    for direction in ['reads', 'writes']:
+        query = 'rate(node_disk_{direction}_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            instances=instances,
+            filter=prom.get_filter(),
+            step=step)
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        for line in stats:
+            compute_name = "{} {}".format(
+                line['metric']['device'],
+                display_compute_name(stats, line))
+            y = line['y']
+            if direction == 'reads':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, compute_name),
+                'hovertemplate': '%{y:.1f} IOPS',
+            })
 
     layout = {
         'yaxis': {
@@ -1459,45 +1416,29 @@ def graph_disk_bdw(request, username, job_id):
     data = []
     step = sanitize_step(request, minimum=prom.rate('node_exporter'))
 
-    query_read = 'rate(node_disk_read_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_read = prom.query_prometheus_multiple(query_read, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_read:
-        compute_name = "{} {}".format(
-            line['metric']['device'],
-            display_compute_name(stats_read, line))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Read {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
-
-    query_write = '-rate(node_disk_written_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
-        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
-        instances=instances,
-        filter=prom.get_filter(),
-        step=step)
-    stats_write = prom.query_prometheus_multiple(query_write, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
-    for line in stats_write:
-        compute_name = "{} {}".format(
-            line['metric']['device'],
-            display_compute_name(stats_write, line))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': 'Write {}'.format(compute_name),
-            'hovertemplate': '%{y:.1f}',
-        })
+    for direction in ['read', 'written']:
+        query = 'rate(node_disk_{direction}_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
+            direction=direction,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            instances=instances,
+            filter=prom.get_filter(),
+            step=step)
+        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        for line in stats:
+            compute_name = "{} {}".format(
+                line['metric']['device'],
+                display_compute_name(stats, line))
+            if direction == 'read':
+                y = line['y']
+            else:
+                y = [-x for x in line['y']]
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': y,
+                'type': 'scatter',
+                'name': '{} {}'.format(direction, compute_name),
+                'hovertemplate': '%{y:.1f}',
+            })
 
     layout = {
         'yaxis': {

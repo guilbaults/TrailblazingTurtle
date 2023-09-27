@@ -12,11 +12,22 @@
 <div id="graph_cpu_node"></div>
 
 <h2>{% translate "Memory" %}</h2>
+<div id="graph_memory_jobstats"></div>
 <div id="graph_memory_node"></div>
 
 <h2>{% translate "Storage" %}</h2>
 <h3>{% translate "Space used" %}</h3>
 <div id="graph_disk_used"></div>
+<h3>{% translate "IOPS" %}</h3>
+<div id="graph_disk_iops"></div>
+<h3>{% translate "Bandwidth" %}</h3>
+<div id="graph_disk_bdw"></div>
+
+<h2>{% translate "Network" %}</h2>
+<h3>{% translate "Ethernet" %}</h3>
+<div id="graph_ethernet_bdw"></div>
+<h3>{% translate "Infiniband" %}</h3>
+<div id="graph_infiniband_bdw"></div>
 
 <h2>{% translate "Jobs" %}</h2>
 
@@ -96,6 +107,11 @@
     loadGraph('graph_disk_used', 'graph_disk_used.json');
     loadGraph('graph_cpu_jobstats', 'graph_cpu_jobstats.json');
     loadGraph('graph_cpu_node', 'graph_cpu_node.json');
+    loadGraph('graph_memory_jobstats', 'graph_memory_jobstats.json');
     loadGraph('graph_memory_node', 'graph_memory_node.json');
+    loadGraph('graph_ethernet_bdw', 'graph_ethernet_bdw.json');
+    loadGraph('graph_infiniband_bdw', 'graph_infiniband_bdw.json');
+    loadGraph('graph_disk_iops', 'graph_disk_iops.json');
+    loadGraph('graph_disk_bdw', 'graph_disk_bdw.json');
 </script>
 {% endblock content %}

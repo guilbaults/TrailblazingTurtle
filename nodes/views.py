@@ -13,6 +13,25 @@ START = datetime.now() - timedelta(days=2)
 END = datetime.now()
 
 
+def cpu_count(node):
+    # return the number of cpu cores on a node
+    query = 'count(node_cpu_seconds_total{{ {hostname_label}=~"{node}(:.*)", mode="idle", {filter} }}) by ({hostname_label})'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, START, END, step="5m")
+    return int(max(stats[0]['y']))
+
+
+def memory(node):
+    query = 'node_memory_MemTotal_bytes{{ {hostname_label}=~"{node}(:.*)", {filter} }}'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, START, END, step="5m")
+    return int(max(stats[0]['y']))
+
+
 @login_required
 @staff
 def index(request):
@@ -209,19 +228,17 @@ def node_gantt_gpu(request, node):
 @staff
 @parse_start_end(default_start=datetime.now() - timedelta(days=7))
 def graph_disk_used(request, node):
-    data = []
-
     query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}})/(1000*1000*1000)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         node=node,
         filter=prom.get_filter())
     stats_disk = prom.query_prometheus_multiple(query_disk, request.start, request.end, step=request.step)
+
+    data = []
     for line in stats_disk:
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        y = line['y']
         data.append({
-            'x': x,
-            'y': y,
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
             'type': 'scatter',
             'name': line['metric']['mountpoint'],
             'hovertemplate': '%{y:.1f} GB',
@@ -231,6 +248,123 @@ def graph_disk_used(request, node):
         'yaxis': {
             'ticksuffix': ' GB',
             'title': _('Disk'),
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_cpu_jobstats(request, node):
+    query = 'sum(rate(slurm_job_core_usage_total{{{hostname_label}=~"{node}(:.*)", {filter}}}[{step}s]) / 1000000000) by (user, slurmjobid)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter(),
+        step=prom.rate('slurm-job-exporter'))
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+    data = []
+    for line in stats:
+        data.append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'name': '{} {}'.format(a(line['metric']['user']), line['metric']['slurmjobid']),
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    layout = {
+        'yaxis': {
+            'title': _('Cores'),
+            'range': [0, cpu_count(node)],
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_cpu_node(request, node):
+    query = 'sum by (mode)(irate(node_cpu_seconds_total{{mode!="idle",{hostname_label}=~"{node}(:.*)",{filter}}}[{step}s]))'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter(),
+        step=prom.rate('node_exporter'))
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+    data = []
+    for line in stats:
+        data.append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': line['metric']['mode'],
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    layout = {
+        'yaxis': {
+            'title': _('Cores'),
+            'range': [0, cpu_count(node)],
+        }
+    }
+
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_memory_node(request, node):
+    data = []
+    query_apps = '(node_memory_MemTotal_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_MemFree_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_Buffers_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_Cached_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_Slab_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_PageTables_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
+        node_memory_SwapCached_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}})/(1024*1024*1024)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats_apps = prom.query_prometheus_multiple(query_apps, request.start, request.end, step=request.step)
+    for line in stats_apps:
+        data.append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'stackgroup': 'one',
+            'name': 'Apps',
+            'hovertemplate': '%{y:.1f}',
+        })
+
+    for memory_type in ['PageTables', 'SwapCached', 'Slab', 'Cached', 'Buffers', 'HardwareCorrupted']:
+        query = 'node_memory_{memory_type}_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}}/(1024*1024*1024)'.format(
+            memory_type=memory_type,
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+        for line in stats:
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': line['y'],
+                'type': 'scatter',
+                'stackgroup': 'one',
+                'name': memory_type,
+                'hovertemplate': '%{y:.1f}',
+            })
+
+    layout = {
+        'yaxis': {
+            'title': _('Memory'),
+            'ticksuffix': 'GiB',
+            'range': [0, memory(node) / (1024 * 1024 * 1024)],
         }
     }
 

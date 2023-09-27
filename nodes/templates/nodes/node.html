@@ -8,8 +8,11 @@
 <h1>{% translate "Node" %} {{node}}</h1>
 
 <h2>{% translate "Cores" %}</h2>
+<div id="graph_cpu_jobstats"></div>
+<div id="graph_cpu_node"></div>
 
 <h2>{% translate "Memory" %}</h2>
+<div id="graph_memory_node"></div>
 
 <h2>{% translate "Storage" %}</h2>
 <h3>{% translate "Space used" %}</h3>
@@ -90,6 +93,9 @@
         gantt('gantt_cpu.json', 'gantt_div_cpu');
     {% endif %}
 
-    loadGraph('graph_disk_used', 'disk_used.json');
+    loadGraph('graph_disk_used', 'graph_disk_used.json');
+    loadGraph('graph_cpu_jobstats', 'graph_cpu_jobstats.json');
+    loadGraph('graph_cpu_node', 'graph_cpu_node.json');
+    loadGraph('graph_memory_node', 'graph_memory_node.json');
 </script>
 {% endblock content %}

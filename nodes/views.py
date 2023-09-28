@@ -200,6 +200,22 @@ def node_gantt(node, gpu=False):
         })
 
     groups = []
+    events = []
+    count = 0
+    for event in node_state(node):
+        events.append({
+            'label': '{} {}'.format(event[2], count),
+            'data': [{
+                'timeRange': [event[0].strftime('%Y-%m-%d %H:%M:%S'), event[1].strftime('%Y-%m-%d %H:%M:%S')],
+                'val': 0,
+            }],
+        })
+        count += 1
+    groups.append({
+        'group': '_states',
+        'data': events,
+    })
+
     for user in users:
         groups.append({
             'group': user,
@@ -223,6 +239,45 @@ def node_gantt_cpu(request, node):
 @staff
 def node_gantt_gpu(request, node):
     return node_gantt(node, gpu=True)
+
+
+def node_state(node):
+    events = []
+    for state in ['down', 'drained', 'draining', 'fail']:
+        query = 'count(slurm_node_state_info{{node="{node}", state=~"{state}", {filter}}}) or on() vector(0)'.format(
+            node=node,
+            state=state,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, START, END)
+        for line in stats:
+            # zip together the x and y values
+            data = list(zip(line['x'], line['y']))
+            # only trigger a event if the state moves from 0 to 1
+            trigger = False
+            starts = []
+            ends = []
+            for item in data:
+                if int(item[1]) == 1:
+                    if trigger:
+                        # already triggered
+                        continue
+                    else:
+                        # up transition
+                        trigger = True
+                        starts.append(item[0])
+                else:
+                    if trigger:
+                        # down transition
+                        ends.append(item[0])
+                        trigger = False
+            if len(starts) > len(ends):
+                # still in state
+                ends.append(datetime.now())
+            # zip together the start and end times
+            if len(starts) > 0:
+                for event in list(zip(starts, ends, [state] * len(starts))):
+                    events.append(event)
+    return events
 
 
 @login_required

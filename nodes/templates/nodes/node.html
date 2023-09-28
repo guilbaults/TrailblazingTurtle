@@ -38,6 +38,16 @@
 <h3>{% translate "Infiniband" %}</h3>
 <div id="graph_infiniband_bdw"></div>
 
+{% if gpu %}
+<h2>{% translate "Gpus" %}</h2>
+<h3>{% translate "Utilization" %}</h3>
+<div id="graph_gpu_utilization"></div>
+<h3>{% translate "Memory" %}</h3>
+<div id="graph_gpu_memory"></div>
+<h3>{% translate "Power" %}</h3>
+<div id="graph_gpu_power"></div>
+{% endif %}
+
 <script>
     function gantt(url, gantt_div){
         var container_div = '#' + gantt_div;
@@ -108,5 +118,11 @@
     loadGraph('graph_infiniband_bdw', 'graph_infiniband_bdw.json');
     loadGraph('graph_disk_iops', 'graph_disk_iops.json');
     loadGraph('graph_disk_bdw', 'graph_disk_bdw.json');
+
+    {% if gpu %}
+        loadGraph('graph_gpu_utilization', 'graph_gpu_utilization.json');
+        loadGraph('graph_gpu_memory', 'graph_gpu_memory.json');
+        loadGraph('graph_gpu_power', 'graph_gpu_power.json');
+    {% endif %}
 </script>
 {% endblock content %}

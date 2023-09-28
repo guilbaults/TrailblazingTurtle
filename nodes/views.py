@@ -6,6 +6,7 @@ from userportal.common import staff, Prometheus, parse_start_end
 from userportal.common import anonymize as a
 from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
+from jobstats.views import GPU_MEMORY, GPU_SHORT_NAME, GPU_IDLE_POWER, GPU_FULL_POWER
 
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -544,4 +545,128 @@ def graph_disk_bdw(request, node):
         }
     }
 
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_gpu_utilization(request, node):
+    data = []
+    queries = [
+        ('slurm_job_utilization_gpu', _('SM Active')),
+        ('slurm_job_sm_occupancy_gpu', _('SM Occupancy')),
+        ('slurm_job_tensor_gpu', _('Tensor')),
+        ('slurm_job_fp64_gpu', _('FP64')),
+        ('slurm_job_fp32_gpu', _('FP32')),
+        ('slurm_job_fp16_gpu', _('FP16')),
+    ]
+
+    for q in queries:
+        query = '{query}{{{hostname_label}=~"{node}(:.*)", {filter}}}'.format(
+            query=q[0],
+            hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+            node=node,
+            filter=prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+        for line in stats:
+            name = '{t} {user} {jobid} GPU {gpuid}'.format(
+                t=q[1],
+                user=a(line['metric']['user']),
+                jobid=line['metric']['slurmjobid'],
+                gpuid=line['metric']['gpu'])
+            data.append({
+                'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+                'y': line['y'],
+                'type': 'scatter',
+                'name': name,
+                'hovertemplate': '%{y:.1f}%',
+            })
+    layout = {
+        'yaxis': {
+            'ticksuffix': ' %',
+            'range': [0, 100],
+            'title': _('GPU Utilization'),
+        }
+    }
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_gpu_memory(request, node):
+    query = 'slurm_job_memory_usage_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}} /(1024*1024*1024)'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+    data = []
+    for line in stats:
+        name = '{user} {jobid} GPU {gpuid} '.format(
+            user=a(line['metric']['user']),
+            jobid=line['metric']['slurmjobid'],
+            gpuid=line['metric']['gpu'])
+        data.append({
+            'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
+            'y': line['y'],
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f} GiB',
+        })
+    layout = {
+        'yaxis': {
+            'ticksuffix': ' GiB',
+            'range': [0, GPU_MEMORY[line['metric']['gpu_type']]],
+            'title': _('GPU Memory'),
+        }
+    }
+    return JsonResponse({'data': data, 'layout': layout})
+
+
+@login_required
+@staff
+@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+def graph_gpu_power(request, node):
+    query = 'slurm_job_power_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}}/1000'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
+        node=node,
+        filter=prom.get_filter())
+    stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+
+    data = []
+    for line in stats:
+        gpu_type = line['metric']['gpu_type']
+        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
+        y = line['y']
+        name = '{user} {jobid} GPU {gpuid}'.format(
+            user=a(line['metric']['user']),
+            jobid=line['metric']['slurmjobid'],
+            gpuid=line['metric']['gpu'])
+        data.append({
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f} W',
+        })
+
+    if len(stats) > 0:
+        data.append({
+            'x': x,
+            'y': [GPU_IDLE_POWER[gpu_type] for x in y],
+            'type': 'scatter',
+            'name': '{} {}'.format(GPU_SHORT_NAME[gpu_type], _('Idle power')),
+            'hovertemplate': '%{y:.1f} W',
+        })
+
+        layout = {
+            'yaxis': {
+                'ticksuffix': ' W',
+                'range': [0, GPU_FULL_POWER[gpu_type]],
+                'title': _('GPU Power'),
+            }
+        }
     return JsonResponse({'data': data, 'layout': layout})

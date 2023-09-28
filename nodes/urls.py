@@ -15,4 +15,7 @@ urlpatterns = [
     path('<str:node>/graph_infiniband_bdw.json', views.graph_infiniband_bdw),
     path('<str:node>/graph_disk_iops.json', views.graph_disk_iops),
     path('<str:node>/graph_disk_bdw.json', views.graph_disk_bdw),
+    path('<str:node>/graph_gpu_utilization.json', views.graph_gpu_utilization),
+    path('<str:node>/graph_gpu_memory.json', views.graph_gpu_memory),
+    path('<str:node>/graph_gpu_power.json', views.graph_gpu_power),
 ]

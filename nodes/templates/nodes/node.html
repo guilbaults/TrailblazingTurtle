@@ -7,6 +7,15 @@
 {% block content %}
 <h1>{% translate "Node" %} {{node}}</h1>
 
+<h2>{% translate "Gantt" %}</h2>
+{% if gpu %}
+<h3>{% translate "Gpus" %}</h3>
+<div id="gantt_div_gpu"></div>
+{% endif %}
+
+<h3>{% translate "Cores" %}</h3>
+<div id="gantt_div_cpu"></div>
+
 <h2>{% translate "Cores" %}</h2>
 <div id="graph_cpu_jobstats"></div>
 <div id="graph_cpu_node"></div>
@@ -29,22 +38,9 @@
 <h3>{% translate "Infiniband" %}</h3>
 <div id="graph_infiniband_bdw"></div>
 
-<h2>{% translate "Jobs" %}</h2>
-
-{% if gpu %}
-<h3>{% translate "Gpus" %}</h3>
-<div id="gantt_div_gpu">
-{% else %}
-<h3>{% translate "Cores" %}</h3>
-<div id="gantt_div_cpu">
-{% endif %}
-
-</div>
-
 <script>
     function gantt(url, gantt_div){
         var container_div = '#' + gantt_div;
-        console.log(container_div);
         $.ajax({
             url : url,
             type : 'GET',
@@ -100,9 +96,8 @@
 
     {% if gpu %}
         gantt('gantt_gpu.json', 'gantt_div_gpu');
-    {% else %}
-        gantt('gantt_cpu.json', 'gantt_div_cpu');
     {% endif %}
+    gantt('gantt_cpu.json', 'gantt_div_cpu');
 
     loadGraph('graph_disk_used', 'graph_disk_used.json');
     loadGraph('graph_cpu_jobstats', 'graph_cpu_jobstats.json');

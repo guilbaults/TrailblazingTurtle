@@ -55,6 +55,7 @@ INSTALLED_APPS = [
     # 'quotas',
     'top',
     #'usersummary',
+    'nodes',
 
     'ccldap',
 

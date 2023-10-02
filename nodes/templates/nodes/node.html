@@ -1,0 +1,128 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Node" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Node" %} {{node}}</h1>
+
+<h2>{% translate "Gantt" %}</h2>
+{% if gpu %}
+<h3>{% translate "Gpus" %}</h3>
+<div id="gantt_div_gpu"></div>
+{% endif %}
+
+<h3>{% translate "Cores" %}</h3>
+<div id="gantt_div_cpu"></div>
+
+<h2>{% translate "Cores" %}</h2>
+<div id="graph_cpu_jobstats"></div>
+<div id="graph_cpu_node"></div>
+
+<h2>{% translate "Memory" %}</h2>
+<div id="graph_memory_jobstats"></div>
+<div id="graph_memory_node"></div>
+
+<h2>{% translate "Storage" %}</h2>
+<h3>{% translate "Space used" %}</h3>
+<div id="graph_disk_used"></div>
+<h3>{% translate "IOPS" %}</h3>
+<div id="graph_disk_iops"></div>
+<h3>{% translate "Bandwidth" %}</h3>
+<div id="graph_disk_bdw"></div>
+
+<h2>{% translate "Network" %}</h2>
+<h3>{% translate "Ethernet" %}</h3>
+<div id="graph_ethernet_bdw"></div>
+<h3>{% translate "Infiniband" %}</h3>
+<div id="graph_infiniband_bdw"></div>
+
+{% if gpu %}
+<h2>{% translate "Gpus" %}</h2>
+<h3>{% translate "Utilization" %}</h3>
+<div id="graph_gpu_utilization"></div>
+<h3>{% translate "Memory" %}</h3>
+<div id="graph_gpu_memory"></div>
+<h3>{% translate "Power" %}</h3>
+<div id="graph_gpu_power"></div>
+{% endif %}
+
+<script>
+    function gantt(url, gantt_div){
+        var container_div = '#' + gantt_div;
+        $.ajax({
+            url : url,
+            type : 'GET',
+            tryCount : 0,
+            retryLimit : 3,
+            dataType    : 'json',
+            contentType : 'application/json',
+            success : function(content) {
+                if(content['data']){
+                    if(content['data'].length == 0){
+                        replace_div_nodata(container_div);
+                    }
+                    else{
+                        $(container_div).html('');
+                        const myChart = TimelinesChart()(container_div);
+                        myChart.data(content['data']);
+                        myChart.zDataLabel(content['unit']);
+                        myChart.zQualitative(false);
+                        myChart.maxHeight(content['maxHeight']);
+                        myChart.sortAlpha(true);
+                        myChart.zColorScale(d3.scaleSequential(d3.interpolate("blue", "red"))
+                        .domain([0,content['maxUnit']]));
+                        myChart.width($(container_div).width());
+                        myChart.onSegmentClick(function (d) {
+                            window.location.href = "{{settings.BASE_URL}}secure/jobstats/" + d['group'] + "/" + d['label'] + "/";
+                        });
+                    }
+                }
+            },
+            error : function(xhr, textStatus, errorThrown ) {
+                if (textStatus == 'timeout' || textStatus == 'error') {
+                    this.tryCount++;
+                    if (this.tryCount <= this.retryLimit) {
+                        //try again
+                        $.ajax(this);
+                        return;
+                    }
+                    replace_div_alert(container_div);
+                    return;
+                }
+                if (xhr.status == 500) {
+                    replace_div_alert(container_div);
+                } else {
+                    replace_div_alert(container_div);
+                }
+            }
+        });
+        const loadingString = gettext('Loading...');
+        if($(container_div).html().trim().length == 0){
+            $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
+        }
+    }
+
+    {% if gpu %}
+        gantt('gantt_gpu.json', 'gantt_div_gpu');
+    {% endif %}
+    gantt('gantt_cpu.json', 'gantt_div_cpu');
+
+    loadGraph('graph_disk_used', 'graph_disk_used.json');
+    loadGraph('graph_cpu_jobstats', 'graph_cpu_jobstats.json');
+    loadGraph('graph_cpu_node', 'graph_cpu_node.json');
+    loadGraph('graph_memory_jobstats', 'graph_memory_jobstats.json');
+    loadGraph('graph_memory_node', 'graph_memory_node.json');
+    loadGraph('graph_ethernet_bdw', 'graph_ethernet_bdw.json');
+    loadGraph('graph_infiniband_bdw', 'graph_infiniband_bdw.json');
+    loadGraph('graph_disk_iops', 'graph_disk_iops.json');
+    loadGraph('graph_disk_bdw', 'graph_disk_bdw.json');
+
+    {% if gpu %}
+        loadGraph('graph_gpu_utilization', 'graph_gpu_utilization.json');
+        loadGraph('graph_gpu_memory', 'graph_gpu_memory.json');
+        loadGraph('graph_gpu_power', 'graph_gpu_power.json');
+    {% endif %}
+</script>
+{% endblock content %}

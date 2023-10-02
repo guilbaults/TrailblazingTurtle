@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Nodes" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Nodes" %}</h1>
+
+<table class="table">
+    <thead class="thead-dark">
+        <tr>
+            <th>{% translate "Node" %}</th>
+            <th>{% translate "State" %}</th>
+            <th>{% translate "Avg cores used" %}</th>
+            <th>{% translate "Cores trend" %}</th>
+            <th>{% translate "Memory used" %}</th>
+            <th>{% translate "Memory trend" %}</th>
+            <th>{% translate "Disk used" %}</th>
+            <th>{% translate "Disk trend" %}</th>
+        </tr>
+    </thead>
+    {% for node in node_stats %}
+    <tr>
+        <td><a href="{{ node.name }}">{{ node.name }}</a></td>
+        <td>{{node.state}}</td>
+        <td>{{node.cpu_used_avg|floatformat:1}} / {{node.cpu_count|floatformat:1}}</td>
+        <td><span id="{{node.name}}_cpu" class="line">{{node.cpu_used|join:','}}</span></td>
+        <td>{{node.mem_used_avg|filesizeformat}} / {{node.mem_installed|filesizeformat}}</td>
+        <td><span id="{{node.name}}_mem" class="line">{{node.mem_used|join:','}}</span></td>
+        <td>{{node.disk_used_avg|filesizeformat}} / {{node.disk_installed|filesizeformat}}</td>
+        <td><span id="{{node.name}}_disk"class="line">{{node.disk_used|join:','}}</span></td>
+    </tr>
+    {% endfor %}
+</table>
+
+<a href="?start={{next_start}}&end={{next_end}}" class="btn btn-primary">{% translate "Next page" %}</a>
+
+{{node_stats|json_script:"node_stats"}}
+
+<script>
+    var node_stats = JSON.parse(document.getElementById('node_stats').textContent);
+    Object.keys(node_stats).forEach(function(key){
+        peity(document.getElementById(node_stats[key].name + '_cpu'), "line", {
+            'max': node_stats[key].cpu_count,
+            'width': 100,
+        });
+
+        peity(document.getElementById(node_stats[key].name + '_mem'), "line", {
+            'max': node_stats[key].mem_installed,
+            'width': 100,
+        })
+
+        peity(document.getElementById(node_stats[key].name + '_disk'), "line", {
+            'max': node_stats[key].disk_installed,
+            'width': 100,
+        })
+    });
+</script>
+{% endblock content %}

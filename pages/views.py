@@ -36,7 +36,7 @@ def dtns(request):
     return render(request, 'pages/dtns.html', context)
 
 
-def sheduler(request):
+def scheduler(request):
     context = {}
     return render(request, 'pages/scheduler.html', context)
 

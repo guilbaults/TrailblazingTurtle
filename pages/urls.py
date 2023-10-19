@@ -13,7 +13,7 @@ urlpatterns = [
     path('logins/graph/network/<str:login>.json', views.graph_login_network),
     path('dtns/', views.dtns),
     path('dtns/graph/network/<str:dtn>.json', views.graph_dtn_network),
-    path('scheduler/', views.sheduler),
+    path('scheduler/', views.scheduler),
     path('scheduler/graph/allocated_cpu.json', views.graph_scheduler_cpu),
     path('scheduler/graph/allocated_gpu.json', views.graph_scheduler_gpu),
     path('software/', views.software),

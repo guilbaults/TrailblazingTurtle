@@ -152,6 +152,8 @@ def context_job_info(username, job_id):
     elif len(jobs) > 1:
         context['multiple_jobs'] = True
         start, end = get_start_end_jobs(jobs)
+        if start is None:
+            start = datetime.now()
         if end is None:
             end = datetime.now()
 

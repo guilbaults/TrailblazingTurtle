@@ -31,8 +31,20 @@
         <td>{{job.job_name}}</td>
         <td>{{job.time_submit_dt | date:"c"}}</td>
         <td>{{job.time_in_queue_dt}}</td>
-        <td>{{job.time_start_dt | date:"c"}}</td>
-        <td>{{job.time_end_dt | date:"c"}}</td>
+        <td>
+          {% if job.time_start_dt %}
+            {{job.time_start_dt | date:"c"}}
+          {% else %}
+            {% translate "Not started" %}
+          {% endif %}
+        </td>
+        <td>
+          {% if job.time_end_dt %}
+            {{job.time_end_dt | date:"c"}}
+          {% else %}
+            {% translate "Not finished" %}
+          {% endif %}
+        </td>
       </tr>
       {% endfor %}
     </tbody>
@@ -685,7 +697,13 @@
         return '-';
       }
       if (type == 'display') {
-        return DateTime.fromISO(data).toLocaleString(DateTime.DATETIME_MED);
+        var t = DateTime.fromISO(data);
+        if (t.isValid) {
+          return t.toLocaleString(DateTime.DATETIME_MED);
+        }
+        else {
+          return data;
+        }
       }
       return data;
     }

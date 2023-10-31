@@ -234,8 +234,8 @@ class Prometheus:
             headers=config['headers'])
         self.filter = config['filter']
 
-    def get_filter(self):
-        return self.filter
+    def get_filter(self, module='default'):
+        return self.filter[module]
 
     def query_prometheus(self, query, duration, end=None, step='3m'):
         values = self.query_prometheus_multiple(query, duration, end, step)

@@ -19,7 +19,7 @@ def index(request):
     if request.user.is_staff:
         context['all_projects'] = []
         query_projects = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
-            filter=prom.get_filter(),
+            filter=prom.get_filter('cloudstats'),
         )
         for project in prom.query_last(query_projects):
             context['all_projects'].append({
@@ -37,7 +37,7 @@ def project(request, project):
     context = {}
     query_instances = 'libvirtd_domain_domain_state{{project_name="{project}", {filter}}}'.format(
         project=project,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_instances = prom.query_prometheus_multiple(query_instances, datetime.now() - timedelta(days=7), datetime.now())
 
     context['instances'] = []
@@ -54,7 +54,7 @@ def instance(request, project, uuid):
     query_instances = 'libvirtd_domain_domain_state{{project_name="{project}", uuid="{uuid}", {filter}}}'.format(
         project=project,
         uuid=uuid,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_instances = prom.query_prometheus_multiple(query_instances, datetime.now() - timedelta(days=7), datetime.now())
     context['instance_name'] = stats_instances[0]['metric']['instance_name']
 
@@ -68,7 +68,7 @@ def project_graph_cpu(request, project):
     timing = query_time(request)
     query_used = 'sum(rate(libvirtd_domain_vcpu_time{{project_name="{project}", {filter}}}[1m])) by (uuid,instance_name) / 1000000000'.format(
         project=project,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
 
     # Only show UUID if required
@@ -96,7 +96,7 @@ def project_graph_cpu(request, project):
     # Get the number of running cores
     query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{project}", {filter}}}))'.format(
         project=project,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -124,7 +124,7 @@ def projects_graph_cpu(request):
     data = []
     timing = query_time(request)
     query_used = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[5m])) by (project_name) / 1000000000'.format(
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
     for line in stats_used:
         data.append({
@@ -137,7 +137,7 @@ def projects_graph_cpu(request):
         })
 
     query_running = 'sum(count(libvirtd_domain_vcpu_time{{ {filter} }})) by (project_name)'.format(
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         data.append({
@@ -164,7 +164,7 @@ def instance_graph_cpu(request, project, uuid):
     query_used = 'rate(libvirtd_domain_vcpu_time{{project_name="{project}", uuid="{uuid}", {filter}}}[1m]) / 1000000000'.format(
         project=project,
         uuid=uuid,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
 
     for line in stats_used:
@@ -183,7 +183,7 @@ def instance_graph_cpu(request, project, uuid):
     query_running = 'sum(count(libvirtd_domain_vcpu_time{{project_name="{project}", uuid="{uuid}", {filter}}}))'.format(
         project=project,
         uuid=uuid,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -212,7 +212,7 @@ def project_graph_memory(request, project):
     timing = query_time(request)
     query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", {filter}}})/1024/1024'.format(
         project=project,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
 
     # Only show UUID if required
@@ -239,7 +239,7 @@ def project_graph_memory(request, project):
 
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", {filter}}})/1024/1024'.format(
         project=project,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -270,7 +270,7 @@ def instance_graph_memory(request, project, uuid):
     query_used = '(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}} - libvirtd_domain_balloon_usable{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
         project=project,
         uuid=uuid,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
 
     for line in stats_used:
@@ -287,7 +287,7 @@ def instance_graph_memory(request, project, uuid):
     query_running = 'sum(libvirtd_domain_balloon_current{{project_name="{project}", uuid="{uuid}", {filter}}})/1024/1024'.format(
         project=project,
         uuid=uuid,
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -316,7 +316,7 @@ def projects_graph_mem(request):
     data = []
     timing = query_time(request)
     query_used = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_used = prom.query_prometheus_multiple(query_used, timing[0], step=timing[1])
     for line in stats_used:
         data.append({
@@ -329,7 +329,7 @@ def projects_graph_mem(request):
         })
 
     query_running = 'sum((libvirtd_domain_balloon_current{{ {filter} }})/1024/1024)'.format(
-        filter=prom.get_filter())
+        filter=prom.get_filter('cloudstats'))
     stats_running = prom.query_prometheus_multiple(query_running, timing[0], step=timing[1])
     for line in stats_running:
         data.append({
@@ -360,7 +360,7 @@ def project_graph_disk_bandwidth(request, project):
         query_bandwidth = 'rate(libvirtd_domain_block_{direction}_bytes{{project_name="{project}", {filter}}}[1m])/1024/1024'.format(
             direction=direction,
             project=project,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         # Only show UUID if required
@@ -408,7 +408,7 @@ def instance_graph_disk_bandwidth(request, project, uuid):
             direction=direction,
             project=project,
             uuid=uuid,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         for line in stats_bandwidth:
@@ -446,7 +446,7 @@ def project_graph_disk_iops(request, project):
         query_bandwidth = 'rate(libvirtd_domain_block_{direction}_requests{{project_name="{project}", {filter}}}[1m])'.format(
             direction=direction,
             project=project,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         # Only show UUID if required
@@ -493,7 +493,7 @@ def instance_graph_disk_iops(request, project, uuid):
             direction=direction,
             project=project,
             uuid=uuid,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         for line in stats_bandwidth:
@@ -529,7 +529,7 @@ def project_graph_network_bandwidth(request, project):
         query_bandwidth = 'rate(libvirtd_domain_net_{direction}_bytes{{project_name="{project}", {filter}}}[1m])/1024/1024'.format(
             direction=direction,
             project=project,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         # Only show UUID if required
@@ -577,7 +577,7 @@ def instance_graph_network_bandwidth(request, project, uuid):
             direction=direction,
             project=project,
             uuid=uuid,
-            filter=prom.get_filter())
+            filter=prom.get_filter('cloudstats'))
         stats_bandwidth = prom.query_prometheus_multiple(query_bandwidth, timing[0], step=timing[1])
 
         for line in stats_bandwidth:

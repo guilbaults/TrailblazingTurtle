@@ -57,9 +57,11 @@ def openstackproject_or_staff(func):
         if request.user.is_staff:
             return func(request, *args, **kwargs)
         else:
-            # TODO search in LDAP
-            return HttpResponseForbidden()
-        return func(request, *args, **kwargs)
+            # check if the user is in the project
+            if kwargs['project'] in cloud_projects_by_user(request.user.get_username()):
+                return func(request, *args, **kwargs)
+            else:
+                return HttpResponseForbidden()
     return wrapper
 
 

@@ -68,7 +68,8 @@ python manage.py test
 This will test the various modules, including reading job data from the Slurm database and Prometheus. A temporary database for Django is created automatically for the tests. Slurm and Prometheus data are read directly from production data with a read-only account. A representative user, job and account need to be defined to be used in the tests, check the `90-tests.py` file for an example.
 
 ## Production install
-The portal can be installed directly on a Centos7 or Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container. The various recommendations for any normal Django production deployment can be followed.
+The portal can be installed directly on a Centos7 or Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container with Podman or Kubernetes. Some scripts used to deploy both Nginx and Django containers inside the same pod are provided in the `podman` directory.
+The various recommendations for any normal Django production deployment can be followed.
 
 [Deploying Django](https://docs.djangoproject.com/en/3.2/howto/deployment/)
 

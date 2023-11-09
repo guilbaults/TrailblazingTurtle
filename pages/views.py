@@ -357,7 +357,7 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
             filter=prom.get_filter(),
         )
     else:
-        query_used = 'slurm_job:used_gpu:sum{{ {filter} }}'.format(
+        query_used = 'sum(slurm_job:used_gpu:sum{{ {filter} }})'.format(
             filter=prom.get_filter(),
         )
 

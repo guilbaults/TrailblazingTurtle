@@ -7,6 +7,7 @@ from userportal.common import anonymize as a
 from datetime import datetime, timedelta
 from django.utils.translation import gettext as _
 from jobstats.views import GPU_MEMORY, GPU_SHORT_NAME, GPU_IDLE_POWER, GPU_FULL_POWER
+from slurm.models import EventTable
 
 
 prom = Prometheus(settings.PROMETHEUS)
@@ -146,6 +147,25 @@ def node(request, node):
         filter=prom.get_filter())
     stats_gpu = prom.query_prometheus_multiple(query_gpu, START, END)
     context['gpu'] = len(stats_gpu) > 0
+
+    context['node_events'] = []
+    try:
+        start = START.timestamp()
+        end = END.timestamp()
+
+        started = EventTable.objects\
+            .filter(node_name=node)\
+            .filter(time_start__gte=start)\
+            .filter(time_start__lte=end).all()
+
+        ended = EventTable.objects\
+            .filter(node_name=node)\
+            .filter(time_end__gte=start)\
+            .filter(time_end__lte=end).all()
+
+        context['node_events'] = started | ended
+    except IndexError:
+        pass
 
     return render(request, 'nodes/node.html', context)
 

@@ -165,6 +165,21 @@ class EventTable(models.Model):
         db_table = settings.CLUSTER_NAME + '_event_table'
         unique_together = (('node_name', 'time_start'),)
 
+    def time_start_dt(self):
+        if self.time_start == 0:
+            return None
+        return datetime.datetime.fromtimestamp(self.time_start)
+
+    def time_end_dt(self):
+        if self.time_end == 0:
+            return None
+        return datetime.datetime.fromtimestamp(self.time_end)
+
+    def duration_dt(self):
+        if self.time_end == 0:
+            return None
+        return self.time_end_dt() - self.time_start_dt()
+
 
 class JobTable(models.Model):
     class StatesJob(models.IntegerChoices):

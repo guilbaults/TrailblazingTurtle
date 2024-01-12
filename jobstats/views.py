@@ -449,7 +449,7 @@ def job(request, username, job_id):
     context['node_events'] = []
     try:
         # only completed jobs seem to have events
-        # gather events that occured on the nodes of the job, 1 hour before and after
+        # gather events that occurred on the nodes of the job, 1 hour before and after
         start = job.time_start - 3600
         end = job.time_end + 3600
 

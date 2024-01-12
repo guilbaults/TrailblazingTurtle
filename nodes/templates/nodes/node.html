@@ -15,6 +15,7 @@
       <th scope="col">{% translate "Node" %}</th>
       <th scope="col">{% translate "Start time" %}</th>
       <th scope="col">{% translate "End time" %}</th>
+      <th scope="col">{% translate "Duration" %}</th>
       <th scope="col">{% translate "Reason" %}</th>
     </tr>
   </thead>
@@ -24,6 +25,7 @@
       <td>{{node_event.node_name}}</td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{node_event.time_start_dt}}">{{node_event.time_start_dt | naturaltime}} <span data-feather="info"></span></span></td>
       <td><span data-toggle="tooltip" data-placement="top" title="{{node_event.time_end_dt}}">{{node_event.time_end_dt | naturaltime}} <span data-feather="info"></span></span></td>
+      <td>{{node_event.duration_dt | naturaltime}}</td>
       <td>{{node_event.reason}}</td>
     </tr>
     {% endfor %}

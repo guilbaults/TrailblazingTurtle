@@ -175,6 +175,11 @@ class EventTable(models.Model):
             return None
         return datetime.datetime.fromtimestamp(self.time_end)
 
+    def duration_dt(self):
+        if self.time_end == 0:
+            return None
+        return self.time_end_dt() - self.time_start_dt()
+
 
 class JobTable(models.Model):
     class StatesJob(models.IntegerChoices):

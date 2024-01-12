@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
-from slurm.models import JobTable, AssocTable
+from slurm.models import JobTable, AssocTable, EventTable
 from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step, parse_start_end, fixed_zoom_config
 from django.conf import settings
 from datetime import datetime, timedelta
@@ -445,6 +445,27 @@ def job(request, username, job_id):
     for comment in comments:
         for graph in comment.graph_ids:
             context['graph_div'][graph] = comment.display_card_class()
+
+    context['node_events'] = []
+    try:
+        # only completed jobs seem to have events
+        # gather events that occured on the nodes of the job, 1 hour before and after
+        start = job.time_start - 3600
+        end = job.time_end + 3600
+
+        started = EventTable.objects\
+            .filter(node_name__in=job.nodes())\
+            .filter(time_start__gte=start)\
+            .filter(time_start__lte=end).all()
+
+        ended = EventTable.objects\
+            .filter(node_name__in=job.nodes())\
+            .filter(time_end__gte=start)\
+            .filter(time_end__lte=end).all()
+
+        context['node_events'] = started | ended
+    except IndexError:
+        pass
 
     # export some settings to the template
     context['CLOUD_CPU_CORE_COST_PER_HOUR'] = settings.CLOUD_CPU_CORE_COST_PER_HOUR

@@ -150,6 +150,31 @@
       </tr>
     </tbody>
   </table>
+
+  {% if node_events %}
+  <h2>{% translate "Node events" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Node" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+        <th scope="col">{% translate "Reason" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for node_event in node_events %}
+      <tr>
+        <td>{{node_event.node_name}}</td>
+        <td><span data-toggle="tooltip" data-placement="top" title="{{node_event.time_start_dt}}">{{node_event.time_start_dt | naturaltime}} <span data-feather="info"></span></span></td>
+        <td><span data-toggle="tooltip" data-placement="top" title="{{node_event.time_end_dt}}">{{node_event.time_end_dt | naturaltime}} <span data-feather="info"></span></span></td>
+        <td>{{node_event.reason}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
 {% endif %}
 
 {% if multiple_jobs is False %}

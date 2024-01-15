@@ -12,8 +12,8 @@ import re
 import time
 from userportal.common import uid_to_username
 
-
-RE_DEPS = re.compile(r'(--depend|--dependency)=(.*)(\w|$)')
+# regex to parse dependencies from the submit line
+RE_DEPS = re.compile(r'(--depend=|--dependency=|-d )(afterok|afterany|afterburstbuffer|aftercorr|afternotok|after):([:\d]+)')
 
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
@@ -373,7 +373,7 @@ class JobTable(models.Model):
         # parse dependencies from the submit line
         deps = []
         for match in re.findall(RE_DEPS, submit_line):
-            params = match[1].split(':')
+            params = match[2].split(':')
             jobs = JobTable.objects.filter(id_user=self.id_user)\
                 .filter(id_job__in=params[1:])
             for job in jobs:

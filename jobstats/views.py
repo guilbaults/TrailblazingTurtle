@@ -275,6 +275,22 @@ def job(request, username, job_id):
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
 
+    comments = []
+    if '--dependency=singleton' in job.submit_line \
+        or '--depend=singleton' in job.submit_line \
+            or '-d singleton' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a singleton dependency'),
+            'info')]
+    if len(context['dependencies']) > 0:
+        comments += [Comment(
+            _('This job has dependencies on other jobs'),
+            'info')]
+    if len(context['depends_on_this']) > 0:
+        comments += [Comment(
+            _('This job is a dependency for other jobs'),
+            'info')]
+
     if 'slurm_exporter' in settings.EXPORTER_INSTALLED:
         try:
             query_priority = 'slurm_account_levelfs{{account="{account}", {filter}}}'.format(
@@ -295,6 +311,7 @@ def job(request, username, job_id):
             context['priority'] = None
 
     if job.time_start_dt() is None:
+        context['comments'] = sorted(comments, key=lambda x: x.line_number)
         return render(request, 'jobstats/job.html', context)
 
     try:
@@ -347,7 +364,6 @@ def job(request, username, job_id):
         except ValueError:
             context['gpu_power'] = None
 
-    comments = []
     try:
         context['job_script'] = JobScript.objects.get(id_job=job_id)
         try:

@@ -114,6 +114,18 @@
     </p>
   {% endif %}
 
+  <p>
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_submit" aria-expanded="false" aria-controls="collapse_job_submit">
+      {% translate "Show submit command" %}
+    </button>
+  </p>
+  <div class="collapse" id="collapse_job_submit">
+    <div class="card card-body">
+      <pre>{% translate "Working directory" %}: <code class="language-bash">{{job.work_dir}}</code></pre>
+      <pre>{% translate "Submit command" %}: <code class="language-bash">{{job.submit_line}}</code></pre>
+    </div>
+  </div>
+
   <h2>{% translate "Scheduler info" %}</h2>
   <table class="table table-striped">
     <thead class="thead-dark">

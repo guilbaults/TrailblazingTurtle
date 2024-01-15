@@ -374,10 +374,12 @@ class JobTable(models.Model):
         deps = []
         for match in re.findall(RE_DEPS, submit_line):
             params = match[1].split(':')
-            for jobid in params[1:]:
+            jobs = JobTable.objects.filter(id_user=self.id_user)\
+                .filter(id_job__in=params[1:])
+            for job in jobs:
                 deps.append({
                     'type': params[0],
-                    'jobid': int(jobid),
+                    'job': job,
                 })
         return deps
 
@@ -395,10 +397,10 @@ class JobTable(models.Model):
         for job in jobs:
             for depend in job.parse_deps(job.submit_line):
                 # found a dependency on this job
-                if depend['jobid'] == self.id_job:
+                if depend['job'].id_job == self.id_job:
                     deps.append({
                         'type': depend['type'],
-                        'jobid': job.id_job,
+                        'job': job,
                     })
         return deps
 

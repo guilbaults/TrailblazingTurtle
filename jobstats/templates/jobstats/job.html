@@ -157,13 +157,17 @@
     <thead class="thead-dark">
       <tr>
         <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Status" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
         <th scope="col">{% translate "Type" %}</th>
       </tr>
     </thead>
     <tbody>
       {% for dep in dependencies %}
       <tr>
-        <td>{{dep.jobid}}</td>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
+        <td><p><span class="badge badge-{{job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td>{{dep.job.job_name}}</td>
         <td>{{dep.type}}</td>
       </tr>
       {% endfor %}
@@ -177,13 +181,17 @@
     <thead class="thead-dark">
       <tr>
         <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Status" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
         <th scope="col">{% translate "Type" %}</th>
       </tr>
     </thead>
     <tbody>
       {% for dep in depends_on_this %}
       <tr>
-        <td>{{dep.jobid}}</td>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
+        <td><p><span class="badge badge-{{job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td>{{dep.job.job_name}}</td>
         <td>{{dep.type}}</td>
       </tr>
       {% endfor %}

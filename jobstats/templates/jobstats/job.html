@@ -151,6 +151,46 @@
     </tbody>
   </table>
 
+  {% if dependencies or depends_on_this %}
+  <h2>{% translate "Job dependencies" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Type" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dep in dependencies %}
+      <tr>
+        <td>{{dep.jobid}}</td>
+        <td>{{dep.type}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if depends_on_this %}
+  <h2>{% translate "Jobs that depend on this job" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Type" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dep in depends_on_this %}
+      <tr>
+        <td>{{dep.jobid}}</td>
+        <td>{{dep.type}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
   {% if node_events %}
   <h2>{% translate "Node events" %}</h2>
   <table class="table table-striped">

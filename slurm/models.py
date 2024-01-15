@@ -13,6 +13,9 @@ import time
 from userportal.common import uid_to_username
 
 
+RE_DEPS = re.compile(r'(--depend|--dependency)=(.*)(\w|$)')
+
+
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
 def expand_nodelist(nlist: str, as_list=False) -> str:
     """ translate a nodelist like 'nid[02516-02575,02580-02635,02836]' into a
@@ -243,6 +246,7 @@ class JobTable(models.Model):
     system_comment = models.TextField(blank=True, null=True)
     tres_alloc = models.TextField()
     tres_req = models.TextField()
+    submit_line = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -363,6 +367,40 @@ class JobTable(models.Model):
     def username(self):
         # convert user id to username from ldap database
         return uid_to_username(self.id_user)
+
+    # internal function to parse dependencies
+    def parse_deps(self, submit_line):
+        # parse dependencies from the submit line
+        deps = []
+        for match in re.findall(RE_DEPS, submit_line):
+            params = match[1].split(':')
+            for jobid in params[1:]:
+                deps.append({
+                    'type': params[0],
+                    'jobid': int(jobid),
+                })
+        return deps
+
+    # dependencies of this job
+    def dependencies(self):
+        return self.parse_deps(self.submit_line)
+
+    # jobs that depend on this job
+    def depends_on_this(self):
+        deps = []
+        # basic filtering with a regex in the database
+        jobs = JobTable.objects\
+            .filter(submit_line__regex='.*{}.*'.format(self.id_job))\
+            .filter(id_user=self.id_user)
+        for job in jobs:
+            for depend in job.parse_deps(job.submit_line):
+                # found a dependency on this job
+                if depend['jobid'] == self.id_job:
+                    deps.append({
+                        'type': depend['type'],
+                        'jobid': job.id_job,
+                    })
+        return deps
 
 
 class LastRanTable(models.Model):

@@ -263,6 +263,9 @@ def job(request, username, job_id):
     # continue with single job
     job = context['job']
 
+    context['dependencies'] = job.dependencies()
+    context['depends_on_this'] = job.depends_on_this()
+
     # Adjust the precision of the graphs.
     context['step'] = get_step(job.time_start_dt(), job.time_end_dt())
 

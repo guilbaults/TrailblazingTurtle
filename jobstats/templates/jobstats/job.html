@@ -159,6 +159,7 @@
         <th scope="col">{% translate "Job" %}</th>
         <th scope="col">{% translate "Status" %}</th>
         <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
         <th scope="col">{% translate "Type" %}</th>
       </tr>
     </thead>
@@ -166,8 +167,15 @@
       {% for dep in dependencies %}
       <tr>
         <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
-        <td><p><span class="badge badge-{{job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td><p><span class="badge badge-{{dep.job.status_badge}}">{{dep.job.status}}</span></p></td>
         <td>{{dep.job.job_name}}</td>
+        <td>
+          {% if dep.job.time_end_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{dep.job.time_end_dt}}">{{dep.job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not finished" %}
+          {% endif %}
+        </td>
         <td>{{dep.type}}</td>
       </tr>
       {% endfor %}
@@ -183,6 +191,7 @@
         <th scope="col">{% translate "Job" %}</th>
         <th scope="col">{% translate "Status" %}</th>
         <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
         <th scope="col">{% translate "Type" %}</th>
       </tr>
     </thead>
@@ -190,8 +199,15 @@
       {% for dep in depends_on_this %}
       <tr>
         <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
-        <td><p><span class="badge badge-{{job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td><p><span class="badge badge-{{dep.job.status_badge}}">{{dep.job.status}}</span></p></td>
         <td>{{dep.job.job_name}}</td>
+        <td>
+          {% if dep.job.time_start_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{dep.job.time_start_dt}}">{{dep.job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not finished" %}
+          {% endif %}
+        </td>
         <td>{{dep.type}}</td>
       </tr>
       {% endfor %}

@@ -12,6 +12,9 @@ import re
 import time
 from userportal.common import uid_to_username
 
+# regex to parse dependencies from the submit line
+RE_DEPS = re.compile(r'(--depend=|--dependency=|-d )(afterok|afterany|afterburstbuffer|aftercorr|afternotok|after):([:\d]+)')
+
 
 # from https://github.com/NERSC/slurm-helpers/blob/master/slurm_utils.py
 def expand_nodelist(nlist: str, as_list=False) -> str:
@@ -243,6 +246,7 @@ class JobTable(models.Model):
     system_comment = models.TextField(blank=True, null=True)
     tres_alloc = models.TextField()
     tres_req = models.TextField()
+    submit_line = models.TextField(blank=True, null=True)
 
     class Meta:
         managed = False
@@ -363,6 +367,42 @@ class JobTable(models.Model):
     def username(self):
         # convert user id to username from ldap database
         return uid_to_username(self.id_user)
+
+    # internal function to parse dependencies
+    def parse_deps(self, submit_line):
+        # parse dependencies from the submit line
+        deps = []
+        for match in re.findall(RE_DEPS, submit_line):
+            params = match[2].split(':')
+            jobs = JobTable.objects.filter(id_user=self.id_user)\
+                .filter(id_job__in=params[1:])
+            for job in jobs:
+                deps.append({
+                    'type': match[1],
+                    'job': job,
+                })
+        return deps
+
+    # dependencies of this job
+    def dependencies(self):
+        return self.parse_deps(self.submit_line)
+
+    # jobs that depend on this job
+    def depends_on_this(self):
+        deps = []
+        # basic filtering with a regex in the database
+        jobs = JobTable.objects\
+            .filter(submit_line__regex='.*{}.*'.format(self.id_job))\
+            .filter(id_user=self.id_user)
+        for job in jobs:
+            for depend in job.parse_deps(job.submit_line):
+                # found a dependency on this job
+                if depend['job'].id_job == self.id_job:
+                    deps.append({
+                        'type': depend['type'],
+                        'job': job,
+                    })
+        return deps
 
 
 class LastRanTable(models.Model):

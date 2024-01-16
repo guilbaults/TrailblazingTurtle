@@ -114,6 +114,18 @@
     </p>
   {% endif %}
 
+  <p>
+    <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapse_job_submit" aria-expanded="false" aria-controls="collapse_job_submit">
+      {% translate "Show submit command" %}
+    </button>
+  </p>
+  <div class="collapse" id="collapse_job_submit">
+    <div class="card card-body">
+      <pre>{% translate "Working directory" %}: <code class="language-bash">{{job.work_dir}}</code></pre>
+      <pre>{% translate "Submit command" %}: <code class="language-bash">{{job.submit_line}}</code></pre>
+    </div>
+  </div>
+
   <h2>{% translate "Scheduler info" %}</h2>
   <table class="table table-striped">
     <thead class="thead-dark">
@@ -150,6 +162,70 @@
       </tr>
     </tbody>
   </table>
+
+  {% if dependencies %}
+  <h2>{% translate "Job dependencies" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Status" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+        <th scope="col">{% translate "Type" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dep in dependencies %}
+      <tr>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
+        <td><p><span class="badge badge-{{dep.job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td>{{dep.job.job_name}}</td>
+        <td>
+          {% if dep.job.time_end_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{dep.job.time_end_dt}}">{{dep.job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not finished" %}
+          {% endif %}
+        </td>
+        <td>{{dep.type}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  {% if depends_on_this %}
+  <h2>{% translate "Jobs that depend on this job" %}</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Status" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "Type" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for dep in depends_on_this %}
+      <tr>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{dep.job.id_job}}">{{dep.job.id_job}}</a></td>
+        <td><p><span class="badge badge-{{dep.job.status_badge}}">{{dep.job.status}}</span></p></td>
+        <td>{{dep.job.job_name}}</td>
+        <td>
+          {% if dep.job.time_start_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{dep.job.time_start_dt}}">{{dep.job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not started" %}
+          {% endif %}
+        </td>
+        <td>{{dep.type}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
 
   {% if node_events %}
   <h2>{% translate "Node events" %}</h2>

@@ -263,6 +263,9 @@ def job(request, username, job_id):
     # continue with single job
     job = context['job']
 
+    context['dependencies'] = job.dependencies()
+    context['depends_on_this'] = job.depends_on_this()
+
     # Adjust the precision of the graphs.
     context['step'] = get_step(job.time_start_dt(), job.time_end_dt())
 
@@ -271,6 +274,54 @@ def job(request, username, job_id):
 
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
+
+    comments = []
+    if '--dependency=singleton' in job.submit_line \
+        or '--depend=singleton' in job.submit_line \
+            or '-d singleton' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a singleton dependency'),
+            'info')]
+    if len(context['dependencies']) > 0:
+        comments += [Comment(
+            _('This job has dependencies on other jobs'),
+            'info')]
+    if len(context['depends_on_this']) > 0:
+        comments += [Comment(
+            _('This job is a dependency for other jobs'),
+            'info')]
+    if '--exclusive' in job.submit_line:
+        comments += [Comment(
+            _('This job is using exclusive mode'),
+            'info')]
+    if '--licenses=' in job.submit_line or '-L ' in job.submit_line:
+        comments += [Comment(
+            _('This job is using licenses'),
+            'info')]
+    if '--nodelist=' in job.submit_line or '-w ' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a specific nodelist'),
+            'info')]
+    if '--exclude=' in job.submit_line or '-x ' in job.submit_line:
+        comments += [Comment(
+            _('This job is excluding nodes'),
+            'warning')]
+    if '--requeue' in job.submit_line:
+        comments += [Comment(
+            _('This job can be requeued'),
+            'info')]
+    if '--no-requeue' in job.submit_line:
+        comments += [Comment(
+            _('This job cannot be requeued'),
+            'info')]
+    if '--reservation=' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a reservation'),
+            'info')]
+    if '--switches=' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a maximum quantity of switches'),
+            'info')]
 
     if 'slurm_exporter' in settings.EXPORTER_INSTALLED:
         try:
@@ -292,6 +343,7 @@ def job(request, username, job_id):
             context['priority'] = None
 
     if job.time_start_dt() is None:
+        context['comments'] = sorted(comments, key=lambda x: x.line_number)
         return render(request, 'jobstats/job.html', context)
 
     try:
@@ -344,7 +396,6 @@ def job(request, username, job_id):
         except ValueError:
             context['gpu_power'] = None
 
-    comments = []
     try:
         context['job_script'] = JobScript.objects.get(id_job=job_id)
         try:

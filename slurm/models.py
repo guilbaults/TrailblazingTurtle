@@ -378,7 +378,7 @@ class JobTable(models.Model):
                 .filter(id_job__in=params[1:])
             for job in jobs:
                 deps.append({
-                    'type': params[0],
+                    'type': match[1],
                     'job': job,
                 })
         return deps

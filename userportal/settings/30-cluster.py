@@ -175,10 +175,15 @@ SOFTWARE_STACK_REGEX = [
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2017/avx512/.*', '2017 - AVX512'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2019/Core/.*', '2019 - Core'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/Core/.*', '2020 - Core'),
+    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2023/x86-64-v3/Core/.*', '2023 - Core'),
+    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/sse3/.*', '2020 - sse3'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx/.*', '2020 - AVX'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx2/.*', '2020 - AVX2'),
     (r'/cvmfs/.*.computecanada.ca/easybuild/software/2020/avx512/.*', '2020 - AVX512'),
+    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2023/x86-64-v3/.*', '2023 - AVX2'),
+    (r'/cvmfs/.*.computecanada.ca/easybuild/software/2023/x86-64-v4/.*', '2023 - AVX512'),
     (r'/cvmfs/.*.computecanada.ca/gentoo/2020/.*', '2020 - Gentoo'),
+    (r'/cvmfs/.*.computecanada.ca/gentoo/2023/.*', '2023 - Gentoo'),
 ]
 
 POSIX_PERSONAL_GROUP_USAGE_NOTE = 'Files should not be stored on the project filesystem with a personal group. <a href="https://docs.alliancecan.ca/wiki/Frequently_Asked_Questions#Disk_quota_exceeded_error_on_/project_filesystems">Learn More</a>'

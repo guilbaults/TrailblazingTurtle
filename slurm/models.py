@@ -375,7 +375,7 @@ class JobTable(models.Model):
         for match in re.findall(RE_DEPS, submit_line):
             params = match[2].split(':')
             jobs = JobTable.objects.filter(id_user=self.id_user)\
-                .filter(id_job__in=params[1:])
+                .filter(id_job__in=params)
             for job in jobs:
                 deps.append({
                     'type': match[1],

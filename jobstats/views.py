@@ -290,6 +290,38 @@ def job(request, username, job_id):
         comments += [Comment(
             _('This job is a dependency for other jobs'),
             'info')]
+    if '--exclusive' in job.submit_line:
+        comments += [Comment(
+            _('This job is using exclusive mode'),
+            'info')]
+    if '--licenses=' in job.submit_line or '-L ' in job.submit_line:
+        comments += [Comment(
+            _('This job is using licenses'),
+            'info')]
+    if '--nodelist=' in job.submit_line or '-w ' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a specific nodelist'),
+            'info')]
+    if '--exclude=' in job.submit_line or '-x ' in job.submit_line:
+        comments += [Comment(
+            _('This job is excluding nodes'),
+            'warning')]
+    if '--requeue' in job.submit_line:
+        comments += [Comment(
+            _('This job can be requeued'),
+            'info')]
+    if '--no-requeue' in job.submit_line:
+        comments += [Comment(
+            _('This job cannot be requeued'),
+            'info')]
+    if '--reservation=' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a reservation'),
+            'info')]
+    if '--switches=' in job.submit_line:
+        comments += [Comment(
+            _('This job is using a maximum quantity of switches'),
+            'info')]
 
     if 'slurm_exporter' in settings.EXPORTER_INSTALLED:
         try:

@@ -217,7 +217,7 @@
           {% if dep.job.time_start_dt %}
             <span data-toggle="tooltip" data-placement="top" title="{{dep.job.time_start_dt}}">{{dep.job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
           {% else %}
-            {% translate "Not finished" %}
+            {% translate "Not started" %}
           {% endif %}
         </td>
         <td>{{dep.type}}</td>

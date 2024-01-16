@@ -28,6 +28,7 @@ class UnixEpochDateField(serializers.DateTimeField):
 class JobSerializer(serializers.HyperlinkedModelSerializer):
     time_submit = UnixEpochDateField()
     time_start = UnixEpochDateField()
+    time_eligible = UnixEpochDateField()
     time_end = UnixEpochDateField()
 
     class Meta:
@@ -38,6 +39,7 @@ class JobSerializer(serializers.HyperlinkedModelSerializer):
             'account',
             'time_submit',
             'time_start',
+            'time_eligible',
             'time_end',
             'timelimit',
             'get_state_display',

@@ -111,6 +111,8 @@
 
 <h1>{% translate "Your jobs" %}</h1>
 
+{% translate "A pending job with no eligible time is probably waiting on dependencies" %}
+
 <select select data-placeholder="{% translate "Filter by job status" %}" multiple class="chosen-select" id="select-status">
   <option value="Pending">Pending</option>
   <option value="Running">Running</option>
@@ -133,6 +135,7 @@
       <th data-data="get_state_display">{% translate "Status" %}</th>
       <th data-data="job_name">{% translate "Job name" %}</th>
       <th data-data="time_submit">{% translate "Submit time" %}</th>
+      <th data-data="time_eligible">{% translate "Eligible time" %}</th>
       <th data-data="time_start">{% translate "Start time" %}</th>
       <th data-data="time_end">{% translate "End time" %}</th>
       <th data-data="timelimit">{% translate "Asked time" %}</th>
@@ -210,6 +213,8 @@ $(document).ready(function() {
       { data: 'time_submit',
         render: parse_time,
       },
+      { data: 'time_eligible',
+        render: parse_time, },
       { data: 'time_start',
         render: parse_time, },
       { data: 'time_end',

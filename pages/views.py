@@ -472,7 +472,7 @@ def graph_software(query_str, software_regexes, extract_path=False):
             continue
         basename = bin.split('/')[-1]
         for name, regex in software_regexes:
-            if type(regex) == list:
+            if isinstance(regex, list):
                 # not a regex but a list of binary names
                 if basename in regex:
                     if name in software:

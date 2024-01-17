@@ -116,9 +116,8 @@ OTHER_PORTALS = []
 # The list is generated with mii-parser.py. The mii system is a index of the binaries deployed with modules on the cluster
 # The list is a first match and is ordered by the number of binaries offered by the module
 SOFTWARE_REGEX = [
-    ('Python', r'.*/python.*$'),  # put all the versions of python together
-    ('R', r'.*/R$'),
-    ('MATLAB', r'.*/MATLAB$'),
+    ('python', r'.*/python.*$'),  # put all the versions of python together
+    ('matlab', r'.*/MATLAB$'),
     ('fastq_screen', ["fastq_screen"]),
     ('libgdsii', ["GDSIIConvert"]),
     ('assimp', ["assimp"]),

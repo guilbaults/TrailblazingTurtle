@@ -470,14 +470,25 @@ def graph_software(query_str, software_regexes, extract_path=False):
         except KeyError:
             # Somehow the metric is missing the exe label
             continue
-        for regex, name in software_regexes:
-            if re.match(regex, bin):
-                if name in software:
-                    software[name] += value
-                else:
-                    software[name] = value
-                accounted += value
-                break
+        basename = bin.split('/')[-1]
+        for name, regex in software_regexes:
+            if type(regex) == list:
+                # not a regex but a list of binary names
+                if basename in regex:
+                    if name in software:
+                        software[name] += value
+                    else:
+                        software[name] = value
+                    accounted += value
+                    break
+            else:
+                if re.match(regex, bin):
+                    if name in software:
+                        software[name] += value
+                    else:
+                        software[name] = value
+                    accounted += value
+                    break
         else:
             if extract_path:
                 name = "Stored in /{}".format(bin.split('/')[1])

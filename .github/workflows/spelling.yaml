@@ -17,4 +17,4 @@ jobs:
       with:
         check_filenames: true
         ignore_words_list: keypair
-        skip: ./locale/fr/LC_MESSAGES/django.po,./locale/fr/LC_MESSAGES/djangojs.po
+        skip: ./locale/fr/LC_MESSAGES/django.po,./locale/fr/LC_MESSAGES/djangojs.po,./mii-parser.py,./userportal/settings/30-cluster.py

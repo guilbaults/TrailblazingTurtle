@@ -19,4 +19,6 @@ urlpatterns = [
     path('software/', views.software),
     path('software/graph/software.json', views.graph_software_processes),
     path('software/graph/software_stack.json', views.graph_software_stack),
+    path('software/graph/software_cvmfs.json', views.graph_software_processes_cvmfs),
+    path('software/graph/software_not_cvmfs.json', views.graph_software_processes_not_cvmfs),
 ]

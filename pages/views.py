@@ -450,7 +450,17 @@ def graph_software_stack(request):
     return graph_software(query_str, settings.SOFTWARE_STACK_REGEX, extract_path=True)
 
 
-def graph_software(query_str, software_regexes, extract_path=False):
+def graph_software_processes_cvmfs(request):
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe=~"/cvmfs/.*", {} }}[1m]) > 0) by (exe)'
+    return graph_software(query_str, settings.SOFTWARE_REGEX, unaccounted=False)
+
+
+def graph_software_processes_not_cvmfs(request):
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe!~"/cvmfs/.*", {} }}[1m]) > 0) by (exe)'
+    return graph_software(query_str, settings.SOFTWARE_REGEX, unaccounted=False)
+
+
+def graph_software(query_str, software_regexes, extract_path=False, unaccounted=True):
     query = query_str.format(prom.get_filter())
     stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), step="5m")
 
@@ -509,10 +519,11 @@ def graph_software(query_str, software_regexes, extract_path=False):
         labels.append(_('Unidentified'))
         values.append(unidentified)
 
-    used = statistics.median(stats_used[1])
-    if used > accounted:
-        labels.append(_('Unaccounted'))
-        values.append(used - accounted)
+    if unaccounted:
+        used = statistics.median(stats_used[1])
+        if used > accounted:
+            labels.append(_('Unaccounted'))
+            values.append(used - accounted)
 
     data = {'data': [{
         'values': values,

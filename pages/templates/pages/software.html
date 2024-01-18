@@ -18,12 +18,24 @@
             <div id="graph_software_stack"></div>
         </div>
     </div>
+    <div class="row">
+        <div class="col-sm">
+            <h4>{% translate "On CVMFS" %}</h4>
+            <div id="graph_software_cvmfs"></div>
+        </div>
+        <div class="col-sm">
+            <h4>{% translate "Not on CVMFS" %}</h4>
+            <div id="graph_software_not_cvmfs"></div>
+        </div>
+    </div>
 </div>
 
 <script>
     $(document).ready(function(){
         loadGraph('graph_software', 'graph/software.json');
         loadGraph('graph_software_stack', 'graph/software_stack.json');
+        loadGraph('graph_software_cvmfs', 'graph/software_cvmfs.json');
+        loadGraph('graph_software_not_cvmfs', 'graph/software_not_cvmfs.json');
     });
 </script>
 

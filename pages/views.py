@@ -460,26 +460,72 @@ def graph_software_processes_not_cvmfs(request):
     return graph_software(query_str, settings.SOFTWARE_REGEX, unaccounted=False)
 
 
-def graph_software(query_str, software_regexes, extract_path=False, unaccounted=True):
-    query = query_str.format(prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), step="5m")
+def graph_software_gpu(request):
+    return graph_software(None, settings.SOFTWARE_REGEX, gpu=True, unaccounted=False)
 
-    query_used = 'slurm_job:used_core:sum{{ {} }}'.format(prom.get_filter())
-    stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), step="5m")
 
-    values = []
+def graph_software_cores_with_gpu(request):
+    return graph_software(None, settings.SOFTWARE_REGEX, gpu=True, unaccounted=False, cores_with_gpu=True)
+
+
+def graph_software(query_str, software_regexes, extract_path=False, unaccounted=True, gpu=False, cores_with_gpu=False):
+    values_graph = []
     labels = []
     unidentified = 0
     accounted = 0
     software = {}
 
-    for line in stats:
-        value = statistics.median(line['y'])
-        try:
-            bin = line['metric']['exe']
-        except KeyError:
-            # Somehow the metric is missing the exe label
-            continue
+    # paths contain (path, used_cores, used_gpus)
+    paths = []
+
+    if gpu is True:
+        query_gpu = 'count(slurm_job_utilization_gpu{{ {} }}) by (slurmjobid,gpu_type)'.format(prom.get_filter())
+        stats_gpu = prom.query_prometheus_multiple(query_gpu, datetime.now() - timedelta(hours=6), step="5m")
+
+        jobs = {}
+
+        for line in stats_gpu:
+            gpu_count = int(statistics.median(line['y']))
+            jobs[int(line['metric']['slurmjobid'])] = gpu_count
+
+        query_exe = 'sum(deriv(slurm_job_process_usage_total{{ slurmjobid=~"{jobids}", {filter} }}[1m]) > 0) by (exe,slurmjobid)'.format(
+            jobids="|".join(map(str, jobs.keys())),
+            filter=prom.get_filter(),
+        )
+        stats_exe = prom.query_prometheus_multiple(query_exe, datetime.now() - timedelta(hours=6), step="5m")
+
+        for line in stats_exe:
+            jobid = int(line['metric']['slurmjobid'])
+            try:
+                duration = line['x'][-1] - line['x'][0]
+                if duration.total_seconds() < 5 * 60:
+                    # job is too short to be accounted
+                    continue
+                ratio = duration.total_seconds() / (6 * 60 * 60)  # since we are querying 6 hours
+                paths.append((line['metric']['exe'], statistics.mean(line['y']) * ratio, jobs[jobid] * ratio))
+            except KeyError:
+                continue
+    else:
+        query = query_str.format(prom.get_filter())
+        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), step="5m")
+
+        for line in stats:
+            try:
+                paths.append((line['metric']['exe'], statistics.median(line['y']), None))
+            except KeyError:
+                # Somehow the metric is missing the exe label
+                continue
+
+    for line in paths:
+        bin = line[0]
+        if cores_with_gpu is True:
+            # show allocated cores with GPUs
+            value = line[1]
+        elif gpu is True:
+            # show allocated GPUs
+            value = line[2]
+        else:
+            value = line[1]
         basename = bin.split('/')[-1]
         for name, regex in software_regexes:
             if isinstance(regex, list):
@@ -512,21 +558,23 @@ def graph_software(query_str, software_regexes, extract_path=False, unaccounted=
 
     for key in software.keys():
         labels.append(key)
-        values.append(software[key])
+        values_graph.append(software[key])
 
     if unidentified > 0:
         # Software that are not in the list of known regexes
         labels.append(_('Unidentified'))
-        values.append(unidentified)
+        values_graph.append(unidentified)
 
     if unaccounted:
+        query_used = 'slurm_job:used_core:sum{{ {} }}'.format(prom.get_filter())
+        stats_used = prom.query_prometheus(query_used, datetime.now() - timedelta(hours=6), step="5m")
         used = statistics.median(stats_used[1])
         if used > accounted:
             labels.append(_('Unaccounted'))
-            values.append(used - accounted)
+            values_graph.append(used - accounted)
 
     data = {'data': [{
-        'values': values,
+        'values': values_graph,
         'labels': labels,
         'type': 'pie',
         'texttemplate': '%{label}: %{value:.0f}',

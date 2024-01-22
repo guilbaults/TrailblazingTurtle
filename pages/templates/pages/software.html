@@ -5,9 +5,9 @@
 {% block title %}{% translate "Scientific software" %}{% endblock title %}
 
 {% block content %}
-<h2>{% translate "CPU cores used by scientific software" %}</h2>
-
+<h1>{% translate "Scientific software" %}</h1>
 <div class="container">
+    <h2>{% translate "CPU cores used" %}</h2>
     <div class="row">
         <div class="col-sm">
             <h4>{% translate "By software" %}</h4>
@@ -28,6 +28,18 @@
             <div id="graph_software_not_cvmfs"></div>
         </div>
     </div>
+
+    <h2>{% translate "GPUs used" %}</h2>
+    <div class="row">
+        <div class="col-sm">
+            <h4>{% translate "GPUs allocated by software" %}</h4>
+            <div id="graph_software_gpu"></div>
+        </div>
+        <div class="col-sm">
+            <h4>{% translate "Cores allocated to GPUs jobs by software" %}</h4>
+            <div id="graph_software_cores_with_gpu"></div>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -36,6 +48,9 @@
         loadGraph('graph_software_stack', 'graph/software_stack.json');
         loadGraph('graph_software_cvmfs', 'graph/software_cvmfs.json');
         loadGraph('graph_software_not_cvmfs', 'graph/software_not_cvmfs.json');
+
+        loadGraph('graph_software_gpu', 'graph/software_gpu.json');
+        loadGraph('graph_software_cores_with_gpu', 'graph/software_cores_with_gpu.json');
     });
 </script>
 

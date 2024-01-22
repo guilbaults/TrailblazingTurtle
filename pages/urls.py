@@ -21,4 +21,6 @@ urlpatterns = [
     path('software/graph/software_stack.json', views.graph_software_stack),
     path('software/graph/software_cvmfs.json', views.graph_software_processes_cvmfs),
     path('software/graph/software_not_cvmfs.json', views.graph_software_processes_not_cvmfs),
+    path('software/graph/software_gpu.json', views.graph_software_gpu),
+    path('software/graph/software_cores_with_gpu.json', views.graph_software_cores_with_gpu),
 ]

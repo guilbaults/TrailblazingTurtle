@@ -228,7 +228,7 @@
   {% endif %}
 
   {% if array_jobs %}
-  <h2>{% translate "Job array" %}</h2>
+  <h2>{% translate "Other jobs in the array" %}</h2>
   <p>{% translate "Pending tasks" %}: {{job.array_task_pending}}</p>
   <table class="table table-striped">
     <thead class="thead-dark">
@@ -266,11 +266,6 @@
       {% endfor %}
     </tbody>
   </table>
-  {% else %}
-    {% if main_job %}
-    <h2>{% translate "Job array" %}</h2>
-    <p>{% translate "This job is a member of this array" %}: <a href="../{{main_job.id_job}}">{{main_job.id_job}}</a></p>
-    {% endif %}
   {% endif %}
 
   {% if node_events %}

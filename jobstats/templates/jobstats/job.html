@@ -227,6 +227,52 @@
   </table>
   {% endif %}
 
+  {% if array_jobs %}
+  <h2>{% translate "Job array" %}</h2>
+  <p>{% translate "Pending tasks" %}: {{job.array_task_pending}}</p>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th scope="col">{% translate "Job" %}</th>
+        <th scope="col">{% translate "Task" %}</th>
+        <th scope="col">{% translate "Status" %}</th>
+        <th scope="col">{% translate "Name" %}</th>
+        <th scope="col">{% translate "Start time" %}</th>
+        <th scope="col">{% translate "End time" %}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for array_job in array_jobs %}
+      <tr>
+        <td><a href="{{settings.BASE_URL}}secure/jobstats/{{username}}/{{array_job.id_job}}">{{array_job.id_job}}</a></td>
+        <td>{{array_job.id_array_task}}</td>
+        <td><p><span class="badge badge-{{array_job.status_badge}}">{{array_job.status}}</span></p></td>
+        <td>{{array_job.job_name}}</td>
+        <td>
+          {% if array_job.time_start_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{array_job.time_start_dt}}">{{array_job.time_start_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not started" %}
+          {% endif %}
+        </td>
+        <td>
+          {% if array_job.time_end_dt %}
+            <span data-toggle="tooltip" data-placement="top" title="{{array_job.time_end_dt}}">{{array_job.time_end_dt | default_if_none:'' | naturaltime}} <span data-feather="info"></span></span>
+          {% else %}
+            {% translate "Not finished" %}
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    {% if main_job %}
+    <h2>{% translate "Job array" %}</h2>
+    <p>{% translate "This job is a member of this array" %}: <a href="../{{main_job.id_job}}">{{main_job.id_job}}</a></p>
+    {% endif %}
+  {% endif %}
+
   {% if node_events %}
   <h2>{% translate "Node events" %}</h2>
   <table class="table table-striped">

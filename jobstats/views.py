@@ -266,6 +266,17 @@ def job(request, username, job_id):
     context['dependencies'] = job.dependencies()
     context['depends_on_this'] = job.depends_on_this()
 
+    if job.array_task_str is not None or job.id_array_job != 0:
+        if job.id_array_task == 4294967294:
+            # 4294967294 is the default value in the database for the main job of an array
+            # list all jobs in the array
+            context['array_jobs'] = JobTable.objects.filter(id_array_job=job.id_array_job).exclude(id_array_task=4294967294)
+
+        if job.id_array_job != 0:
+            # this is an array job
+            # find the main job
+            context['main_job'] = JobTable.objects.get(id_array_job=job.id_array_job, id_array_task=4294967294)
+
     # Adjust the precision of the graphs.
     context['step'] = get_step(job.time_start_dt(), job.time_end_dt())
 

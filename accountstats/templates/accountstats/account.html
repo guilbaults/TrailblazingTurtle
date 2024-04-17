@@ -157,6 +157,13 @@
   </thead>
 </table>
 
+<form id="jumpto">
+  <div class="form-inline float-right">
+    <input type="number" id="page" name="page" value="" placeholder="1" min="1">
+    <button type="submit" class="btn btn-primary">{% translate "Jump to page" %}</button>
+  </div>
+</form>
+
 {% include "notes.js" %}
 
 <script>
@@ -218,6 +225,7 @@ $(document).ready(function() {
   $('#jobs').DataTable({
     order: [[ 3, "desc" ]],
     stateSave: true,
+    lengthMenu: [10, 100, 1000],
     columns: [
       { data: 'username', 
         orderable: false,
@@ -286,6 +294,10 @@ $(document).ready(function() {
   $('#select-status').on('change', function() {
     $('#jobs').DataTable().ajax.url( '{{settings.BASE_URL}}api/jobs/?format=datatables&account={{account}}&status=' + $(this).val().join(',') ).load();
   }).trigger('change');
+  $('#jumpto').on('submit', function(e) {
+    e.preventDefault();
+    $('#jobs').DataTable().page($('#page').val() - 1).draw('page');
+  });
 });
 </script>
 

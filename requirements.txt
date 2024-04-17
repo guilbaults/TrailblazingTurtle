@@ -19,7 +19,7 @@ djangorestframework-datatables==0.7.0
 djangosaml2==1.5.1
 elementpath==2.4.0
 flake8==3.9.0
-gunicorn==20.1.0
+gunicorn==22.0.0
 idna==2.10
 importlib-metadata==3.7.3
 importlib-resources==5.4.0

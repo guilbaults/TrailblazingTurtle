@@ -230,7 +230,7 @@
   {% if array_jobs %}
   <h2>{% translate "Other jobs in the array" %}</h2>
   <p>{% translate "Pending tasks" %}: {{job.array_task_pending}}</p>
-  <table class="table table-striped">
+  <table class="table table-striped" id="array_jobs">
     <thead class="thead-dark">
       <tr>
         <th scope="col">{% translate "Job" %}</th>
@@ -266,6 +266,13 @@
       {% endfor %}
     </tbody>
   </table>
+
+  <form id="jumpto">
+    <div class="form-inline float-right">
+      <input type="number" id="page" name="page" value="" placeholder="1" min="1">
+      <button type="submit" class="btn btn-primary">{% translate "Jump to page" %}</button>
+    </div>
+  </form>
   {% endif %}
 
   {% if node_events %}
@@ -833,25 +840,26 @@
 
   hljs.initLineNumbersOnLoad();
 
+  luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
+
+  function parse_time(data, type) {
+    if (data == null) {
+      return '-';
+    }
+    if (type == 'display') {
+      var t = DateTime.fromISO(data);
+      if (t.isValid) {
+        return t.toLocaleString(DateTime.DATETIME_MED);
+      }
+      else {
+        return data;
+      }
+    }
+    return data;
+  }
+
   {% if multiple_jobs %}
   $(document).ready(function() {
-    luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
-    function parse_time(data, type) {
-      if (data == null) {
-        return '-';
-      }
-      if (type == 'display') {
-        var t = DateTime.fromISO(data);
-        if (t.isValid) {
-          return t.toLocaleString(DateTime.DATETIME_MED);
-        }
-        else {
-          return data;
-        }
-      }
-      return data;
-    }
-
     $('#jobs').DataTable({
       columns: [
         {},
@@ -862,7 +870,26 @@
         {render: parse_time},
       ]
     });
+  });
+  {% endif %}
 
+  {% if array_jobs %}
+  $(document).ready(function() {
+    $('#array_jobs').DataTable({
+      columns: [
+        {},
+        {},
+        {},
+        {},
+        {render: parse_time},
+        {render: parse_time},
+      ]
+    });
+
+    $('#jumpto').on('submit', function(e) {
+      e.preventDefault();
+      $('#array_jobs').DataTable().page($('#page').val() - 1).draw('page');
+    });
   });
   {% endif %}
   </script>

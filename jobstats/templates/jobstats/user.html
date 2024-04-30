@@ -12,7 +12,7 @@
 <p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/notes/new?username={{username}}">{% translate "Create a new note" %}</a></p>
 {% endif %}
 
-<h1>{% translate "Your current use" %}</h1>
+<h1>{% translate "Your current use" %}{% if user.is_staff %} ({{username | anonymize}}){% endif %}</h1>
 
 <table class="table table-striped">
   <thead class="thead-dark">

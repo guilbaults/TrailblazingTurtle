@@ -51,7 +51,7 @@
   </table>
 
 {% else %}
-  <h1>{% translate "Details on job" %} {{job.job_name | anonymize}} ({{job_id}})</h1>
+  <h1>{% translate "Details on job" %} {{job.job_name | anonymize}} ({{job_id}}) {% if user.is_staff %} ({{username | anonymize}}){% endif %}</h1>
   <p><span class="badge badge-{{job.status_badge}}">{{job.status}}</span></p>
   <div class="progress">
     {% if job.time_start != 0 and job.time_end == 0 %}

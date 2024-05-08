@@ -38,6 +38,7 @@
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
+      <th scope="col">{% translate "Account" %}</th>
       <th scope="col">{% translate "Allocated GPUs" %}</th>
       <th scope="col">{% translate "Used GPUs" %}</th>
       <th scope="col">{% translate "Fully used GPUs equivalent" %}</th>
@@ -56,6 +57,7 @@
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>
       </td>
+      <td><a href="{{settings.BASE_URL}}secure/accountstats/{{user.account}}">{{user.account | anonymize}}</a></td>
       <td>{{user.gpu_asked | floatformat}}</td>
       <td>
 {% if user.gpu_used == 0 %}
@@ -106,6 +108,7 @@
       "paging": false,
       "order": [[ 1, "desc" ]],
       columns: [
+        { },
         { },
         { },
         { },

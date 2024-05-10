@@ -331,10 +331,10 @@ def lustre(request):
 @login_required
 @staff
 def graph_lustre_mdt(request, fs):
-    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{fs}-mds.*", user!="root", {filter}}}[5m])))'.format(
+    query = 'topk(20, lustre:metadata:rate3m_user{{fs="{fs}", user!="root", {filter}}})'.format(
         fs=fs,
         filter=prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), datetime.now())
     data = []
     for line in stats:
         try:
@@ -364,11 +364,11 @@ def graph_lustre_mdt(request, fs):
 def graph_lustre_ost(request, fs):
     data = []
     for rw in ['read', 'write']:
-        query = 'topk(5, sum by (user) (rate(lustre_job_{rw}_bytes_total{{target=~"{fs}.*", {filter}}}[5m])))/1024/1024'.format(
+        query = 'topk(20, lustre:{rw}_bytes:rate3m_user{{fs="{fs}", user!="root", {filter}}})/1024/1024'.format(
             rw=rw,
             fs=fs,
             filter=prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), datetime.now())
 
         for line in stats:
             try:

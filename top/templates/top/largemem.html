@@ -30,6 +30,7 @@
     <tr>
       <th scope="col">{% translate "Username" %}</th>
       <th scope="col">{% translate "Job ID" %}</th>
+      <th scope="col">{% translate "Account" %}</th>
       <th scope="col">{% translate "Start time" %}</th>
       <th scope="col">{% translate "Allocated cores" %}</th>
       <th scope="col">{% translate "Used cores" %}</th>
@@ -51,6 +52,7 @@
         <span class="badge badge-primary"><span data-feather="alert-circle" title="Job has a note"></span></span>
         {% endif %}</a>
       </td>
+      <td><a href="{{settings.BASE_URL}}secure/accountstats/{{job.account}}">{{job.account | anonymize}}</a></td>
       <td>{{job.time_start_dt | date:"U"}}</td>
       <td>{{job.cpu_asked | floatformat}}</td>
       <td>
@@ -90,6 +92,7 @@
       "paging": false,
       "order": [[ 5, "desc" ]],
       columns: [
+        { },
         { },
         { },
         { render: parse_time },

@@ -262,6 +262,7 @@ def largemem(request):
             stats = {
                 'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
+                'account': job.account,
                 'time_start_dt': job.time_start_dt,
                 'cpu_asked': stats_cpu_asked[job_id],
                 'cpu_used': stats_cpu_used[job_id],
@@ -283,7 +284,7 @@ def largemem(request):
 
             stats['waste_badges'] = waste_badges
             context['jobs'].append(stats)
-        except IndexError:
+        except KeyError:
             pass
 
     # gather all usernames

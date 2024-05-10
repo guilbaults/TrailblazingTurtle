@@ -22,7 +22,7 @@ def index(request):
 def metrics_to_user(metrics):
     users_metrics = {}
     for line in metrics:
-        users_metrics[line['metric']['user']] = float(line['value'][1])
+        users_metrics[(line['metric']['user'], line['metric']['account'])] = float(line['value'][1])
     return users_metrics
 
 
@@ -36,7 +36,7 @@ def metrics_to_job(metrics):
 def stats_for_users(users=None):
     if users is None:
         # get the top 100 and use the same list for all the other queries
-        query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account{{ {filter} }}) by (user))'.format(
+        query_cpu = 'topk(100, sum(slurm_job:allocated_core:count_user_account{{ {filter} }}) by (user, account))'.format(
             filter=prom.get_filter())
         stats_cpu = prom.query_last(query_cpu)
         users = []
@@ -44,22 +44,22 @@ def stats_for_users(users=None):
             users.append(line['metric']['user'])
     else:
         # use the list of users as filter
-        query_cpu = 'sum(slurm_job:allocated_core:count_user_account{{ user=~"{users}", {filter} }}) by (user)'.format(
+        query_cpu = 'sum(slurm_job:allocated_core:count_user_account{{ user=~"{users}", {filter} }}) by (user, account)'.format(
             users='|'.join(users),
             filter=prom.get_filter())
         stats_cpu = prom.query_last(query_cpu)
     stats_cpu_asked = metrics_to_user(stats_cpu)
 
-    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
+    query_cpu_used = 'sum(slurm_job:used_core:sum_user_account{{user=~"{users}", {filter} }}) by (user, account)'.format(
         users='|'.join(users),
         filter=prom.get_filter())
     stats_cpu_used = metrics_to_user(prom.query_last(query_cpu_used))
 
-    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+    query_mem_asked = 'sum(slurm_job:allocated_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user, account)'.format(
         users='|'.join(users),
         filter=prom.get_filter())
     stats_mem_asked = metrics_to_user(prom.query_last(query_mem_asked))
-    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+    query_mem_max = 'sum(slurm_job:max_memory:sum_user_account{{user=~"{users}", {filter}}}) by (user, account)'.format(
         users='|'.join(users),
         filter=prom.get_filter())
     stats_mem_max = metrics_to_user(prom.query_last(query_mem_max))
@@ -72,7 +72,8 @@ def compute(request):
     context = {}
     stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=None)
 
-    users = stats_cpu_asked.keys()
+    lines = stats_cpu_asked.keys()
+    users = [x[0] for x in lines]
 
     # get notes
     notes = Note.objects.filter(username__in=users).filter(deleted_at=None)
@@ -81,22 +82,25 @@ def compute(request):
         note_per_user.add(note.username)
 
     context['cpu_users'] = []
-    for user in users:
+    for line in lines:
         try:
-            reasonable_mem = stats_cpu_asked[user] * settings.NORMAL_MEM_BY_CORE * 1.1
+            reasonable_mem = stats_cpu_asked[line] * settings.NORMAL_MEM_BY_CORE * 1.1
+            user = line[0]
+            account = line[1]
 
             stats = {
                 'user': user,
-                'cpu_asked': stats_cpu_asked[user],
-                'cpu_used': stats_cpu_used[user],
-                'cpu_ratio': stats_cpu_used[user] / stats_cpu_asked[user],
-                'mem_asked': stats_mem_asked[user],
-                'mem_max': stats_mem_max[user],
-                'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
+                'account': account,
+                'cpu_asked': stats_cpu_asked[line],
+                'cpu_used': stats_cpu_used[line],
+                'cpu_ratio': stats_cpu_used[line] / stats_cpu_asked[line],
+                'mem_asked': stats_mem_asked[line],
+                'mem_max': stats_mem_max[line],
+                'mem_ratio': stats_mem_max[line] / stats_mem_asked[line],
                 'note_flag': user in note_per_user,
             }
             waste_badges = []
-            if stats_mem_asked[user] > reasonable_mem:
+            if stats_mem_asked[line] > reasonable_mem:
                 # If the user ask for more memory than what's available per core on a standard node
                 if stats['mem_ratio'] < 0.1:
                     waste_badges.append(('danger', _('Memory')))
@@ -126,7 +130,7 @@ def compute(request):
 def gpucompute(request):
     context = {}
 
-    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {filter} }}) by (user))'.format(
+    query_gpu = 'topk(100, sum(slurm_job:allocated_gpu:count_user_account{{ {filter} }}) by (user, account))'.format(
         filter=prom.get_filter())
     stats_gpu = prom.query_last(query_gpu)
     gpu_users = []
@@ -135,18 +139,18 @@ def gpucompute(request):
 
     stats_gpu_asked = metrics_to_user(stats_gpu)
 
-    query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user=~"{users}", {filter} }}) by (user)'.format(
+    query_gpu_util = 'sum(slurm_job:used_gpu:sum_user_account{{user=~"{users}", {filter} }}) by (user, account)'.format(
         users='|'.join(gpu_users),
         filter=prom.get_filter())
     stats_gpu_util = metrics_to_user(prom.query_last(query_gpu_util))
 
-    query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user=~"{users}", {filter}}}) by (user)'.format(
+    query_gpu_used = 'sum(slurm_job:non_idle_gpu:sum_user_account{{user=~"{users}", {filter}}}) by (user, account)'.format(
         users='|'.join(gpu_users),
         filter=prom.get_filter())
     stats_gpu_used = metrics_to_user(prom.query_last(query_gpu_used))
 
     # grab the cores, memory for each user
-    users = list(stats_gpu_asked.keys())
+    users = [x[0] for x in stats_gpu_asked.keys()]
     stats_cpu_asked, stats_cpu_used, stats_mem_asked, stats_mem_max = stats_for_users(users=users)
 
     # get notes
@@ -159,37 +163,40 @@ def gpucompute(request):
     for line in stats_gpu:
         try:
             user = line['metric']['user']
-            if user not in stats_gpu_used:
+            account = line['metric']['account']
+            identifier = (user, account)
+            if identifier not in stats_gpu_used:
                 # User is not using any GPU
-                stats_gpu_used[user] = 0
+                stats_gpu_used[identifier] = 0
 
-            reasonable_mem = stats_gpu_asked[user] * settings.NORMAL_MEM_BY_GPU * 1.1
-            reasonable_cores = stats_gpu_asked[user] * settings.NORMAL_CORES_BY_GPU * 1.1
+            reasonable_mem = stats_gpu_asked[identifier] * settings.NORMAL_MEM_BY_GPU * 1.1
+            reasonable_cores = stats_gpu_asked[identifier] * settings.NORMAL_CORES_BY_GPU * 1.1
 
             stats = {
                 'user': user,
-                'gpu_asked': stats_gpu_asked[user],
-                'gpu_util': stats_gpu_util[user],
-                'gpu_used': stats_gpu_used[user],
-                'gpu_ratio': stats_gpu_util[user] / stats_gpu_asked[user],
-                'cpu_asked': stats_cpu_asked[user],
-                'cpu_used': stats_cpu_used[user],
-                'cpu_ratio': stats_cpu_used[user] / stats_cpu_asked[user],
-                'mem_asked': stats_mem_asked[user],
-                'mem_max': stats_mem_max[user],
-                'mem_ratio': stats_mem_max[user] / stats_mem_asked[user],
-                'reasonable_mem': stats_mem_asked[user] < reasonable_mem,
-                'reasonable_cores': stats_cpu_asked[user] < reasonable_cores,
+                'account': account,
+                'gpu_asked': stats_gpu_asked[identifier],
+                'gpu_util': stats_gpu_util[identifier],
+                'gpu_used': stats_gpu_used[identifier],
+                'gpu_ratio': stats_gpu_util[identifier] / stats_gpu_asked[identifier],
+                'cpu_asked': stats_cpu_asked[identifier],
+                'cpu_used': stats_cpu_used[identifier],
+                'cpu_ratio': stats_cpu_used[identifier] / stats_cpu_asked[identifier],
+                'mem_asked': stats_mem_asked[identifier],
+                'mem_max': stats_mem_max[identifier],
+                'mem_ratio': stats_mem_max[identifier] / stats_mem_asked[identifier],
+                'reasonable_mem': stats_mem_asked[identifier] < reasonable_mem,
+                'reasonable_cores': stats_cpu_asked[identifier] < reasonable_cores,
                 'note_flag': user in note_per_user,
             }
             waste_badges = []
-            if stats_mem_asked[user] > reasonable_mem:
+            if stats_mem_asked[identifier] > reasonable_mem:
                 # Using more memory than the fair share per GPU
                 if stats['mem_ratio'] < 0.1:
                     waste_badges.append(('danger', _('Memory')))
                 elif stats['mem_ratio'] < 0.5:
                     waste_badges.append(('warning', _('Memory')))
-            if stats_cpu_asked[user] > reasonable_cores:
+            if stats_cpu_asked[identifier] > reasonable_cores:
                 # Using more cores than the fair share per GPU
                 if stats['cpu_ratio'] < 0.75:
                     waste_badges.append(('danger', _('Cores')))
@@ -255,6 +262,7 @@ def largemem(request):
             stats = {
                 'user': uid_to_username(job.id_user),
                 'job_id': job.id_job,
+                'account': job.account,
                 'time_start_dt': job.time_start_dt,
                 'cpu_asked': stats_cpu_asked[job_id],
                 'cpu_used': stats_cpu_used[job_id],
@@ -276,7 +284,7 @@ def largemem(request):
 
             stats['waste_badges'] = waste_badges
             context['jobs'].append(stats)
-        except IndexError:
+        except KeyError:
             pass
 
     # gather all usernames
@@ -323,10 +331,10 @@ def lustre(request):
 @login_required
 @staff
 def graph_lustre_mdt(request, fs):
-    query = 'topk(5, sum by (user) (rate(lustre_job_stats_total{{instance=~"{fs}-mds.*", user!="root", {filter}}}[5m])))'.format(
+    query = 'topk(20, lustre:metadata:rate3m_user{{fs="{fs}", user!="root", {filter}}})'.format(
         fs=fs,
         filter=prom.get_filter())
-    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+    stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), datetime.now())
     data = []
     for line in stats:
         try:
@@ -356,11 +364,11 @@ def graph_lustre_mdt(request, fs):
 def graph_lustre_ost(request, fs):
     data = []
     for rw in ['read', 'write']:
-        query = 'topk(5, sum by (user) (rate(lustre_job_{rw}_bytes_total{{target=~"{fs}.*", {filter}}}[5m])))/1024/1024'.format(
+        query = 'topk(20, lustre:{rw}_bytes:rate3m_user{{fs="{fs}", user!="root", {filter}}})/1024/1024'.format(
             rw=rw,
             fs=fs,
             filter=prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=24), datetime.now())
 
         for line in stats:
             try:

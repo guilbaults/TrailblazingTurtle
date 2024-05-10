@@ -26,6 +26,7 @@
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
+      <th scope="col">{% translate "Account" %}</th>
       <th scope="col">{% translate "Allocated cores" %}</th>
       <th scope="col">{% translate "Used cores" %}</th>
       <th scope="col">{% translate "Allocated memory" %}</th>
@@ -41,6 +42,7 @@
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>
       </td>
+      <td><a href="{{settings.BASE_URL}}secure/accountstats/{{user.account}}">{{user.account | anonymize}}</a></td>
       <td>{{user.cpu_asked | floatformat}}</td>
       <td>
 {% if user.cpu_ratio < 0.75 %}
@@ -71,6 +73,7 @@
       "paging": false,
       "order": [[ 1, "desc" ]],
       columns: [
+        { },
         { },
         { },
         { },

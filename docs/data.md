@@ -1,5 +1,5 @@
 # Data sources
-Some features will not be available if the exporter required to gather the stats is not configured.
+The main requirement to monitor a Slurm cluster is to install slurm-job-exporter and open a read-only access to the Slurm MySQL database. Other data sources in this page can be installed to gather more data.
 
 ## slurm-job-exporter
 [slurm-job-exporter](https://github.com/guilbaults/slurm-job-exporter) is used to capture information from cgroups managed by Slurm on each compute node. This gathers CPU, memory, and GPU utilization.
@@ -47,11 +47,11 @@ groups:
     expr: sum(label_replace(deriv(slurm_job_process_usage_total{}[1m]) > 0, "bin", "$1", "exe", ".*/(.*)")) by (cluster, account, bin)
 ```
 
-## slurm-exporter
-[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture stats from Slurm like the priority of each user. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
-
 ## Access to the database of slurmacct
 This MySQL database is accessed by a read-only user. It does not need to be in the same database server where Django is storing its data.
+
+## slurm-exporter
+[slurm-exporter](https://github.com/guilbaults/prometheus-slurm-exporter/tree/osc) is used to capture stats from Slurm like the priority of each user. This portal is using a fork, branch `osc` in the linked repository. This fork support GPU reporting and sshare stats.
 
 ## lustre\_exporter and lustre\_exporter\_slurm
 Those 2 exporters are used to gather information about Lustre usage.

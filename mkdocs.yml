@@ -1,0 +1,37 @@
+site_name: TrailblazingTurtle
+nav:
+  - 'Home': index.md
+  - 'Data collection': data.md
+  - 'Development': development.md
+  - 'Installation': install.md
+  - 'Modules':
+    - 'Job Stats': jobstats.md
+    - 'Top': top.md
+    - 'User Summary': usersummary.md
+    - 'Account Stats': accountstats.md
+    - 'Cloud Stats': cloudstats.md
+    - 'Nodes': nodes.md
+    - 'Quotas': quotas.md
+    - 'Quotas GPFS': quotasgpfs.md
+    - 'CF Access': cfaccess.md
+
+theme:
+  name: material
+  # logo: img/logo.png
+  features:
+    # enable button to copy code blocks
+    - content.code.copy
+plugins:
+  - search
+markdown_extensions:
+  # allow for arbitrary nesting of code and content blocks
+  - pymdownx.superfences:
+  # syntax highlighting in code blocks and inline code
+  - pymdownx.highlight
+  # support for (collapsible) admonitions (notes, tips, etc.)
+  - admonition
+  - pymdownx.details
+  # icon + emoji
+  # - pymdownx.emoji:
+  #     emoji_index: !!python/name:material.extensions.emoji.twemoji
+  #     emoji_generator: !!python/name:material.extensions.emoji.to_svg

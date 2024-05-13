@@ -1,3 +1,12 @@
+# Installation
+
+Before installing in production, [a test environment should be set up to test the portal](development.md). This makes it easier to fully configure each module and modify as needed some functions like how the allocations are retrieved. Installing Prometheus and some exporters is also recommended to test the portal with real data.
+
+The portal can be installed directly on a Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container with Podman or Kubernetes. Some scripts used to deploy both Nginx and Django containers inside the same pod are provided in the `podman` directory.
+The various recommendations for any normal Django production deployment can be followed.
+
+[Deploying Django](https://docs.djangoproject.com/en/3.2/howto/deployment/)
+
 # Production without containers on Rocky Linux 8
 
 RPMs required for production

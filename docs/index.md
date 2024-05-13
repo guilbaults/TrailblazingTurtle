@@ -9,8 +9,3 @@ The Django portal will access various MySQL databases like the database of Slurm
 Time series are stored with Prometheus for better performance. Compatible alternatives to Prometheus like Thanos, VictoriaMetrics, and Grafana Mimir should work without any problems (Thanos is used in production). Recorder rules in Prometheus are used to pre-aggregate some stats for the portal.
 
 ![Architecture diagram](userportal.png)
-
-* [Data collection](data_collection.md)
-* [Development](development.md)
-* [Installation](installation.md)
-* [Modules](modules.md)

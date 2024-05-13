@@ -1,4 +1,5 @@
 site_name: TrailblazingTurtle
+repo_url: https://github.com/guilbaults/TrailblazingTurtle/
 nav:
   - 'Home': index.md
   - 'Data collection': data.md

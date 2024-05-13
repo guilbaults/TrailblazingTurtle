@@ -1,4 +1,4 @@
-A test and developpement environment using the local `uid` resolver and dummies allocations is provided to test the portal.
+A test and development environment using the local `uid` resolver and dummies allocations is provided to test the portal.
 
 To use it, copy `example/local.py` to `userportal/local.py`. The other functions are documented in `common.py` if any other overrides are needed for your environment.
 

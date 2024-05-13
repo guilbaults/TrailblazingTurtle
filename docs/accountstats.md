@@ -1,7 +1,9 @@
 # Accountstats
 The users can also see the aggregated use of the users in the same group. This also shows the current priority of this account in Slurm and a few months of history on how much computing resources were used.
 
-<a href="accountstats.png"><img src="accountstats.png" alt="Stats per account" width="100"/></a>
+## Screenshots
+### Account stats
+![Stats per account](accountstats.png)
 
 ## Requirements
 

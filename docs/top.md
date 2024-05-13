@@ -5,10 +5,18 @@ These pages are only available to staff and are meant to visualize poor cluster 
 * Jobs on large memory nodes (ranked by worst to best)
 * Top users on Lustre
 
-<a href="top_compute.png"><img src="top_compute.png" alt="Top compute user (CPU)" width="100"/></a>
-<a href="top_compute_gpu.png"><img src="top_compute_gpu.png" alt="Top compute user(GPU)" width="100"/></a>
-<a href="top_largemem.png"><img src="top_largemem.png" alt="Jobs on large memory nodes" width="100"/></a>
-<a href="top_lustre.png"><img src="top_lustre.png" alt="Top users on Lustre" width="100"/></a>
+## Screenshots
+### Top compute user (CPU)
+![Top compute user (CPU)](top_compute.png)
+
+### Top compute user (GPU)
+![Top compute user (GPU)](top_compute_gpu.png)
+
+### Jobs on large memory nodes
+![Jobs on large memory nodes](top_largemem.png)
+
+### Top users on Lustre
+![Top users on Lustre](top_lustre.png)
 
 ## Requirements
 * Access to the database of Slurm

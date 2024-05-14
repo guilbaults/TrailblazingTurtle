@@ -30,3 +30,6 @@ Various data sources are used to populate the content of this portal. Most of th
 Some pre-aggregation is done using recorder rules in Prometheus. The required recorder rules are documented in the data sources documentation.
 
 [Data sources documentation](docs/data.md)
+
+## Documentation
+The documentation is available in the `docs` directory. The documentation is written in Markdown and can be read directly in the repository or on the [GitHub pages](https://guilbaults.github.io/TrailblazingTurtle/).

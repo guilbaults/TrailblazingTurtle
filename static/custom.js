@@ -51,7 +51,7 @@ function loadGraph(container, url){
                             name: 'Filter series',
                             icon: Plotly.Icons.eraseshape,
                             click: function(gd) {
-                                bootbox.prompt('Filter series by name (case sensitive):',
+                                bootbox.prompt(gettext('Filter series by name (case sensitive):'),
                                     function(filter_value) {
                                     if (filter_value != null) {
                                         var new_data = [];

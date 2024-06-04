@@ -46,6 +46,29 @@ function loadGraph(container, url){
                         content['config'] = {};
                     }
 
+                    content['config']['modeBarButtonsToAdd'] = [
+                        {
+                            name: 'Filter series',
+                            icon: Plotly.Icons.eraseshape,
+                            click: function(gd) {
+                                bootbox.prompt(gettext('Filter series by name (case sensitive):'),
+                                    function(filter_value) {
+                                    if (filter_value != null) {
+                                        var new_data = [];
+                                        for (var i = 0; i < content['data'].length; i++) {
+                                            var trace = content['data'][i];
+                                            // check if the trace name contains the filter value
+                                            if(trace['name'].includes(filter_value)){
+                                                new_data.push(trace);
+                                            }
+                                        }
+                                        Plotly.newPlot(gd, new_data, content['layout'], content['config']);
+                                    }
+                                });
+                            }
+                        }
+                    ]
+
                     Plotly.newPlot(container, content['data'], content['layout'], content['config']);
 
                     $(container_div).on('plotly_relayout', function(self, relayout_data){

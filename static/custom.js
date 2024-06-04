@@ -62,8 +62,8 @@ function loadGraph(container, url){
                                                 new_data.push(trace);
                                             }
                                         }
+                                        Plotly.newPlot(gd, new_data, content['layout'], content['config']);
                                     }
-                                    Plotly.newPlot(gd, new_data, content['layout'], content['config']);
                                 });
                             }
                         }

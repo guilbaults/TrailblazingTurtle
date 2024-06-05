@@ -72,19 +72,29 @@ function loadGraph(container, url){
                     Plotly.newPlot(container, content['data'], content['layout'], content['config']);
 
                     $(container_div).on('plotly_relayout', function(self, relayout_data){
-                        var end_date = new Date(relayout_data['xaxis.range[1]']);
-                        var end_date_unix = Math.round(end_date.getTime() / 1000);
+                        if (relayout_data['xaxis.range[0]'] == undefined || relayout_data['xaxis.range[1]'] == undefined){
+                            // reset axes event
+                            // remove the old parameters from the url string
+                            var url_splitted = url.split('?');
+                            url = url_splitted[0];
+                            debounce_loadGraph(container, url);
+                        }
+                        else{
+                            // the date is in UTC and we need to convert it to unix timestamp
+                            var start_date = new Date(relayout_data['xaxis.range[0]'] + " Z");
+                            var start_date_unix = Math.round(start_date.getTime() / 1000);
 
-                        var start_date = new Date(relayout_data['xaxis.range[0]']);
-                        var start_date_unix = Math.round(start_date.getTime() / 1000);
+                            var end_date = new Date(relayout_data['xaxis.range[1]'] + " Z");
+                            var end_date_unix = Math.round(end_date.getTime() / 1000);
 
-                        // remove the old parameters from the url string
-                        var url_splitted = url.split('?');
-                        url = url_splitted[0];
+                            // remove the old parameters from the url string
+                            var url_splitted = url.split('?');
+                            url = url_splitted[0];
 
-                        // get the new range and reload the graph
-                        var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
-                        debounce_loadGraph(container, newurl);
+                            // get the new range and reload the graph
+                            var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
+                            debounce_loadGraph(container, newurl);
+                        }
                     });
                 }
             }

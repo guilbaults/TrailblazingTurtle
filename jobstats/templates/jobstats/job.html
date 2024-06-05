@@ -794,45 +794,45 @@
   {% include "notes.js" %}
 
   <script>
-  loadGraph('graph_cpu', 'graph/cpu.json?step={{step}}');
-  loadGraph('graph_mem', 'graph/mem.json?step={{step}}');
-  loadGraph('graph_thread', 'graph/thread.json?step={{step}}');
+  loadGraph('graph_cpu', 'graph/cpu.json');
+  loadGraph('graph_mem', 'graph/mem.json');
+  loadGraph('graph_thread', 'graph/thread.json');
   {% if 'lustre_exporter' in settings.EXPORTER_INSTALLED %}
-    loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json?step={{step}}');
-    loadGraph('graph_lustre_ost', 'graph/lustre_ost.json?step={{step}}');
+    loadGraph('graph_lustre_mdt', 'graph/lustre_mdt.json');
+    loadGraph('graph_lustre_ost', 'graph/lustre_ost.json');
   {% endif %}
 
   {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
-    loadGraph('graph_l2_rate', 'graph/l2_rate.json?step={{step}}');
-    loadGraph('graph_l3_rate', 'graph/l3_rate.json?step={{step}}');
-    loadGraph('graph_ipc', 'graph/ipc.json?step={{step}}');
+    loadGraph('graph_l2_rate', 'graph/l2_rate.json');
+    loadGraph('graph_l3_rate', 'graph/l3_rate.json');
+    loadGraph('graph_ipc', 'graph/ipc.json');
   {% endif %}
 
   {% if gpu_count > 0 %}
-    loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json?step={{step}}');
-    loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json?step={{step}}');
-    loadGraph('graph_gpu_memory', 'graph/gpu_memory.json?step={{step}}');
-    loadGraph('graph_gpu_power', 'graph/gpu_power.json?step={{step}}');
-    loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json?step={{step}}');
+    loadGraph('graph_gpu_utilization', 'graph/gpu_utilization.json');
+    loadGraph('graph_gpu_memory_utilization', 'graph/gpu_memory_utilization.json');
+    loadGraph('graph_gpu_memory', 'graph/gpu_memory.json');
+    loadGraph('graph_gpu_power', 'graph/gpu_power.json');
+    loadGraph('graph_gpu_pcie', 'graph/gpu_pcie.json');
     {% if gpu_count > 1 %}
-    loadGraph('graph_gpu_nvlink', 'graph/gpu_nvlink.json?step={{step}}');
+    loadGraph('graph_gpu_nvlink', 'graph/gpu_nvlink.json');
     {% endif %}
   {% endif %}
 
   {% if 'node_exporter' in settings.EXPORTER_INSTALLED and multiple_jobs is False %}
-    loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json?step={{step}}');
-    loadGraph('graph_ethernet_bdw', 'graph/ethernet_bdw.json?step={{step}}');
-    loadGraph('graph_disk_iops', 'graph/disk_iops.json?step={{step}}');
-    loadGraph('graph_disk_bdw', 'graph/disk_bdw.json?step={{step}}');
-    loadGraph('graph_disk_used', 'graph/disk_used.json?step={{step}}');
+    loadGraph('graph_infiniband_bdw', 'graph/infiniband_bdw.json');
+    loadGraph('graph_ethernet_bdw', 'graph/ethernet_bdw.json');
+    loadGraph('graph_disk_iops', 'graph/disk_iops.json');
+    loadGraph('graph_disk_bdw', 'graph/disk_bdw.json');
+    loadGraph('graph_disk_used', 'graph/disk_used.json');
   
     {% if 'pcm-sensor-server' in settings.EXPORTER_INSTALLED %}
-      loadGraph('graph_mem_bdw', 'graph/mem_bdw.json?step={{step}}');
-      loadGraph('graph_cpu_interconnect', 'graph/cpu_interconnect.json?step={{step}}');
+      loadGraph('graph_mem_bdw', 'graph/mem_bdw.json');
+      loadGraph('graph_cpu_interconnect', 'graph/cpu_interconnect.json');
     {% endif %}
 
     {% if 'redfish_exporter' in settings.EXPORTER_INSTALLED %}
-      loadGraph('graph_power', 'graph/power.json?step={{step}}');
+      loadGraph('graph_power', 'graph/power.json');
     {% endif %}
   {% endif %}
 

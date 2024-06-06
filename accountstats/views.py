@@ -46,7 +46,7 @@ def account(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_application(request, account):
     data = []
     query_alloc = 'slurm_job:process_usage:sum_account{{account="{}", {}}}'.format(account, prom.get_filter())
@@ -70,7 +70,11 @@ def graph_application(request, account):
 
 def graph(request, query, stacked=True, unit=None):
     data = []
-    stats_alloc = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
+    stats_alloc = prom.query_prometheus_multiple(
+        query,
+        request.start,
+        end=request.end,
+        step=request.step)
     for line in stats_alloc:
         user = line['metric']['user']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -94,7 +98,7 @@ def graph(request, query, stacked=True, unit=None):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_cpu_allocated(request, account):
     query_alloc = 'sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     return graph(request, query_alloc, unit=_('cores'))
@@ -102,7 +106,7 @@ def graph_cpu_allocated(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_cpu_used(request, account):
     query_used = 'sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     return graph(request, query_used, unit=_('cores'))
@@ -110,7 +114,7 @@ def graph_cpu_used(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_cpu_wasted(request, account):
     query_alloc = 'clamp_min(sum(slurm_job:allocated_core:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_core:sum_user_account{{account="{}", {}}}) by (user), 0)'.format(account, prom.get_filter(), account, prom.get_filter())
     return graph(request, query_alloc, stacked=False, unit=_('cores'))
@@ -118,7 +122,7 @@ def graph_cpu_wasted(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_mem_allocated(request, account):
     query_alloc = 'sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
     return graph(request, query_alloc, unit=_('GiB'))
@@ -126,7 +130,7 @@ def graph_mem_allocated(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_mem_used(request, account):
     query_used = 'sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user) /(1024*1024*1024)'.format(account, prom.get_filter())
     return graph(request, query_used, unit=_('GiB'))
@@ -134,7 +138,7 @@ def graph_mem_used(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_mem_wasted(request, account):
     query_alloc = 'clamp_min(sum(slurm_job:allocated_memory:sum_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:rss_memory:sum_user_account{{account="{}", {}}}) by (user), 0) /(1024*1024*1024)'.format(account, prom.get_filter(), account, prom.get_filter())
     return graph(request, query_alloc, stacked=False, unit=_('GiB'))
@@ -142,7 +146,7 @@ def graph_mem_wasted(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(hours=6))
+@parse_start_end(default_start=datetime.now() - timedelta(hours=6), minimum=prom.rate('lustre_exporter'))
 def graph_lustre_mdt(request, account):
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",account=~"{}", {}}}[5m])) by (user, fs) !=0'.format(account, prom.get_filter())
     return graph(request, query, stacked=False, unit=_('IOPS'))
@@ -150,11 +154,16 @@ def graph_lustre_mdt(request, account):
 
 @login_required
 @account_or_staff
+@parse_start_end(default_start=datetime.now() - timedelta(hours=6), minimum=prom.rate('lustre_exporter'))
 def graph_lustre_ost(request, account):
     data = []
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{}_bytes_total{{component=~"ost",account=~"{}",target=~".*-OST.*", {}}}[5m])) by (user, fs)) / (1024*1024)'.format(i, account, prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, datetime.now() - timedelta(hours=6), datetime.now())
+        stats = prom.query_prometheus_multiple(
+            query,
+            request.start,
+            request.end,
+            step=request.step)
 
         for line in stats:
             fs = line['metric']['fs']
@@ -183,7 +192,7 @@ def graph_lustre_ost(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_gpu_allocated(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     return graph(request, query, unit=_('GPUs'))
@@ -191,7 +200,7 @@ def graph_gpu_allocated(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_gpu_used(request, account):
     query = 'sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter())
     return graph(request, query, unit=_('GPUs'))
@@ -199,7 +208,7 @@ def graph_gpu_used(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 def graph_gpu_wasted(request, account):
     query = 'sum(slurm_job:allocated_gpu:count_user_account{{account="{}", {}}}) by (user) - sum(slurm_job:used_gpu:sum_user_account{{account="{}", {}}}) by (user)'.format(account, prom.get_filter(), account, prom.get_filter())
     return graph(request, query, stacked=False, unit=_('GPUs'))
@@ -207,7 +216,7 @@ def graph_gpu_wasted(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_allocated(request, account):
     query = 'count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300'.format(account, prom.get_filter())
@@ -216,7 +225,7 @@ def graph_gpu_power_allocated(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_used(request, account):
     query = 'sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000'.format(account, prom.get_filter())
@@ -225,7 +234,7 @@ def graph_gpu_power_used(request, account):
 
 @login_required
 @account_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=30))
+@parse_start_end(default_start=datetime.now() - timedelta(days=30), minimum=prom.rate('slurm-job-exporter'))
 # kinda broken when using multiple GPUs
 def graph_gpu_power_wasted(request, account):
     query = '(count(slurm_job_power_gpu{{account="{}", {}}}) by (user) * 300) - (sum(slurm_job_power_gpu{{account="{}", {}}}) by (user) / 1000)'.format(account, prom.get_filter(), account, prom.get_filter())
@@ -245,7 +254,7 @@ def graph_gpu_priority(request, account):
 
 
 # auth done in functions above
-@parse_start_end(default_start=datetime.now() - timedelta(days=90))
+@parse_start_end(default_start=datetime.now() - timedelta(days=90), minimum=prom.rate('slurm-job-exporter'))
 def graph_cpu_or_gpu_priority(request, account, gpu_or_cpu):
     data = []
     if gpu_or_cpu == 'gpu':

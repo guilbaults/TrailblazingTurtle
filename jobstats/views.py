@@ -93,21 +93,6 @@ GPU_SHORT_NAME = {
 prom = Prometheus(settings.PROMETHEUS)
 
 
-def sanitize_step(request, minimum=30):
-    # all in seconds, will return the smallest interval allowed to drap a graph
-    try:
-        step = int(request.GET.get('step'))
-    except ValueError:
-        step = minimum
-    except TypeError:
-        step = minimum
-
-    if step < minimum:
-        return minimum
-    else:
-        return step
-
-
 def jobid_str_to_list(jobid_str):
     # split range of jobids in format 100-105,107,109,110-120 to a list of jobids
     jobs_blocks = jobid_str.split(',')
@@ -142,7 +127,7 @@ def get_job_ids_regex(jobs):
     return '|'.join([str(job.id_job) for job in jobs])
 
 
-def context_job_info(username, job_id):
+def context_job_info(request, username, job_id):
     context = {'job_id': job_id, 'username': username}
     uid = username_to_uid(username)
     context['uid'] = uid
@@ -165,7 +150,6 @@ def context_job_info(username, job_id):
             time_end=end.timestamp(),
         )
 
-        context['step'] = get_step(start, end)
         context['jobs'] = jobs
         context['id_regex'] = get_job_ids_regex(context['jobs'])
         context['gpu_count'] = 0
@@ -175,8 +159,27 @@ def context_job_info(username, job_id):
         context['job'] = jobs[0]
         context['multiple_jobs'] = False
         context['id_regex'] = str(context['job'].id_job)
-        context['step'] = get_step(context['job'].time_start_dt(), context['job'].time_end_dt())
         context['gpu_count'] = context['job'].gpu_count()
+
+    context['start'] = context['job'].time_start_dt()
+    context['end'] = context['job'].time_end_dt()
+    # Handle start and end time from request GET params
+    if request is not None:
+        if 'start' in request.GET:
+            try:
+                get_start = datetime.fromtimestamp(int(request.GET['start']))
+                if get_start > context['start']:
+                    context['start'] = get_start
+            except ValueError:
+                pass
+        if 'end' in request.GET:
+            try:
+                get_end = datetime.fromtimestamp(int(request.GET['end']))
+                if get_end < context['end']:
+                    context['end'] = get_end
+            except ValueError:
+                pass
+    context['step'] = get_step(context['start'], context['end'])
     return context
 
 
@@ -255,7 +258,7 @@ def user(request, username):
 @login_required
 @user_or_staff
 def job(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     if context['multiple_jobs']:
         return render(request, 'jobstats/job.html', context)
@@ -269,9 +272,6 @@ def job(request, username, job_id):
     if job.id_array_job != 0:
         # list all jobs in the array
         context['array_jobs'] = JobTable.objects.filter(id_array_job=job.id_array_job).order_by('id_array_task')
-
-    # Adjust the precision of the graphs.
-    context['step'] = get_step(job.time_start_dt(), job.time_end_dt())
 
     if request.user.is_staff:
         context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
@@ -538,14 +538,14 @@ def job(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_cpu(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     query = 'rate(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}}[{}s]) / 1000000000'.format(context['id_regex'], prom.get_filter(), prom.rate('slurm-job-exporter'))
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     data = []
     for line in stats:
@@ -576,9 +576,9 @@ def graph_cpu(request, username, job_id):
         query_count = 'count(slurm_job_core_usage_total{{slurmjobid=~"{}", {}}})'.format(context['id_regex'], prom.get_filter())
         line = prom.query_prometheus(
             query_count,
-            context['job'].time_start_dt(),
-            context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
         data.append({
@@ -683,7 +683,7 @@ def graph_mem_user(request, username):
 @login_required
 @user_or_staff
 def graph_mem(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
 
@@ -708,9 +708,9 @@ def graph_mem(request, username, job_id):
         query = '{}{{slurmjobid=~"{}", {}}}/(1024*1024*1024)'.format(stat[0], context['id_regex'], prom.get_filter())
         stats = prom.query_prometheus_multiple(
             query,
-            context['job'].time_start_dt(),
-            context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('slurm-job-exporter')))
         for line in stats:
             compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -736,9 +736,9 @@ def graph_mem(request, username, job_id):
         query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
         line = prom.query_prometheus(
             query_count,
-            context['job'].time_start_dt(),
-            context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('slurm-job-exporter')))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
         y = line[1]
         data.append({
@@ -764,16 +764,16 @@ def graph_mem(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_thread(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
 
     query_procs = 'slurm_job_process_count{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
     stats_procs = prom.query_prometheus_multiple(
         query_procs,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
     for line in stats_procs:
         compute_name = display_compute_name(stats_procs, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -793,9 +793,9 @@ def graph_thread(request, username, job_id):
     query_threads = 'slurm_job_threads_count{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
     stats_threads = prom.query_prometheus_multiple(
         query_threads,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
     for line in stats_threads:
         if line['metric']['state'] == '?':
             # ignore "?" state
@@ -825,9 +825,9 @@ def graph_thread(request, username, job_id):
     query_exe = 'sum(deriv(slurm_job_process_usage_total{{slurmjobid=~"{}", {}}}[1m])) by (exe)'.format(context['id_regex'], prom.get_filter())
     stats_exe = prom.query_prometheus_multiple(
         query_exe,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     for line in stats_exe:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -853,17 +853,17 @@ def graph_thread(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_lustre_mdt(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     query = 'sum(rate(lustre_job_stats_total{{component="mdt",jobid=~"{job_id}", {filter}}}[{step}s])) by (operation, fs, jobid) !=0'.format(
         job_id=context['id_regex'],
-        step=sanitize_step(request, minimum=prom.rate('lustre_exporter')),
+        step=max(context['step'], prom.rate('lustre_exporter')),
         filter=prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('lustre_exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('lustre_exporter')))
 
     data = []
     for line in stats:
@@ -924,20 +924,20 @@ def graph_lustre_mdt_user(request, username):
 @login_required
 @user_or_staff
 def graph_lustre_ost(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
     for i in ['read', 'write']:
         query = '(sum(rate(lustre_job_{i}_bytes_total{{component="ost",jobid=~"{job_id}",target=~".*-OST.*", {filter}}}[{step}s])) by (fs, jobid)) / (1024*1024)'.format(
             i=i,
             job_id=context['id_regex'],
-            step=sanitize_step(request, minimum=prom.rate('lustre_exporter')),
+            step=max(context['step'], prom.rate('lustre_exporter')),
             filter=prom.get_filter())
         stats = prom.query_prometheus_multiple(
             query,
-            context['job'].time_start_dt(),
-            context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum=prom.rate('lustre_exporter')))
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('lustre_exporter')))
 
         for line in stats:
             fs = line['metric']['fs']
@@ -1009,7 +1009,7 @@ def graph_lustre_ost_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_utilization(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
 
@@ -1026,9 +1026,9 @@ def graph_gpu_utilization(request, username, job_id):
         query = '{}{{slurmjobid=~"{}", {}}}'.format(q[0], context['id_regex'], prom.get_filter())
         stats = prom.query_prometheus_multiple(
             query,
-            context['job'].time_start_dt(),
-            context['job'].time_end_dt(),
-            step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('slurm-job-exporter')))
 
         for line in stats:
             gpu_id = display_gpu_id(line)
@@ -1094,14 +1094,14 @@ def graph_gpu_utilization_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_memory_utilization(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     query = 'slurm_job_utilization_gpu_memory{{slurmjobid=~"{}", {}}}'.format(context['id_regex'], prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     data = []
     for line in stats:
@@ -1133,14 +1133,14 @@ def graph_gpu_memory_utilization(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_memory(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     query = 'slurm_job_memory_usage_gpu{{slurmjobid=~"{}", {}}} /(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     data = []
     for line in stats:
@@ -1173,14 +1173,14 @@ def graph_gpu_memory(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_power(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     query = 'slurm_job_power_gpu{{slurmjobid=~"{}", {}}}/1000'.format(context['id_regex'], prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     data = []
     for line in stats:
@@ -1273,7 +1273,7 @@ def graph_gpu_power_user(request, username):
 @login_required
 @user_or_staff
 def graph_gpu_pcie(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
     query = 'slurm_job_pcie_gpu{{slurmjobid=~"{}", {}}} /1024/1024/1024'.format(
@@ -1281,9 +1281,9 @@ def graph_gpu_pcie(request, username, job_id):
         prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     for line in stats:
         gpu_id = display_gpu_id(line)
@@ -1318,7 +1318,7 @@ def graph_gpu_pcie(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_gpu_nvlink(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
 
     data = []
     query = 'slurm_job_nvlink_gpu{{slurmjobid="{}", {}}} /1024/1024/1024'.format(
@@ -1326,9 +1326,9 @@ def graph_gpu_nvlink(request, username, job_id):
         prom.get_filter())
     stats = prom.query_prometheus_multiple(
         query,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     for line in stats:
         gpu_id = display_gpu_id(line)
@@ -1363,11 +1363,11 @@ def graph_gpu_nvlink(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_ethernet_bdw(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
-    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
+    step = max(context['step'], prom.rate('node_exporter'))
 
     for direction in ['receive', 'transmit']:
         query = 'rate(node_network_{direction}_bytes_total{{device!~"ib.*|lo", {hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000)'.format(
@@ -1376,7 +1376,11 @@ def graph_ethernet_bdw(request, username, job_id):
             instances=instances,
             filter=prom.get_filter(),
             step=step)
-        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['start'],
+            context['end'],
+            step=step)
         for line in stats:
             compute_name = display_compute_name(stats, line)
             if direction == 'receive':
@@ -1404,11 +1408,11 @@ def graph_ethernet_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_infiniband_bdw(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
-    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
+    step = max(context['step'], prom.rate('node_exporter'))
 
     for direction in ['received', 'transmitted']:
         query = 'rate(node_infiniband_port_data_{direction}_bytes_total{{{hostname_label}=~"{instances}", {filter}}}[{step}s]) * 8 / (1000*1000*1000)'.format(
@@ -1417,7 +1421,11 @@ def graph_infiniband_bdw(request, username, job_id):
             instances=instances,
             filter=prom.get_filter(),
             step=step)
-        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['start'],
+            context['end'],
+            step=step)
         for line in stats:
             compute_name = display_compute_name(stats, line)
             if direction == 'received':
@@ -1445,11 +1453,11 @@ def graph_infiniband_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_iops(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
-    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
+    step = max(context['step'], prom.rate('node_exporter'))
 
     for direction in ['reads', 'writes']:
         query = 'rate(node_disk_{direction}_completed_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
@@ -1458,7 +1466,11 @@ def graph_disk_iops(request, username, job_id):
             instances=instances,
             filter=prom.get_filter(),
             step=step)
-        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['start'],
+            context['end'],
+            step=step)
         for line in stats:
             compute_name = "{} {}".format(
                 line['metric']['device'],
@@ -1488,11 +1500,11 @@ def graph_disk_iops(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_bdw(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
-    step = sanitize_step(request, minimum=prom.rate('node_exporter'))
+    step = max(context['step'], prom.rate('node_exporter'))
 
     for direction in ['read', 'written']:
         query = 'rate(node_disk_{direction}_bytes_total{{{hostname_label}=~"{instances}",device=~"nvme.n.|sd.|vd.", {filter}}}[{step}s])'.format(
@@ -1501,7 +1513,11 @@ def graph_disk_bdw(request, username, job_id):
             instances=instances,
             filter=prom.get_filter(),
             step=step)
-        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=step)
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['start'],
+            context['end'],
+            step=step)
         for line in stats:
             compute_name = "{} {}".format(
                 line['metric']['device'],
@@ -1531,7 +1547,7 @@ def graph_disk_bdw(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_disk_used(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
@@ -1541,7 +1557,11 @@ def graph_disk_used(request, username, job_id):
         instances=instances,
         localscratch=settings.LOCALSCRATCH,
         filter=prom.get_filter())
-    stats_disk = prom.query_prometheus_multiple(query_disk, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('node_exporter')))
+    stats_disk = prom.query_prometheus_multiple(
+        query_disk,
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('node_exporter')))
     for line in stats_disk:
         compute_name = "{} {}".format(
             line['metric']['device'],
@@ -1569,7 +1589,7 @@ def graph_disk_used(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_mem_bdw(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
@@ -1580,7 +1600,11 @@ def graph_mem_bdw(request, username, job_id):
             direction=direction,
             instances=instances,
             filter=prom.get_filter())
-        stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        stats = prom.query_prometheus_multiple(
+            query,
+            context['start'],
+            context['end'],
+            step=max(context['step'], prom.rate('pcm-sensor-server')))
         for line in stats:
             if 'socket' not in line['metric']:
                 continue
@@ -1631,7 +1655,7 @@ def map_pcm_cores(request, context):
         query_mapping,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        step=max(context['step'], prom.rate('pcm-sensor-server')))
 
     all_cores_mapping = {}  # key is the OS core, value is the (socket, core, thread)
     reverse_mapping = {}  # key is the (socket, core, thread), value is the OS core
@@ -1659,7 +1683,7 @@ def map_pcm_cores(request, context):
         query_cpu,
         context['job'].time_start_dt(),
         context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('slurm-job-exporter')))
+        step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     used_mapping = {}
     for line in stats_cpu:
@@ -1698,7 +1722,7 @@ def filter_stats(stats, used_mapping, reverse_mapping):
 
 
 def graph_cache_rate(request, username, job_id, l_cache):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     used_mapping, reverse_mapping = map_pcm_cores(request, context)
@@ -1713,9 +1737,9 @@ def graph_cache_rate(request, username, job_id, l_cache):
         rate=prom.rate('pcm-sensor-server'))
     stats_cache = prom.query_prometheus_multiple(
         query_cache,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('pcm-sensor-server')))
 
     # from all the L3 cache hits and misses, keep only the ones used by the job
     data = filter_stats(stats_cache, used_mapping, reverse_mapping)
@@ -1732,7 +1756,7 @@ def graph_cache_rate(request, username, job_id, l_cache):
 
 
 def graph_ipc(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     used_mapping, reverse_mapping = map_pcm_cores(request, context)
@@ -1751,9 +1775,9 @@ def graph_ipc(request, username, job_id):
         rate=prom.rate('pcm-sensor-server'))
     stats_ipc = prom.query_prometheus_multiple(
         query_ipc,
-        context['job'].time_start_dt(),
-        context['job'].time_end_dt(),
-        step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('pcm-sensor-server')))
 
     data = filter_stats(stats_ipc, used_mapping, reverse_mapping)
 
@@ -1769,7 +1793,7 @@ def graph_ipc(request, username, job_id):
 @login_required
 @user_or_staff
 def graph_cpu_interconnect(request, username, job_id):
-    context = context_job_info(username, job_id)
+    context = context_job_info(request, username, job_id)
     instances = instances_regex(context)
 
     data = []
@@ -1780,7 +1804,11 @@ def graph_cpu_interconnect(request, username, job_id):
         instances=instances,
         filter=prom.get_filter(),
         rate=prom.rate('pcm-sensor-server'))
-    stats = prom.query_prometheus_multiple(query, context['job'].time_start_dt(), context['job'].time_end_dt(), step=sanitize_step(request, minimum=prom.rate('pcm-sensor-server')))
+    stats = prom.query_prometheus_multiple(
+        query,
+        context['start'],
+        context['end'],
+        step=max(context['step'], prom.rate('pcm-sensor-server')))
     for line in stats:
         compute_name = "Received socket {} {}".format(
             line['metric']['socket'],
@@ -1840,14 +1868,10 @@ def power(job, step):
 @login_required
 @user_or_staff
 def graph_power(request, username, job_id):
-    uid = username_to_uid(username)
-    try:
-        job = JobTable.objects.filter(id_user=uid).filter(id_job=job_id).get()
-    except JobTable.DoesNotExist:
-        return HttpResponseNotFound('Job not found')
+    context = context_job_info(request, username, job_id)
 
     data = []
-    for line in power(job, step=sanitize_step(request, minimum=prom.rate('redfish_exporter'))):
+    for line in power(context['job'], step=max(context['step'], prom.rate('redfish_exporter'))):
         compute_name = "{}".format(line['metric'][settings.PROM_NODE_HOSTNAME_LABEL])
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         data.append({

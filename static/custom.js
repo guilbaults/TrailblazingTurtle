@@ -72,19 +72,34 @@ function loadGraph(container, url){
                     Plotly.newPlot(container, content['data'], content['layout'], content['config']);
 
                     $(container_div).on('plotly_relayout', function(self, relayout_data){
-                        var end_date = new Date(relayout_data['xaxis.range[1]']);
-                        var end_date_unix = Math.round(end_date.getTime() / 1000);
+                        if(relayout_data['xaxis.autorange'] == true && relayout_data['xaxis.showspikes'] == false){
+                            // reset X axis event (unzoom)
+                            // remove the old parameters from the url string
+                            var url_splitted = url.split('?');
+                            url = url_splitted[0];
+                            debounce_loadGraph(container, url);
+                        }
+                        else if(relayout_data['xaxis.range[0]']){
+                            // zoom event
+                            // the date is in UTC and we need to convert it to unix timestamp
+                            var start_date = new Date(relayout_data['xaxis.range[0]'] + " Z");
+                            var start_date_unix = Math.round(start_date.getTime() / 1000);
 
-                        var start_date = new Date(relayout_data['xaxis.range[0]']);
-                        var start_date_unix = Math.round(start_date.getTime() / 1000);
+                            var end_date = new Date(relayout_data['xaxis.range[1]'] + " Z");
+                            var end_date_unix = Math.round(end_date.getTime() / 1000);
 
-                        // remove the old parameters from the url string
-                        var url_splitted = url.split('?');
-                        url = url_splitted[0];
+                            // remove the old parameters from the url string
+                            var url_splitted = url.split('?');
+                            url = url_splitted[0];
 
-                        // get the new range and reload the graph
-                        var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
-                        debounce_loadGraph(container, newurl);
+                            // get the new range and reload the graph
+                            var newurl = url + '?start=' + start_date_unix + '&end=' + end_date_unix;
+                            debounce_loadGraph(container, newurl);
+                        }
+                        else{
+                            // event not handled
+                            // autoscale will end up here and it will not refresh the graph on purpose
+                        }
                     });
                 }
             }

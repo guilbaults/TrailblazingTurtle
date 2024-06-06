@@ -162,7 +162,11 @@ def context_job_info(request, username, job_id):
         context['gpu_count'] = context['job'].gpu_count()
 
     context['start'] = context['job'].time_start_dt()
-    context['end'] = context['job'].time_end_dt()
+    if context['job'].time_end_dt() is None:
+        # If the job has not ended, use the current time
+        context['end'] = datetime.now()
+    else:
+        context['end'] = context['job'].time_end_dt()
     # Handle start and end time from request GET params
     if request is not None:
         if 'start' in request.GET:

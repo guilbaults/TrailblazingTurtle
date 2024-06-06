@@ -153,6 +153,10 @@ def request_to_username(request):
 
 
 def get_step(start, end, minimum=60):
+    if start is None:
+        start = datetime.now()
+    if end is None:
+        end = datetime.now()
     delta = end - start
 
     if delta.days > 6 * 30:

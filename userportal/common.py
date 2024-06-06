@@ -152,55 +152,46 @@ def request_to_username(request):
     return request.user.username.split('@')[0]
 
 
-def query_time(request, exporter_name=None):
-    delta = int(request.GET.get('delta', 0))
-
-    if delta > 3600 * 24 * 7 * 30 * 6:
-        # more than 6 months
-        delta = 3600 * 24 * 7 * 30 * 6
-
-    start = datetime.now() - timedelta(seconds=delta)
-
-    if exporter_name in settings.EXPORTER_SAMPLING_RATE:
-        step = max(int(delta / RESOLUTION), settings.EXPORTER_SAMPLING_RATE[exporter_name]) * 2
-    else:
-        step = max(int(delta / RESOLUTION), 30) * 2
-
-    return (start, step)
-
-
-def get_step(start, end=None):
-    if end is None:
-        end = datetime.now()
-    if start is None:
-        start = datetime.now()
+def get_step(start, end, minimum=60):
     delta = end - start
 
     if delta.days > 6 * 30:
         # more than 6 months
         return 3600 * 24
     else:
-        return int(delta.total_seconds() / RESOLUTION)
+        span = int(delta.total_seconds() / RESOLUTION)
+        if span < minimum:
+            return minimum
+        else:
+            return span
 
 
-def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_end=datetime.now()):
+def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_end=datetime.now(), minimum=60):
+    """ From the GET parameters, add start and end to the request object
+    if delta is set, it will be used to calculate the start time from now() instead of start and end
+    """
     def decorator_wrapper(view_func):
         def func_wrapper(request, *args, **kwargs):
-            if 'start' in request.GET:
-                try:
-                    start = datetime.fromtimestamp(int(request.GET['start']))
-                except ValueError:
+            if 'delta' in request.GET:
+                delta = int(request.GET['delta'])
+                start = datetime.now() - timedelta(seconds=delta)
+                end = datetime.now()
+            else:
+                if 'start' in request.GET:
+                    try:
+                        start = datetime.fromtimestamp(int(request.GET['start']))
+                    except ValueError:
+                        start = default_start
+                else:
                     start = default_start
-            else:
-                start = default_start
 
-            if 'end' in request.GET:
-                try:
-                    end = datetime.fromtimestamp(int(request.GET['end']))
-                except ValueError:
+                if 'end' in request.GET:
+                    try:
+                        end = datetime.fromtimestamp(int(request.GET['end']))
+                    except ValueError:
+                        end = default_end
+                else:
                     end = default_end
-            else:
-                end = default_end
 
             # start and end can't be in the future
             if start > datetime.now():
@@ -209,7 +200,7 @@ def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_en
                 end = datetime.now()
             request.start = start
             request.end = end
-            request.step = get_step(start, end)
+            request.step = get_step(start, end, minimum)
             return view_func(request, *args, **kwargs)
         return func_wrapper
     return decorator_wrapper

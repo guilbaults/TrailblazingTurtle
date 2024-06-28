@@ -29,9 +29,7 @@
   <thead class="thead-dark">
     <tr>
       <th scope="col">{% translate "Username" %}</th>
-      <th scope="col">{% translate "Job ID" %}</th>
       <th scope="col">{% translate "Account" %}</th>
-      <th scope="col">{% translate "Start time" %}</th>
       <th scope="col">{% translate "Allocated cores" %}</th>
       <th scope="col">{% translate "Used cores" %}</th>
       <th scope="col">{% translate "Allocated memory" %}</th>
@@ -40,34 +38,28 @@
     </tr>
   </thead>
   <tbody>
-{% for job in jobs %}
+    {% for user in by_users %}
     <tr>
-      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}">{{job.user | anonymize}}
-        {% if job.user_flag %}
+      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{user.user}}">{{user.user | anonymize}}
+        {% if user.note_flag %}
         <span class="badge badge-primary"><span data-feather="alert-circle" title="User has a note"></span></span>
         {% endif %}</a>
       </td>
-      <td><a href="{{settings.BASE_URL}}secure/jobstats/{{job.user}}/{{job.job_id}}">{{job.job_id}}</a>
-        {% if job.job_flag %}
-        <span class="badge badge-primary"><span data-feather="alert-circle" title="Job has a note"></span></span>
-        {% endif %}</a>
-      </td>
-      <td><a href="{{settings.BASE_URL}}secure/accountstats/{{job.account}}">{{job.account | anonymize}}</a></td>
-      <td>{{job.time_start_dt | date:"U"}}</td>
-      <td>{{job.cpu_asked | floatformat}}</td>
+      <td><a href="{{settings.BASE_URL}}secure/accountstats/{{user.account}}">{{user.account | anonymize}}</a></td>
+      <td>{{user.cpu_asked | floatformat}}</td>
       <td>
-{% if job.cpu_ratio < 0.75 %}
-<span class="badge badge-danger">{{job.cpu_used | floatformat:-2}}</span>
-{% elif job.cpu_ratio < 0.90 %}
-<span class="badge badge-warning">{{job.cpu_used | floatformat:-2}}</span>
+{% if user.cpu_ratio < 0.75 %}
+<span class="badge badge-danger">{{user.cpu_used | floatformat:-1}}</span>
+{% elif user.cpu_ratio < 0.90 %}
+<span class="badge badge-warning">{{user.cpu_used | floatformat:-1}}</span>
 {% else %}
-<span class="badge badge-success">{{job.cpu_used | floatformat:-2}}</span>
+{{user.cpu_used | floatformat:-1}}
 {% endif %}
       </td>
-      <td>{{job.mem_asked | floatformat:0 }}</td>
-      <td>{{job.mem_max | floatformat:0 }}</td>
+      <td>{{user.mem_asked | floatformat:0 }}</td>
+      <td>{{user.mem_max | floatformat:0 }}</td>
       <td>
-        {% for badge in job.waste_badges %}
+        {% for badge in user.waste_badges %}
         <span class="badge badge-{{badge.0}}">{{badge.1}}</span>
         {% empty %}
         <span class="badge badge-success">OK</span>
@@ -75,27 +67,17 @@
       </td>
     </tr>
 {% endfor %}
+  </tbody>
+</table>
 
 <script>
   $(document).ready(function () {
-    luxon.Settings.defaultLocale = "{{LANGUAGE_CODE}}"; // Luxon autodetect seems broken
-    function parse_time(data, type) {
-      if (type == 'display' || type === 'filter'){
-        return DateTime.fromSeconds(parseInt(data)).toLocaleString(DateTime.DATETIME_MED);
-      }
-      else{
-        return data;
-      }
-    }
-
     $('#largemem').DataTable({
       "paging": false,
-      "order": [[ 6, "desc" ]],
+      "order": [[ 4, "desc" ]],
       columns: [
         { },
         { },
-        { },
-        { render: parse_time },
         { },
         { },
         { render: function(data, type, row){
@@ -109,7 +91,7 @@
         },
         { render: function(data, type, row){
             if ( type === 'display' || type === 'filter' ) {
-              ratio = data/row[5];
+              ratio = data/row[4];
               if (ratio < 0.1) {
                 return '<span class="badge badge-danger">' + filesize(data) + '</span>';
               }

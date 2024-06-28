@@ -88,7 +88,7 @@
         },
         { render: function(data, type, row){
             if ( type === 'display' || type === 'filter' ) {
-              ratio = data/row[3];
+              ratio = data/row[4];
               if (ratio < 0.1) {
                 return '<span class="badge badge-danger">' + filesize(data) + '</span>';
               }

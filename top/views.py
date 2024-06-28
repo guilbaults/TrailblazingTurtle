@@ -253,37 +253,25 @@ def largemem(request):
     stats_mem_max = metrics_to_job(prom.query_last(query_mem_max))
 
     context['jobs'] = []
+    by_users = {}
     for job in jobs_running:
         try:
             job_id = str(job.id_job)
+            user = uid_to_username(job.id_user)
+            account = job.account
 
-            mem_ratio = stats_mem_max[job_id] / stats_mem_asked[job_id]
-            cpu_ratio = stats_cpu_used[job_id] / stats_cpu_asked[job_id]
-            stats = {
-                'user': uid_to_username(job.id_user),
-                'job_id': job.id_job,
-                'account': job.account,
-                'time_start_dt': job.time_start_dt,
-                'cpu_asked': stats_cpu_asked[job_id],
-                'cpu_used': stats_cpu_used[job_id],
-                'mem_asked': stats_mem_asked[job_id],
-                'mem_max': stats_mem_max[job_id],
-                'mem_ratio': mem_ratio,
-                'cpu_ratio': cpu_ratio,
-                'min_ratio': min(mem_ratio, cpu_ratio),
-            }
-            waste_badges = []
-            if stats['mem_ratio'] < 0.1:
-                waste_badges.append(('danger', _('Memory')))
-            elif stats['mem_ratio'] < 0.5:
-                waste_badges.append(('warning', _('Memory')))
-            if stats['cpu_ratio'] < 0.75:
-                waste_badges.append(('danger', _('Cores')))
-            elif stats['cpu_ratio'] < 0.9:
-                waste_badges.append(('warning', _('Cores')))
-
-            stats['waste_badges'] = waste_badges
-            context['jobs'].append(stats)
+            if (user, account) not in by_users:
+                by_users[(user, account)] = {
+                    'cpu_asked': stats_cpu_asked[job_id],
+                    'cpu_used': stats_cpu_used[job_id],
+                    'mem_asked': stats_mem_asked[job_id],
+                    'mem_max': stats_mem_max[job_id],
+                }
+            else:
+                by_users[(user, account)]['cpu_asked'] += stats_cpu_asked[job_id]
+                by_users[(user, account)]['cpu_used'] += stats_cpu_used[job_id]
+                by_users[(user, account)]['mem_asked'] += stats_mem_asked[job_id]
+                by_users[(user, account)]['mem_max'] += stats_mem_max[job_id]
         except KeyError:
             pass
 
@@ -314,6 +302,30 @@ def largemem(request):
             job['user_flag'] = True
         if job['job_id'] in note_per_jobid:
             job['job_flag'] = True
+
+    # convert dict to list
+    context['by_users'] = []
+    for (user, account), stats in by_users.items():
+        if user in note_per_user:
+            stats['user_flag'] = True
+        stats['user'] = user
+        stats['account'] = account
+        stats['cpu_ratio'] = stats['cpu_used'] / stats['cpu_asked']
+        stats['mem_ratio'] = stats['mem_max'] / stats['mem_asked']
+        stats['min_ratio'] = min(stats['cpu_ratio'], stats['mem_ratio'])
+
+        waste_badges = []
+        if stats['mem_ratio'] < 0.1:
+            waste_badges.append(('danger', _('Memory')))
+        elif stats['mem_ratio'] < 0.5:
+            waste_badges.append(('warning', _('Memory')))
+        if stats['cpu_ratio'] < 0.75:
+            waste_badges.append(('danger', _('Cores')))
+        elif stats['cpu_ratio'] < 0.9:
+            waste_badges.append(('warning', _('Cores')))
+        stats['waste_badges'] = waste_badges
+
+        context['by_users'].append(stats)
 
     return render(request, 'top/largemem.html', context)
 

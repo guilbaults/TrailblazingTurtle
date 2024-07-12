@@ -3,7 +3,7 @@ FROM ubuntu:22.04
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN apt-get update && apt-get install -y tzdata && apt install -y python3.10 python3-pip python3-dev libpq-dev nginx libmysqlclient-dev build-essential libsasl2-dev libldap2-dev libssl-dev xmlsec1 gettext
+RUN apt-get update && apt-get install -y tzdata && apt install -y python3.10 python3-pip python3-dev python3-numpy libpq-dev nginx libmysqlclient-dev build-essential libsasl2-dev libldap2-dev libssl-dev xmlsec1 gettext
 
 WORKDIR /opt/userportal
 

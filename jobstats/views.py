@@ -488,13 +488,15 @@ def job(request, username, job_id):
         stats_exe = prom.query_prometheus_multiple(query_exe, job.time_start_dt(), job.time_end_dt())
         context['applications'] = []
         for exe in stats_exe:
-            name = exe['metric']['exe']
-            value = statistics.mean(exe['y'])
-            if settings.DEMO:
-                if not name.startswith('/cvmfs'):
-                    # skip non-cvmfs applications in demo mode
-                    name = '[redacted]'
-            context['applications'].append({'name': name, 'value': value})
+            # sometimes the exe is not present, skip those
+            if 'exe' in exe['metric']:
+                name = exe['metric']['exe']
+                value = statistics.mean(exe['y'])
+                if settings.DEMO:
+                    if not name.startswith('/cvmfs'):
+                        # skip non-cvmfs applications in demo mode
+                        name = '[redacted]'
+                context['applications'].append({'name': name, 'value': value})
     except ValueError:
         pass
 
@@ -836,14 +838,16 @@ def graph_thread(request, username, job_id):
     for line in stats_exe:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        name = os.path.basename(line['metric']['exe'])
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': name,
-            'hovertemplate': '%{y:.1f}',
-        })
+        # sometimes the exe is not present, skip those
+        if 'exe' in line['metric']:
+            name = os.path.basename(line['metric']['exe'])
+            data.append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': name,
+                'hovertemplate': '%{y:.1f}',
+            })
 
     layout = {
         'yaxis': {

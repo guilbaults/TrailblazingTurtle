@@ -16,6 +16,10 @@ RUN python3 -m venv /opt/userportal-env && \
 COPY . .
 
 RUN patch /opt/userportal-env/lib/python3.12/site-packages/ldapdb/backends/ldap/base.py < /opt/userportal/ldapdb.patch
+
+# Temporarily remove db version check to support mariadb server on EL8 without appstream enabled
+RUN patch /opt/userportal-env/lib/python3.12/site-packages/django/db/backends/base/base.py < /opt/userportal/dbcheck.patch
+
 RUN /opt/userportal-env/bin/python manage.py collectstatic --noinput && /opt/userportal-env/bin/python manage.py compilemessages
 
 EXPOSE 8000

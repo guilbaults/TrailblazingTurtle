@@ -14,6 +14,7 @@ django-debug-toolbar==4.4.6
 django-ldapdb @ git+https://github.com/nikolaik/django-ldapdb@381e4f40032c96ea6ae6623a5a0339b3ea526ae5
 django-settings-export==1.2.1
 django-watchman==1.3.0
+django_csp==3.8
 djangorestframework==3.15.2
 djangorestframework-datatables==0.7.2
 djangosaml2==1.9.3

@@ -1,0 +1,11 @@
+--- /opt/userportal-env/lib/python3.12/site-packages/django/db/backends/base/base.py    2024-07-17 17:45:44.000000000 +0000
++++ /opt/userportal-env/lib/python3.12/site-packages/django/db/backends/base/base.py.modified   2024-07-17 19:21:39.250937980 +0000
+@@ -222,7 +222,7 @@
+         """Initialize the database connection settings."""
+         global RAN_DB_VERSION_CHECK
+         if self.alias not in RAN_DB_VERSION_CHECK:
+-            self.check_database_version_supported()
++            #self.check_database_version_supported()
+             RAN_DB_VERSION_CHECK.add(self.alias)
+
+     def create_cursor(self, name=None):

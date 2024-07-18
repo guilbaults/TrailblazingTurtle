@@ -20,6 +20,16 @@ if [ -z "$VERSION" ]; then
     VERSION=latest
 fi
 
+if [ -z "$WORKERS" ]; then
+    echo "WORKERS is not set in the config file, using 4"
+    WORKERS=4
+fi
+
+if [ -z "$THREADS" ]; then
+    echo "THREADS is not set in the config file, using 4"
+    THREADS=4
+fi
+
 podman pod stop TT-$TT_ENV
 podman pod rm -f TT-$TT_ENV
 podman volume rm -f TT-$TT_ENV-static
@@ -28,6 +38,8 @@ podman pod create -p $PORT:80 --name TT-$TT_ENV
 podman volume create TT-$TT_ENV-static
 
 podman run --detach --pod TT-$TT_ENV --name=TT-$TT_ENV-django \
+    --env WORKERS=${WORKERS} \
+    --env THREADS=${THREADS} \
     -v $TT_ENV_PATH/99-local.py:/secrets/settings/99-local.py:Z \
     -v $TT_ENV_PATH/private.key:/opt/userportal/private.key:Z \
     -v $TT_ENV_PATH/public.cert:/opt/userportal/public.cert:Z \

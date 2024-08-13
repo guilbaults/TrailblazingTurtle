@@ -4,18 +4,17 @@
 <h1>{% translate "Internal notes" %}</h1>
 
 {% for note in notes %}
-  <div class="alert alert-primary" role="alert">
-    <div class="container">
-      <div class="row">
-        <div class="col">
-          <a href="{{ note.get_absolute_url }}"><h2 class="alert-heading">{{ note.title }}</h2></a>
-        </div>
-        <div class="col-3">
-          {% translate "Modified at:" %} <span class="utc_date">{{ note.modified_at | date:"c" }}</span>
-        </div>
-      </div>
+  <div class="card border-primary">
+    <div class="card-header">
+      {% if note.job_id %}
+        <a href="{{ note.get_absolute_url }}">{{ note.title }}</a> <a href="{{settings.BASE_URL}}secure/jobstats/{{note.username}}/{{ note.job_id }}"> ({{ note.job_id }})</a> - <span class="utc_date">{{ note.modified_at | date:"c" }}</span>
+      {% else %}
+        {{ note.title }} - <span class="utc_date">{{ note.modified_at | date:"c" }}</span>
+      {% endif %}
     </div>
-    <p>{{ note.notes }}</p>
+    <div class="card-body">
+      <p class="card-text">{{ note.notes | linebreaks}}</p>
+    </div>
   </div>
 {% empty %}
   <p>{% translate "No notes found." %}</p>

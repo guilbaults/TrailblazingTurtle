@@ -16,6 +16,7 @@ from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
 from django.http import Http404
 import os
+from django.db.models import Q
 
 GPU_MEMORY = {
     'GRID V100D-4C': 4,
@@ -278,7 +279,7 @@ def job(request, username, job_id):
         context['array_jobs'] = JobTable.objects.filter(id_array_job=job.id_array_job).order_by('id_array_task')
 
     if request.user.is_staff:
-        context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
+        context['notes'] = Note.objects.filter(Q(username=username) | Q(job_id=job_id)).filter(deleted_at=None).order_by('-modified_at')
 
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024

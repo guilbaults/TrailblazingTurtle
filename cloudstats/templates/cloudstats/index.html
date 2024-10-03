@@ -26,18 +26,28 @@
   <div id="graph_cpu"></div>
   <h4>{% translate "Memory used" %}</h4>
   <div id="graph_mem"></div>
+  <h4>{% translate "Projects" %}</h4>
+  Total physical cores: {{physical_cores | floatformat:0}}<br>
+  Total physical memory: {{physical_memory | floatformat:0}} GB<br>
+
   <table class="table table-striped">
     <thead class="thead-dark">
       <tr>
         <th>{% translate "Project" %}</th>
-        <th>{% translate "Allocated cores" %}</th>
+        <th>{% translate "Running cores" %}</th>
+        <th>{% translate "Used cores" %}</th>
+        <th>{% translate "Running memory (GB)" %}</th>
+        <th>{% translate "Used memory (GB)" %}</th>
       </tr>
     </thead>
     <tbody>
   {% for project in all_projects %}
     <tr>
       <td><a href="{{ project.id }}">{{project.name | anonymize }}</a></td>
-      <td>{{project.cores}}</td>
+      <td>{{project.cores | floatformat:1}}</td>
+      <td>{{project.used_cores | floatformat:1}}</td>
+      <td>{{project.memory | floatformat:1}}</td>
+      <td>{{project.used_memory | floatformat:1}}</td>
     </tr>
   {% endfor %}
     </tbody>

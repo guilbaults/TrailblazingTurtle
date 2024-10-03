@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from collections import Counter
+import statistics
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -18,15 +19,84 @@ def index(request):
 
     if request.user.is_staff:
         context['all_projects'] = []
-        query_projects = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
+        all_projects = {}
+
+        query_count_cores = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
-        for project in prom.query_last(query_projects):
+        stats_avg_cores = prom.query_prometheus_multiple(query_count_cores, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_avg_cores:
+            all_projects[line['metric']['project_name']] = {'cores': statistics.mean(line['y'])}
+
+        query_used_cores = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[1h])/1000/1000/1000) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_avg_used_cores = prom.query_prometheus_multiple(query_used_cores, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_avg_used_cores:
+            all_projects[line['metric']['project_name']]['used_cores'] = statistics.mean(line['y'])
+
+        query_memory = 'sum(libvirtd_domain_balloon_current{{ {filter} }}/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_memory = prom.query_prometheus_multiple(query_memory, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_memory:
+            all_projects[line['metric']['project_name']]['memory'] = statistics.mean(line['y'])
+
+        query_used_memory = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_used_memory = prom.query_prometheus_multiple(query_used_memory, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_used_memory:
+            all_projects[line['metric']['project_name']]['used_memory'] = statistics.mean(line['y'])
+
+        context['total_projects'] = {'cores': 0, 'used_cores': 0, 'memory': 0, 'used_memory': 0}
+        for project in sorted(all_projects):
             context['all_projects'].append({
-                'id': project['metric']['project_name'],
-                'name': project['metric']['project_name'],
-                'cores':
-                int(project['value'][1])})
+                'id': project,
+                'name': project,
+                'cores': all_projects[project]['cores'],
+                'used_cores': all_projects[project]['used_cores'],
+                'memory': all_projects[project]['memory'],
+                'used_memory': all_projects[project]['used_memory'],
+            })
+            context['total_projects']['cores'] += all_projects[project]['cores']
+            context['total_projects']['used_cores'] += all_projects[project]['used_cores']
+            context['total_projects']['memory'] += all_projects[project]['memory']
+            context['total_projects']['used_memory'] += all_projects[project]['used_memory']
+
+        context['all_projects'].append({
+            'id': 'total',
+            'name': _('Total'),
+            'cores': context['total_projects']['cores'],
+            'used_cores': context['total_projects']['used_cores'],
+            'memory': context['total_projects']['memory'],
+            'used_memory': context['total_projects']['used_memory'],
+        })
+
+        # Grab the hypervisors hostnames
+        query_hypervisors = 'libvirtd_info{{ {filter} }}'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_hypervisors = prom.query_prometheus_multiple(query_hypervisors, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        context['hypervisors'] = []
+        for line in stats_hypervisors:
+            context['hypervisors'].append(line['metric']['instance'].split(':')[0])
+
+        # get the physical cores
+        query_physical_cores = 'count(node_cpu_seconds_total{{ {filter}, mode="idle", instance=~"({instances}).*" }})'.format(
+            filter=prom.get_filter('cloudstats'),
+            instances='|'.join(context['hypervisors'])
+        )
+        stats_physical_cores = prom.query_last(query_physical_cores)
+        context['physical_cores'] = stats_physical_cores[0]['value'][1]
+
+        # get the physical memory
+        query_physical_memory = 'sum(node_memory_MemTotal_bytes{{ {filter}, instance=~"({instances}).*" }})/1024/1024/1024'.format(
+            filter=prom.get_filter('cloudstats'),
+            instances='|'.join(context['hypervisors'])
+        )
+        stats_physical_memory = prom.query_last(query_physical_memory)
+        context['physical_memory'] = stats_physical_memory[0]['value'][1]
 
     return render(request, 'cloudstats/index.html', context)
 

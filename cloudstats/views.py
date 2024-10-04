@@ -49,7 +49,30 @@ def index(request):
         for line in stats_used_memory:
             all_projects[line['metric']['project_name']]['used_memory'] = statistics.mean(line['y'])
 
-        context['total_projects'] = {'cores': 0, 'used_cores': 0, 'memory': 0, 'used_memory': 0}
+        # infer the number of gpus from the instance_name
+        query_gpus = 'count(libvirtd_domain_balloon_current{{ {filter} }}) by (project_name, instance_type)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_gpus = prom.query_prometheus_multiple(query_gpus, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_gpus:
+            try:
+                gpu_qty = settings.CLOUD_INSTANCE_TYPE[line['metric']['instance_type']]['gpu']
+            except KeyError:
+                gpu_qty = 0
+
+            if 'gpu_qty' in all_projects[line['metric']['project_name']]:
+                all_projects[line['metric']['project_name']]['gpu_qty'] =+ statistics.mean(line['y']) * gpu_qty
+            else:
+                all_projects[line['metric']['project_name']]['gpu_qty'] = statistics.mean(line['y']) * gpu_qty
+
+        query_block_capacity = 'sum(libvirtd_domain_block_capacity{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_block_capacity = prom.query_prometheus_multiple(query_block_capacity, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_block_capacity:
+            all_projects[line['metric']['project_name']]['block_capacity'] = statistics.mean(line['y'])
+
+        context['total_projects'] = {'cores': 0, 'used_cores': 0, 'memory': 0, 'used_memory': 0, 'gpu_qty': 0, 'block_capacity': 0}
         for project in sorted(all_projects):
             context['all_projects'].append({
                 'id': project,
@@ -58,11 +81,15 @@ def index(request):
                 'used_cores': all_projects[project]['used_cores'],
                 'memory': all_projects[project]['memory'],
                 'used_memory': all_projects[project]['used_memory'],
+                'gpu_qty': all_projects[project]['gpu_qty'],
+                'block_capacity': all_projects[project]['block_capacity'],
             })
             context['total_projects']['cores'] += all_projects[project]['cores']
             context['total_projects']['used_cores'] += all_projects[project]['used_cores']
             context['total_projects']['memory'] += all_projects[project]['memory']
             context['total_projects']['used_memory'] += all_projects[project]['used_memory']
+            context['total_projects']['gpu_qty'] += all_projects[project]['gpu_qty']
+            context['total_projects']['block_capacity'] += all_projects[project]['block_capacity']
 
         context['all_projects'].append({
             'id': 'total',
@@ -71,6 +98,8 @@ def index(request):
             'used_cores': context['total_projects']['used_cores'],
             'memory': context['total_projects']['memory'],
             'used_memory': context['total_projects']['used_memory'],
+            'gpu_qty': context['total_projects']['gpu_qty'],
+            'block_capacity': context['total_projects']['block_capacity'],
         })
 
         # Grab the hypervisors hostnames

@@ -38,6 +38,8 @@
         <th>{% translate "Used cores" %}</th>
         <th>{% translate "Running memory (GB)" %}</th>
         <th>{% translate "Used memory (GB)" %}</th>
+        <th>{% translate "Running GPUs" %}</th>
+        <th>{% translate "Block capacity (GB)" %}</th>
       </tr>
     </thead>
     <tbody>
@@ -48,6 +50,8 @@
       <td>{{project.used_cores | floatformat:1}}</td>
       <td>{{project.memory | floatformat:1}}</td>
       <td>{{project.used_memory | floatformat:1}}</td>
+      <td>{{project.gpu_qty | floatformat:1}}</td>
+      <td>{{project.block_capacity | floatformat:1}}</td>
     </tr>
   {% endfor %}
     </tbody>

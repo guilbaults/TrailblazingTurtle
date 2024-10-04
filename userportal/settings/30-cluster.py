@@ -96,6 +96,20 @@ CLUSTER_INTRO = """
 
 CLOUD_ALLOCATIONS_FILE = '/var/www/userportal/projects-rac2022.yml'
 
+# We can gather the cpu/memory info from the exporter, but not the gpu info
+CLOUD_INSTANCE_TYPE = {
+    'gpu12-120-850gb-a100x1': { 'gpu': 1 },
+    'gpu24-240-1700gb-a100x2': { 'gpu': 2 },
+    'gpu48-480-3400gb-a100x4': { 'gpu': 4 },
+    'gpu16-240-3375gb-a100x1': { 'gpu': 1 },
+    'gpu32-480-6750gb-a100x2': { 'gpu': 2 },
+    'gpu64-960-13500gb-a100x4': { 'gpu': 4 },
+    'gpu13-240-2500gb-a100-80gx1': { 'gpu': 1 },
+    'gpu26-480-5000gb-a100-80gx2': { 'gpu': 2 },
+    'gpu52-960-10000gb-a100-80gx4': { 'gpu': 4 },
+    'gpu104-1920-20000gb-a100-80gx8': { 'gpu': 8 },
+}
+
 # Links in the menu
 EXTERNAL_LINKS = []
 #EXTERNAL_LINKS = [

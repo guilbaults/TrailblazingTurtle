@@ -61,7 +61,7 @@ def index(request):
                 gpu_qty = 0
 
             if 'gpu_qty' in all_projects[line['metric']['project_name']]:
-                all_projects[line['metric']['project_name']]['gpu_qty'] =+ statistics.mean(line['y']) * gpu_qty
+                all_projects[line['metric']['project_name']]['gpu_qty'] += statistics.mean(line['y']) * gpu_qty
             else:
                 all_projects[line['metric']['project_name']]['gpu_qty'] = statistics.mean(line['y']) * gpu_qty
 

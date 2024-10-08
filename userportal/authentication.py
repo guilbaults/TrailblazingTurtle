@@ -23,7 +23,7 @@ class staffRemoteUserBackend(RemoteUserBackend):
             username = username.split('@')[0]
         return username
 
-    def configure_user(self, request, user):
+    def configure_user(self, request, user, created=True):
         if 'staff@computecanada.ca' in request.META['affiliation'] \
                 or 'staff@alliancecan.ca' in request.META['affiliation']:
             user.is_staff = True

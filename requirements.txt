@@ -7,7 +7,7 @@ cryptography==42.0.8
 cycler==0.12.1
 dateparser==1.2.0
 defusedxml==0.7.1
-Django==5.0.7
+Django==5.0.9
 django-bootstrap-pagination @ git+https://github.com/teejaydub/django-bootstrap-pagination@82ea7a213860a741890f324e025f6ec215f24a32
 django-crispy-forms==2.2
 django-debug-toolbar==4.4.6

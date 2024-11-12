@@ -170,9 +170,11 @@ def get_step(start, end, minimum=60):
             return span
 
 
-def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_end=datetime.now(), minimum=60):
+def parse_start_end(timedelta_start=timedelta(days=1), minimum=60):
     """ From the GET parameters, add start and end to the request object
     if delta is set, it will be used to calculate the start time from now() instead of start and end
+
+    The default parameters are evaluated when python is loaded, this why they are not a datetime object since they would not update when the decorator is called
     """
     def decorator_wrapper(view_func):
         def func_wrapper(request, *args, **kwargs):
@@ -185,17 +187,17 @@ def parse_start_end(default_start=datetime.now() - timedelta(days=1), default_en
                     try:
                         start = datetime.fromtimestamp(int(request.GET['start']))
                     except ValueError:
-                        start = default_start
+                        start = datetime.now() - timedelta_start
                 else:
-                    start = default_start
+                    start = datetime.now() - timedelta_start
 
                 if 'end' in request.GET:
                     try:
                         end = datetime.fromtimestamp(int(request.GET['end']))
                     except ValueError:
-                        end = default_end
+                        end = datetime.now()
                 else:
-                    end = default_end
+                    end = datetime.now()
 
             # start and end can't be in the future
             if start > datetime.now():

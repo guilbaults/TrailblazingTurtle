@@ -603,7 +603,7 @@ def graph_cpu(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_cpu_user(request, username):
     data = []
     try:
@@ -640,7 +640,7 @@ def graph_cpu_user(request, username):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_mem_user(request, username):
     data = []
     try:
@@ -903,7 +903,7 @@ def graph_lustre_mdt(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(hours=6))
+@parse_start_end(timedelta_start=timedelta(hours=6))
 def graph_lustre_mdt_user(request, username):
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[{}s])) by (operation, fs) !=0'.format(username, prom.get_filter(), prom.rate('lustre_exporter'))
     stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
@@ -979,7 +979,7 @@ def graph_lustre_ost(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(hours=6))
+@parse_start_end(timedelta_start=timedelta(hours=6))
 def graph_lustre_ost_user(request, username):
     data = []
     for i in ['read', 'write']:
@@ -1067,7 +1067,7 @@ def graph_gpu_utilization(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_gpu_utilization_user(request, username):
     data = []
 
@@ -1231,7 +1231,7 @@ def graph_gpu_power(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=2))
+@parse_start_end(timedelta_start=timedelta(days=2))
 def graph_gpu_power_user(request, username):
     data = []
 

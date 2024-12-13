@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 from slurm.models import JobTable
 from django.conf import settings
 from django.http import JsonResponse, HttpResponseForbidden
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 prom = Prometheus(settings.PROMETHEUS)
 
@@ -79,7 +79,7 @@ def user(request, username):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=90))
+@parse_start_end(timedelta_start=timedelta(days=90))
 def graph_inodes(request, username, resource_type, resource_name):
     allocs = storage_allocations(username)
     for alloc in allocs:
@@ -127,7 +127,7 @@ def graph_inodes(request, username, resource_type, resource_name):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=90))
+@parse_start_end(timedelta_start=timedelta(days=90))
 def graph_bytes(request, username, resource_type, resource_name):
     allocs = storage_allocations(username)
     for alloc in allocs:

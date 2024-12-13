@@ -5,7 +5,18 @@ Before installing in production, [a test environment should be set up to test th
 The portal can be installed directly on a Rocky8 Apache web server or with Nginx and Gunicorn. The portal can also be deployed as a container with Podman or Kubernetes. Some scripts used to deploy both Nginx and Django containers inside the same pod are provided in the `podman` directory.
 The various recommendations for any normal Django production deployment can be followed.
 
-[Deploying Django](https://docs.djangoproject.com/en/3.2/howto/deployment/)
+[Deploying Django](https://docs.djangoproject.com/en/5.0/howto/deployment/)
+
+The database should support UTF8. With MariaDB, the default collation can be changed with the following command:
+
+```
+ALTER DATABASE userportal CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+Migration scripts will also ensure that the tables and columns are converted to the correct collation.
+
+# Production with containers
+Using containers is the recommended way to deploy the portal. The container is automatically built in the CI pipeline and pushed to the Github registry. This container is handling the django application. The static files are served by a standard Nginx container. Both containers are deployed in the same pod with a shared volume containing the static files.
 
 # Production without containers on Rocky Linux 8
 

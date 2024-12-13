@@ -302,7 +302,7 @@ def node_state(node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_disk_used(request, node):
     query_disk = '(node_filesystem_size_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}} - node_filesystem_avail_bytes{{{hostname_label}=~"{node}(:.*)", {filter}}})/(1000*1000*1000)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
@@ -332,7 +332,7 @@ def graph_disk_used(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_cpu_jobstats(request, node):
     query = 'sum(rate(slurm_job_core_usage_total{{{hostname_label}=~"{node}(:.*)", {filter}}}[{step}s]) / 1000000000) by (user, slurmjobid)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
@@ -363,7 +363,7 @@ def graph_cpu_jobstats(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_cpu_node(request, node):
     query = 'sum by (mode)(irate(node_cpu_seconds_total{{mode!="idle",{hostname_label}=~"{node}(:.*)",{filter}}}[{step}s]))'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
@@ -395,7 +395,7 @@ def graph_cpu_node(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_memory_jobstats(request, node):
     query = '(sum(slurm_job_memory_usage{{{hostname_label}=~"{node}(:.*)", {filter}}}) by (user, slurmjobid))/(1024*1024*1024)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
@@ -426,7 +426,7 @@ def graph_memory_jobstats(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_memory_node(request, node):
     data = []
     query_apps = '(node_memory_MemTotal_bytes{{{hostname_label}=~"{node}(:.*)",{filter}}} - \
@@ -480,7 +480,7 @@ def graph_memory_node(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_ethernet_bdw(request, node):
     data = []
 
@@ -517,7 +517,7 @@ def graph_ethernet_bdw(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_infiniband_bdw(request, node):
     data = []
     for direction in ['received', 'transmitted']:
@@ -553,7 +553,7 @@ def graph_infiniband_bdw(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_disk_iops(request, node):
     data = []
     for direction in ['reads', 'writes']:
@@ -589,7 +589,7 @@ def graph_disk_iops(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_disk_bdw(request, node):
     data = []
     for direction in ['read', 'written']:
@@ -625,7 +625,7 @@ def graph_disk_bdw(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_gpu_utilization(request, node):
     data = []
     queries = [
@@ -670,7 +670,7 @@ def graph_gpu_utilization(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_gpu_memory(request, node):
     query = 'slurm_job_memory_usage_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}} /(1024*1024*1024)'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
@@ -703,7 +703,7 @@ def graph_gpu_memory(request, node):
 
 @login_required
 @staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_gpu_power(request, node):
     query = 'slurm_job_power_gpu{{{hostname_label}=~"{node}(:.*)", {filter}}}/1000'.format(
         hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,

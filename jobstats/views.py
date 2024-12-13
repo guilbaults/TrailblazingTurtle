@@ -16,6 +16,7 @@ from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
 from jobstats.analyze_job import Comment
 from django.http import Http404
 import os
+from django.db.models import Q
 
 GPU_MEMORY = {
     'GRID V100D-4C': 4,
@@ -278,7 +279,7 @@ def job(request, username, job_id):
         context['array_jobs'] = JobTable.objects.filter(id_array_job=job.id_array_job).order_by('id_array_task')
 
     if request.user.is_staff:
-        context['notes'] = Note.objects.filter(job_id=job_id).filter(deleted_at=None).order_by('-modified_at')
+        context['notes'] = Note.objects.filter(Q(username=username) | Q(job_id=job_id)).filter(deleted_at=None).order_by('-modified_at')
 
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
@@ -488,13 +489,15 @@ def job(request, username, job_id):
         stats_exe = prom.query_prometheus_multiple(query_exe, job.time_start_dt(), job.time_end_dt())
         context['applications'] = []
         for exe in stats_exe:
-            name = exe['metric']['exe']
-            value = statistics.mean(exe['y'])
-            if settings.DEMO:
-                if not name.startswith('/cvmfs'):
-                    # skip non-cvmfs applications in demo mode
-                    name = '[redacted]'
-            context['applications'].append({'name': name, 'value': value})
+            # sometimes the exe is not present, skip those
+            if 'exe' in exe['metric']:
+                name = exe['metric']['exe']
+                value = statistics.mean(exe['y'])
+                if settings.DEMO:
+                    if not name.startswith('/cvmfs'):
+                        # skip non-cvmfs applications in demo mode
+                        name = '[redacted]'
+                context['applications'].append({'name': name, 'value': value})
     except ValueError:
         pass
 
@@ -600,7 +603,7 @@ def graph_cpu(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_cpu_user(request, username):
     data = []
     try:
@@ -637,7 +640,7 @@ def graph_cpu_user(request, username):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_mem_user(request, username):
     data = []
     try:
@@ -836,14 +839,16 @@ def graph_thread(request, username, job_id):
     for line in stats_exe:
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        name = os.path.basename(line['metric']['exe'])
-        data.append({
-            'x': x,
-            'y': y,
-            'type': 'scatter',
-            'name': name,
-            'hovertemplate': '%{y:.1f}',
-        })
+        # sometimes the exe is not present, skip those
+        if 'exe' in line['metric']:
+            name = os.path.basename(line['metric']['exe'])
+            data.append({
+                'x': x,
+                'y': y,
+                'type': 'scatter',
+                'name': name,
+                'hovertemplate': '%{y:.1f}',
+            })
 
     layout = {
         'yaxis': {
@@ -898,7 +903,7 @@ def graph_lustre_mdt(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(hours=6))
+@parse_start_end(timedelta_start=timedelta(hours=6))
 def graph_lustre_mdt_user(request, username):
     query = 'sum(rate(lustre_job_stats_total{{component=~"mdt",user=~"{}", {}}}[{}s])) by (operation, fs) !=0'.format(username, prom.get_filter(), prom.rate('lustre_exporter'))
     stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
@@ -974,7 +979,7 @@ def graph_lustre_ost(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(hours=6))
+@parse_start_end(timedelta_start=timedelta(hours=6))
 def graph_lustre_ost_user(request, username):
     data = []
     for i in ['read', 'write']:
@@ -1062,7 +1067,7 @@ def graph_gpu_utilization(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=7))
+@parse_start_end(timedelta_start=timedelta(days=7))
 def graph_gpu_utilization_user(request, username):
     data = []
 
@@ -1226,7 +1231,7 @@ def graph_gpu_power(request, username, job_id):
 
 @login_required
 @user_or_staff
-@parse_start_end(default_start=datetime.now() - timedelta(days=2))
+@parse_start_end(timedelta_start=timedelta(days=2))
 def graph_gpu_power_user(request, username):
     data = []
 

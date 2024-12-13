@@ -10,7 +10,9 @@ DATABASES = {
         'HOST': 'dbserver',
         'PORT': '3128',
         'OPTIONS': {
-        }
+            'charset': 'utf8mb4',
+            'use_unicode': True,
+        },
     },
     'slurm': {
         'ENGINE': 'django.db.backends.mysql',

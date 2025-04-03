@@ -201,7 +201,8 @@ def graph_login_memory(request, login):
     if login not in settings.LOGINS.keys():
         return JsonResponse({'error': 'Unknown login node'})
 
-    total_mem_query = 'node_memory_MemTotal_bytes{{instance=~"{login}(:.*)?", {filter} }}'.format(
+    total_mem_query = 'node_memory_MemTotal_bytes{{{hostname_label}=~"{login}(:.*)?", {filter} }}'.format(
+        hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
         login=login,
         filter=prom.get_filter(),
     )

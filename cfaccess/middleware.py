@@ -1,7 +1,7 @@
 from django.http import HttpResponseForbidden, HttpRequest
 from django.conf import settings
 
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 
 from cfaccess.backends import CloudflareAccessLDAPBackend
 
@@ -66,10 +66,12 @@ class CloudflareAccessLDAPMiddleware:
         # We have a valid JWT, check if the user is not currently authenticated, if so,
         # login the user to their session
         if not request.user.is_authenticated:
-            user = authenticate(request, cloudflare_user=jwt_username, jwt_data=jwt_data)
-            request.user = user
-            login(request, user)
-
+            backend = CloudflareAccessLDAPBackend()
+            user = backend.authenticate(request, cloudflare_user=jwt_username, jwt_data=jwt_data)
+            if user is not None:
+                user.backend = 'cfaccess.backends.CloudflareAccessLDAPBackend'
+                request.user = user
+                login(request, user)
         # The user is already authenticated as the correct user, proceed with session
         return self.get_response(request)
 

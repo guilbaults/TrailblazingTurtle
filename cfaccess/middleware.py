@@ -1,7 +1,7 @@
 from django.http import HttpResponseForbidden, HttpRequest
 from django.conf import settings
 
-from django.contrib.auth import login, logout, authenticate
+from django.contrib.auth import login, logout
 
 from cfaccess.backends import CloudflareAccessLDAPBackend
 

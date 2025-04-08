@@ -53,3 +53,4 @@ tzdata==2024.1
 tzlocal==5.2
 urllib3==2.2.2
 xmlschema==2.5.1
+PyJWT==2.10.1

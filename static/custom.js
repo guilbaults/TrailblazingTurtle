@@ -16,7 +16,7 @@ function loadGraph(container, url){
     var container_div = '#' + container;
     const loadingString = gettext('Loading...');
     //if content of div is empty, show loading spinner
-    if($('#' + container).html().trim().length == 0){
+    if($(container_div).html()?.trim().length == 0){
         $(container_div).html('<div class="spinner-border m-5 justify-content-center" role="status"><span class="sr-only">' + loadingString + '</span></div>');
     }
 

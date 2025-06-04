@@ -1854,29 +1854,31 @@ def power(job, step):
         # * (multiply that by the ratio of GPUs used in that node)
         # + (add the power of the gpu allocated to the job)
         # results is not perfect when the node is shared between jobs
-        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*){oob_suffix}") \
-- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*"))\
-* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}):9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )\
+        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}{domain}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*){oob_suffix}{domain}") \
+- label_replace((sum(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}){domain}:9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*"))\
+* ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}){domain}:9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )\
 + ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
             hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
             oob_suffix=settings.HOSTNAME_OOB_SUFFIX,
+            domain=settings.HOSTNAME_DOMAIN,
             prom_metric_chassis_power_avg=settings.PROM_METRIC_CHASSIS_POWER_AVG_CONSUMED_WATTS,
         )
     else:
         # ( take the node power)
         # * (the ratio of cpu cores allocated in that node)
-        nodes_node_exporter = '|'.join([s + '(:.*)?' for s in nodes])
-        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*){oob_suffix}") ) \
-            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(node_cpu_seconds_total{{{hostname_label}=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(
+        nodes_node_exporter = '|'.join([s + settings.HOSTNAME_DOMAIN + '(:.*)?' for s in nodes])
+        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}{domain}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*){oob_suffix}{domain}") ) \
+            * ( label_replace(count(slurm_job_core_usage_total{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*){domain}:.*") / label_replace((count(node_cpu_seconds_total{{{hostname_label}=~"({nodes_node_exporter})", mode="idle", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*){domain}:.*") )'.format(
             hostname_label=settings.PROM_NODE_HOSTNAME_LABEL,
             nodes='|'.join(nodes),
             filter=prom.get_filter(),
             jobid=job.id_job,
             nodes_node_exporter=nodes_node_exporter,
             oob_suffix=settings.HOSTNAME_OOB_SUFFIX,
+            domain=settings.HOSTNAME_DOMAIN,
             prom_metric_chassis_power_avg=settings.PROM_METRIC_CHASSIS_POWER_AVG_CONSUMED_WATTS,
         )
     return prom.query_prometheus_multiple(query, job.time_start_dt(), job.time_end_dt(), step)

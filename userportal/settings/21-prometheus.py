@@ -8,3 +8,6 @@ PROMETHEUS = {
 }
 
 PROM_NODE_HOSTNAME_LABEL = 'instance'
+
+# Prometheus metric to obtain the average wattage consumption of chassis
+PROM_METRIC_CHASSIS_POWER_AVG_CONSUMED_WATTS = 'redfish_chassis_power_average_consumed_watts'

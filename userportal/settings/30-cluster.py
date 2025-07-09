@@ -51,6 +51,9 @@ DTNS = {
 # out-of-band suffix to append to the hostname
 HOSTNAME_OOB_SUFFIX = '-oob'
 
+# append a domain the hostname (including leading dot)
+HOSTNAME_DOMAIN = ''
+
 # value used in the next variables, not showned in the UI, can be removed
 HARDWARE_OVERHEAD = 1.10  # cables, racks, etc.
 CURRENCY_CONVERSION = 1.25  # USD to CAD conversion

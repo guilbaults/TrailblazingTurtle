@@ -323,11 +323,12 @@ class JobTable(models.Model):
         return '{}'.format(status[self.state])
 
     def gpu_count(self):
-        gpu_match = re.match(r'.*1001=(\d+)', self.tres_alloc)
-        if gpu_match:
-            return int(gpu_match.group(1))
-        else:
-            return 0
+        __gpu_count = 0
+        for key in settings.SLURM_TRES:
+            gpu_match = re.match(r".*%s(\d+)" % key, self.tres_alloc)
+            if gpu_match:
+                __gpu_count += int(gpu_match.group(1))
+        return __gpu_count
 
     def gpu_type(self):
         for key in settings.SLURM_TRES:

@@ -50,7 +50,7 @@ def index(request):
     nodes = []
     node_states = {}
     for line in stats:
-        name = line['metric']['node']
+        name = line['metric']['node']+settings.HOSTNAME_DOMAIN
         nodes.append(name)
         node_states[name] = {'state': line['metric']['state']}
 

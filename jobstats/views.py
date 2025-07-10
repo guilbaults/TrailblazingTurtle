@@ -1854,7 +1854,7 @@ def power(job, step):
         # * (multiply that by the ratio of GPUs used in that node)
         # + (add the power of the gpu allocated to the job)
         # results is not perfect when the node is shared between jobs
-        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}{domain}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1", "{hostname_label}", "(.*){oob_suffix}{domain}") \
+        query = '(label_replace(sum({prom_metric_chassis_power_avg}{{{hostname_label}=~"({nodes}){oob_suffix}{domain}", {filter} }}) by ({hostname_label}), "{hostname_label}", "$1{domain}", "{hostname_label}", "(.*){oob_suffix}{domain}") \
 - label_replace((sum(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}){domain}:9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*"))\
 * ( label_replace(count(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") / label_replace((count(nvidia_gpu_power_usage_milliwatts{{{hostname_label}=~"({nodes}){domain}:9445", {filter}}} / 1000) by ({hostname_label})), "{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )\
 + ( label_replace(sum(slurm_job_power_gpu{{slurmjobid="{jobid}", {filter}}} / 1000) by ({hostname_label}),"{hostname_label}", "$1", "{hostname_label}", "(.*):.*") )'.format(

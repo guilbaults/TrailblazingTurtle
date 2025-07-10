@@ -59,7 +59,7 @@ GPU_FULL_POWER = {
 GPU_IDLE_POWER = {
     'Tesla V100-SXM2-16GB': 55,
     'NVIDIA A100-SXM4-40GB': 55,
-    'NVIDIA H100 80GB HBM3': 55,
+    'NVIDIA H100 80GB HBM3': 70,
     'Tesla V100-PCIE-32GB': 55,
     'Quadro RTX 6000': 50,
     '1g.5gb': 55,  # assuming A100 for all MIGs at the moment

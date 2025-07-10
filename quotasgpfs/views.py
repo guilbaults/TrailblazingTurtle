@@ -5,7 +5,7 @@ from django.conf import settings
 from django.utils.translation import gettext as _
 
 
-from userportal.common import user_or_staff, query_time, staff
+from userportal.common import user_or_staff, parse_start_end, staff
 from ccldap.models import LdapUser, LdapAllocation
 from userportal.common import Prometheus
 
@@ -135,6 +135,7 @@ def get_quota(
 
 @login_required
 @user_or_staff
+@parse_start_end(minimum=prom.rate('slurm_exporter'))
 def user_getgraph(request, username):
     fs = request.GET.get("fs")
     metric = request.GET.get("metric")
@@ -176,10 +177,8 @@ def user_getgraph(request, username):
         name,
     )
 
-    delta = query_time(request)
-    usage = prom.query_prometheus(usage_query, delta[0], None, delta[1])
-    quota = prom.query_prometheus(quota_query, delta[0], None, delta[1])
-    # quota = prom.query_last(quota_query)[0]['value'][1]
+    usage = prom.query_prometheus(usage_query, request.start, None, step=request.step)
+    quota = prom.query_prometheus(quota_query, request.start, None, step=request.step)
 
     return graph_prometheus_result(usage, quota, metric)
 

@@ -116,9 +116,9 @@ def get_start_end_jobs(jobs):
     end = None
 
     for job in jobs:
-        if start is None or job.time_start_dt() < start:
+        if start is None or (job.time_start_dt() is not None and job.time_start_dt() < start):
             start = job.time_start_dt()
-        if end is None or job.time_end_dt() > end:
+        if end is None or (job.time_end_dt() is not None and job.time_end_dt() > end):
             end = job.time_end_dt()
 
     return start, end

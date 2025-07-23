@@ -497,22 +497,22 @@ def graph_scheduler_cpu_gpu(request, res_type='cpu'):
 
 
 def graph_software_processes(request):
-    query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[2m]) > 0) by (exe)'
     return graph_software(query_str, settings.SOFTWARE_REGEX)
 
 
 def graph_software_stack(request):
-    query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[1m]) > 0) by (exe)'
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ {} }}[2m]) > 0) by (exe)'
     return graph_software(query_str, settings.SOFTWARE_STACK_REGEX, extract_path=True)
 
 
 def graph_software_processes_cvmfs(request):
-    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe=~"/cvmfs/.*", {} }}[1m]) > 0) by (exe)'
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe=~"/cvmfs/.*", {} }}[2m]) > 0) by (exe)'
     return graph_software(query_str, settings.SOFTWARE_REGEX, unaccounted=False)
 
 
 def graph_software_processes_not_cvmfs(request):
-    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe!~"/cvmfs/.*", {} }}[1m]) > 0) by (exe)'
+    query_str = 'sum(deriv(slurm_job_process_usage_total{{ exe!~"/cvmfs/.*", {} }}[2m]) > 0) by (exe)'
     return graph_software(query_str, settings.SOFTWARE_REGEX, unaccounted=False)
 
 

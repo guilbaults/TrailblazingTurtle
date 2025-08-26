@@ -166,6 +166,8 @@ def graph_lustre_ost(request, account):
             step=request.step)
 
         for line in stats:
+            if 'fs' not in line['metric']:
+                continue
             fs = line['metric']['fs']
             user = a(line['metric']['user'])
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))

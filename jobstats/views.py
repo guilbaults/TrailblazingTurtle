@@ -193,7 +193,8 @@ def context_job_info(request, username, job_id):
 
 
 def instances_regex(context):
-    return '|'.join([s + '(:.*)?' for s in context['job'].nodes()])
+    regex = settings.HOSTNAME_DOMAIN + '(:.*)?'
+    return '|'.join([s + regex for s in context['job'].nodes()])
 
 
 def display_compute_name(lines, line):

@@ -3,11 +3,11 @@ certifi==2024.7.4
 cffi==1.16.0
 charset-normalizer==3.3.2
 contourpy==1.2.1
-cryptography==42.0.8
+cryptography==43.0.1
 cycler==0.12.1
 dateparser==1.2.0
 defusedxml==0.7.1
-Django==5.0.9
+Django==5.0.14
 django-bootstrap-pagination @ git+https://github.com/teejaydub/django-bootstrap-pagination@82ea7a213860a741890f324e025f6ec215f24a32
 django-crispy-forms==2.2
 django-debug-toolbar==4.4.6
@@ -21,7 +21,7 @@ djangosaml2==1.9.3
 elementpath==4.4.0
 flake8==7.1.0
 fonttools==4.53.1
-gunicorn==22.0.0
+gunicorn==23.0.0
 httmock==1.4.0
 idna==3.7
 kiwisolver==1.4.5
@@ -38,7 +38,6 @@ pyasn1_modules==0.4.0
 pycodestyle==2.12.0
 pycparser==2.22
 pyflakes==3.2.0
-pyOpenSSL==24.1.0
 pyparsing==3.1.2
 pysaml2==7.5.0
 python-dateutil==2.9.0.post0
@@ -46,11 +45,11 @@ python-ldap==3.4.4
 pytz==2024.1
 PyYAML==6.0.1
 regex==2024.5.15
-requests==2.32.3
+requests==2.32.4
 six==1.16.0
 sqlparse==0.5.0
 tzdata==2024.1
 tzlocal==5.2
-urllib3==2.2.2
+urllib3==2.5.0
 xmlschema==2.5.1
 PyJWT==2.10.1

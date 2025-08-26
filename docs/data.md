@@ -56,7 +56,7 @@ This MySQL database is accessed by a read-only user. It does not need to be in t
 ## lustre\_exporter and lustre\_exporter\_slurm
 Those 2 exporters are used to gather information about Lustre usage.
 
-* [lustre\_exporter](https://github.com/HewlettPackard/lustre_exporter) capture information on Lustre MDS and OSS but will only use \$SLURM\_JOBID as a tag on the metrics.
+* [lustre\_exporter](https://github.com/GSI-HPC/lustre_exporter/) capture information on Lustre MDS and OSS but will only use \$SLURM\_JOBID as a tag on the metrics.
 * [lustre\_exporter\_slurm](https://github.com/guilbaults/lustre_exporter_slurm) is used as a proxy between Prometheus and lustre_exporter to improve the content of the tags. This will match the \$SLURM\_JOBID to a job in Slurm and will add the username and Slurm account in the tags.
 
 The following recorder rules are used to pre-aggregate stats shown in the user portal.

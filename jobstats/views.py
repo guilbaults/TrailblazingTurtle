@@ -880,6 +880,8 @@ def graph_lustre_mdt(request, username, job_id):
 
     data = []
     for line in stats:
+        if 'fs' not in line['metric']:
+            continue
         operation = line['metric']['operation']
         fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -913,6 +915,8 @@ def graph_lustre_mdt_user(request, username):
     stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
     data = []
     for line in stats:
+        if 'fs' not in line['metric']:
+            continue
         operation = line['metric']['operation']
         fs = line['metric']['fs']
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
@@ -953,6 +957,8 @@ def graph_lustre_ost(request, username, job_id):
             step=max(context['step'], prom.rate('lustre_exporter')))
 
         for line in stats:
+            if 'fs' not in line['metric']:
+                continue
             fs = line['metric']['fs']
             if i == 'read':
                 y = line['y']
@@ -995,6 +1001,8 @@ def graph_lustre_ost_user(request, username):
         stats = prom.query_prometheus_multiple(query, request.start, request.end, step=request.step)
 
         for line in stats:
+            if 'fs' not in line['metric']:
+                continue
             fs = line['metric']['fs']
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             if i == 'read':

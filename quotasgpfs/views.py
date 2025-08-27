@@ -18,6 +18,7 @@ fs_scratch_type = settings.QUOTA_TYPES['scratch'][1]
 fs_project = settings.QUOTA_TYPES['project'][0]
 fs_project_type = settings.QUOTA_TYPES['project'][1]
 
+
 @login_required
 def index(request):
     return redirect("user/{}/".format(request.user.username.split("@")[0]))
@@ -157,7 +158,7 @@ def user_getgraph(request, username):
         # Check the user is permitted to access this quota
         if str(user.uid) != name:
             return HttpResponseForbidden()
-        quota_type = fs_home_type 
+        quota_type = fs_home_type
     elif fs == fs_project:
         # Check the user is a member of the allocation
         if name != str(user.uid):

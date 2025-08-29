@@ -3,20 +3,21 @@
 
 [![DOI](https://zenodo.org/badge/549763009.svg)](https://zenodo.org/badge/latestdoi/549763009)
 
-This web portal is intended to give HPC users a view of the overall use of the HPC cluster and their use. This portal uses the information collected on compute nodes and management servers to produce the information in the various modules:
+This web portal is intended to give HPC users a view of the overall use of the HPC cluster and their use. This portal uses the information collected on compute nodes and management servers to produce the information in the various modules.
 
-[Documentation](docs/index.md)
-
-Some examples of the available graphs are displayed in the documentation of each module. 
+Some examples of the available graphs are displayed in the documentation of each module. The main module for a Slurm cluster is the [Jobstats module](https://guilbaults.github.io/TrailblazingTurtle/jobstats/).
 
 This portal is made to be modular, some modules can be disabled if the data required is not needed or collected. Some modules have optional dependencies and will hide some graphs if the data is not available.
 
-This portal also supports OpenStack, the users can see their use without having to install a monitoring agent in their VM in their OpenStack VMs.
+This portal also supports [OpenStack](https://guilbaults.github.io/TrailblazingTurtle/cloudstats/), the users can see their use without having to install a monitoring agent in their VM in their OpenStack VMs.
 
 Staff members can also see the use of any users to help them optimize their use of HPC and OpenStack clusters.
 
 Some information collected is also available for the general public like the number of cores used, the performance of the filesystem, and the load on the login nodes.
 [Here is an example of this portal for the Narval Cluster at Calcul Quebec](https://portail.narval.calculquebec.ca/)
+
+## Documentation
+The documentation is available in the `docs` directory. The documentation is written in Markdown and can be read directly in the repository or on the [GitHub pages](https://guilbaults.github.io/TrailblazingTurtle/).
 
 ## Design
 Performance metrics are stored in Prometheus, multiple exporters are used to gather this data, and most are optional.
@@ -31,5 +32,3 @@ Some pre-aggregation is done using recorder rules in Prometheus. The required re
 
 [Data sources documentation](docs/data.md)
 
-## Documentation
-The documentation is available in the `docs` directory. The documentation is written in Markdown and can be read directly in the repository or on the [GitHub pages](https://guilbaults.github.io/TrailblazingTurtle/).

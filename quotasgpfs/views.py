@@ -17,6 +17,9 @@ fs_scratch = settings.QUOTA_TYPES['scratch'][0]
 fs_scratch_type = settings.QUOTA_TYPES['scratch'][1]
 fs_project = settings.QUOTA_TYPES['project'][0]
 fs_project_type = settings.QUOTA_TYPES['project'][1]
+fs_key="fs"
+if settings.CLUSTER_NAME == "argo":
+   fs_key="fileset"
 
 
 @login_required
@@ -40,7 +43,7 @@ def user(request, username):
     context["username"] = user.username
 
     # User home quota
-    quota = get_quota(fs_home_type, fs_home, str(user.uid), user.username, _("Home"))
+    quota = get_quota(fs_key, fs_home_type, fs_home, str(user.uid), user.username, _("Home"))
     if quota:
         quotas.append(quota)
 
@@ -48,6 +51,7 @@ def user(request, username):
     allocations = LdapAllocation.objects.filter(members=username, status="active").all()
     for allocation in allocations:
         quota = get_quota(
+            fs_key,
             fs_project_type,
             fs_project,
             str(allocation.gid),
@@ -64,6 +68,7 @@ def user(request, username):
     # files from their home directory to project, without changing the group to the project.
 
     quota = get_quota(
+        fs_key,
         fs_project_type,
         fs_project,
         str(user.group),
@@ -76,7 +81,7 @@ def user(request, username):
             quotas.append(quota)
 
     # Get User Scratch Quota
-    quota = get_quota(fs_scratch_type, fs_scratch, str(user.uid), user.username, "Scratch")
+    quota = get_quota(fs_key, fs_scratch_type, fs_scratch, str(user.uid), user.username, "Scratch")
     if quota:
         quotas.append(quota)
 
@@ -85,11 +90,12 @@ def user(request, username):
 
 
 def get_quota(
-    quota_type, fs, name, allocation_name, friendly_name, note="", show_breakdown=False
+    fs_key, quota_type, fs, name, allocation_name, friendly_name, note="", show_breakdown=False
 ):
     """
     Params:
     -------
+    key: 'fs' | 'fileset' - filesets are identified in prometheus as 'fileset', not 'fs'
     type: 'user' | 'group' | 'fileset'
     fs: 'home' | 'project' | 'scratch' - these may vary by site, e.g. depending on whether filesets are in use
     name: quota to query (on siku, uid/gid)
@@ -98,17 +104,17 @@ def get_quota(
     """
 
     usage_bytes_metric = prom.query_last(
-        'gpfs_%s_used_bytes{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_used_bytes{%s="%s", %s="%s"}' % (fs_key, quota_type, fs, quota_type, name)
     )
     quota_bytes_metric = prom.query_last(
-        'gpfs_%s_quota_bytes{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_quota_bytes{%s="%s", %s="%s"}' % (fs_key, quota_type, fs, quota_type, name)
     )
 
     usage_files_metric = prom.query_last(
-        'gpfs_%s_used_files{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_used_files{%s="%s", %s="%s"}' % (fs_key, quota_type, fs, quota_type, name)
     )
     quota_files_metric = prom.query_last(
-        'gpfs_%s_quota_files{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_quota_files{%s="%s", %s="%s"}' % (fs_key, quota_type, fs, quota_type, name)
     )
 
     if not (usage_bytes_metric and quota_bytes_metric and usage_files_metric and quota_files_metric):
@@ -169,16 +175,18 @@ def user_getgraph(request, username):
     else:
         return HttpResponseNotFound()
 
-    usage_query = 'gpfs_%s_used_%s{fs="%s", %s="%s"}' % (
+    usage_query = 'gpfs_%s_used_%s{%s="%s", %s="%s"}' % (
         quota_type,
         metric,
+        fs_key,
         fs,
         quota_type,
         name,
     )
-    quota_query = 'gpfs_%s_quota_%s{fs="%s", %s="%s"}' % (
+    quota_query = 'gpfs_%s_quota_%s{%s="%s", %s="%s"}' % (
         quota_type,
         metric,
+        fs_key,
         fs,
         quota_type,
         name,
@@ -244,6 +252,7 @@ def project(request, project):
 
     # get overall quota
     context["quota"] = get_quota(
+        fs_key,
         fs_project_type,
         fs_project,
         str(allocation.gid),
@@ -282,7 +291,7 @@ def project_getgraph(request, project):
     for memberuid in allocation.members:
         user = LdapUser.objects.filter(username=memberuid).get()
 
-        quota = get_quota(fs_home_type, fs_project, str(user.uid), user.username, "")
+        quota = get_quota(fs_key, fs_home_type, fs_project, str(user.uid), user.username, "")
         if quota is None:
             continue
 

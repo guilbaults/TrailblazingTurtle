@@ -4,23 +4,19 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-
 from userportal.common import user_or_staff, parse_start_end, staff
 from ccldap.models import LdapUser, LdapAllocation
 from userportal.common import Prometheus
 
+import re
+
 prom = Prometheus(settings.PROMETHEUS)
+
 # - file system name and associated quota type: home/user, scratch/user, project/group
-fs_home = settings.QUOTA_TYPES['home'][0]
-fs_home_type = settings.QUOTA_TYPES['home'][1]
-fs_scratch = settings.QUOTA_TYPES['scratch'][0]
-fs_scratch_type = settings.QUOTA_TYPES['scratch'][1]
-fs_project = settings.QUOTA_TYPES['project'][0]
-fs_project_type = settings.QUOTA_TYPES['project'][1]
-# - fs_key: 'fs' | 'fileset' - filesets are identified in prometheus as 'fileset', not 'fs'
-fs_key="fs"
-if settings.CLUSTER_NAME == "argo":
-   fs_key="fileset"
+# - we deal with filesets vs file systems within 'get_quota' and 'user_getgraph'
+(fs_home, fs_home_type) = settings.QUOTA_TYPES['home']
+(fs_scratch, fs_scratch_type) = settings.QUOTA_TYPES['scratch']
+(fs_project, fs_project_type) = settings.QUOTA_TYPES['project']
 
 
 @login_required
@@ -101,6 +97,11 @@ def get_quota(
     friendly_name: Friendly name to show in portal
     """
 
+    # - catch case of filesets instead of file systems - assumes e.g. 'home-fileset', as at Argo
+    fs_key = "fs"
+    if re.search("fileset", fs):
+        fs_key = "fileset"
+
     usage_bytes_metric = prom.query_last(
         'gpfs_%s_used_bytes{%s="%s", %s="%s"}' % (quota_type, fs_key, fs, quota_type, name)
     )
@@ -153,6 +154,11 @@ def user_getgraph(request, username):
     name = request.GET.get("name")
 
     user = LdapUser.objects.get(username=username)
+
+    # - catch case of filesets instead of file systems
+    fs_key = "fs"
+    if re.search("fileset", fs):
+        fs_key = "fileset"
 
     # Validate Params
     if metric not in ["bytes", "files"]:

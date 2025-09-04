@@ -26,7 +26,10 @@ GPU_MEMORY = {
     'Tesla V100-SXM2-16GB': 16,
     'Tesla V100-PCIE-32GB': 32,
     'NVIDIA A100-SXM4-40GB': 40,
+    'NVIDIA A100 80GB PCIe': 80,
     'NVIDIA H100 80GB HBM3': 80,
+    'NVIDIA H100 NVL': 95,
+    'NVIDIA L40': 45,
     'Quadro RTX 6000': 20,
     '1g.5gb': 5,
     '1g.10gb': 10,
@@ -42,7 +45,10 @@ GPU_MEMORY = {
 GPU_FULL_POWER = {
     'Tesla V100-SXM2-16GB': 300,
     'NVIDIA A100-SXM4-40GB': 400,
+    'NVIDIA A100 80GB PCIe': 300,
     'NVIDIA H100 80GB HBM3': 700,
+    'NVIDIA H100 NVL': 400,
+    'NVIDIA L40': 300,
     'Tesla V100-PCIE-32GB': 250,
     'Quadro RTX 6000': 250,
     '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
@@ -59,7 +65,10 @@ GPU_FULL_POWER = {
 GPU_IDLE_POWER = {
     'Tesla V100-SXM2-16GB': 55,
     'NVIDIA A100-SXM4-40GB': 55,
+    'NVIDIA A100 80GB PCIe': 55,
     'NVIDIA H100 80GB HBM3': 70,
+    'NVIDIA H100 NVL': 66,
+    'NVIDIA L40': 55,
     'Tesla V100-PCIE-32GB': 55,
     'Quadro RTX 6000': 50,
     '1g.5gb': 55,  # assuming A100 for all MIGs at the moment
@@ -82,7 +91,10 @@ GPU_SHORT_NAME = {
     'Tesla V100-PCIE-32GB': 'V100-32G',
     'Quadro RTX 6000': 'RTX6000',
     'NVIDIA A100-SXM4-40GB': 'A100',
+    'NVIDIA A100 80GB PCIe': 'A100 80GB',
     'NVIDIA H100 80GB HBM3': 'H100',
+    'NVIDIA H100 NVL': 'H100 NVL',
+    'NVIDIA L40': 'L40',
     '1g.5gb': '1g.5gb',
     '1g.10gb': '1g.10gb',
     '2g.10gb': '2g.10gb',

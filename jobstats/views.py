@@ -50,7 +50,7 @@ GPU_FULL_POWER = {
     'NVIDIA H100 NVL': 400,
     'NVIDIA L40': 300,
     'Tesla V100-PCIE-32GB': 250,
-    'Quadro RTX 6000': 250,
+    'Quadro RTX 6000': 265,
     '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
     '1g.10gb': 400,
     '2g.10gb': 400,

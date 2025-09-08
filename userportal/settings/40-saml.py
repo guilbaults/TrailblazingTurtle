@@ -1,4 +1,12 @@
 # SAML2 settings
+import saml2
+import saml2.saml
+
+# These variables are defined in 10-base.py
+INSTALLED_APPS += ['djangosaml2']
+MIDDLEWARE += ['djangosaml2.middleware.SamlSessionMiddleware']
+AUTHENTICATION_BACKENDS += ['userportal.authentication.staffSaml2Backend']
+
 SAML_SESSION_COOKIE_NAME = 'saml_session'
 SESSION_COOKIE_SECURE = True
 LOGIN_URL = '/saml2/login/'

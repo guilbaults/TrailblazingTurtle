@@ -5,8 +5,6 @@ Django settings for userportal project.
 from pathlib import Path
 from django.utils.translation import gettext_lazy as _
 import os
-import saml2
-import saml2.saml
 import logging.config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -34,7 +32,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
-    'djangosaml2',
     'csp',
     'watchman',
 
@@ -70,7 +67,6 @@ MIDDLEWARE += [
     'django.contrib.auth.middleware.RemoteUserMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'djangosaml2.middleware.SamlSessionMiddleware',
     'csp.middleware.CSPMiddleware',
 ]
 
@@ -152,7 +148,6 @@ STATIC_ROOT = '/opt/userportal/collected-static/'
 AUTHENTICATION_BACKENDS = [
     'userportal.authentication.staffRemoteUserBackend',
     'django.contrib.auth.backends.ModelBackend',
-    'userportal.authentication.staffSaml2Backend',
 ]
 
 LDAP_BASE_DN = 'dc=computecanada,dc=ca'

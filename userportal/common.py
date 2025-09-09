@@ -229,7 +229,7 @@ class Prometheus:
         self.prom = PrometheusConnect(
             url=config['url'],
             headers=config['headers'])
-        self.filter = config['filter']
+        self.filter = {'default': ''} | config.get('filter', {})
 
     def get_filter(self, module='default'):
         return self.filter[module]

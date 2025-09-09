@@ -237,7 +237,7 @@ class Prometheus:
     def query_prometheus(self, query, duration, end=None, step='3m'):
         values = self.query_prometheus_multiple(query, duration, end, step)
         if len(values) == 0:
-            raise ValueError
+            raise ValueError(f"Prometheus response is empty: query:{query}, duration:{duration}, end:{end}, step:{step}")
         return (values[0]['x'], values[0]['y'])
 
     def query_prometheus_multiple(self, query, start, end=None, step='3m'):

@@ -4,12 +4,19 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils.translation import gettext as _
 
-
 from userportal.common import user_or_staff, parse_start_end, staff
 from ccldap.models import LdapUser, LdapAllocation
 from userportal.common import Prometheus
 
+import re
+
 prom = Prometheus(settings.PROMETHEUS)
+
+# - file system name and associated quota type: home/user, scratch/user, project/group
+# - we deal with filesets vs file systems within 'get_quota' and 'user_getgraph'
+(fs_home, fs_home_type) = settings.QUOTA_TYPES['home']
+(fs_scratch, fs_scratch_type) = settings.QUOTA_TYPES['scratch']
+(fs_project, fs_project_type) = settings.QUOTA_TYPES['project']
 
 
 @login_required
@@ -33,7 +40,7 @@ def user(request, username):
     context["username"] = user.username
 
     # User home quota
-    quota = get_quota("user", "home", str(user.uid), user.username, _("Home"))
+    quota = get_quota(fs_home_type, fs_home, str(user.uid), user.username, _("Home"))
     if quota:
         quotas.append(quota)
 
@@ -41,8 +48,8 @@ def user(request, username):
     allocations = LdapAllocation.objects.filter(members=username, status="active").all()
     for allocation in allocations:
         quota = get_quota(
-            "group",
-            "project",
+            fs_project_type,
+            fs_project,
             str(allocation.gid),
             allocation.name,
             f"Project: {allocation.name}",
@@ -57,8 +64,8 @@ def user(request, username):
     # files from their home directory to project, without changing the group to the project.
 
     quota = get_quota(
-        "group",
-        "project",
+        fs_project_type,
+        fs_project,
         str(user.group),
         user.username,
         f"Project: {user.username}",
@@ -69,7 +76,7 @@ def user(request, username):
             quotas.append(quota)
 
     # Get User Scratch Quota
-    quota = get_quota("user", "scratch", str(user.uid), user.username, "Scratch")
+    quota = get_quota(fs_scratch_type, fs_scratch, str(user.uid), user.username, "Scratch")
     if quota:
         quotas.append(quota)
 
@@ -84,24 +91,29 @@ def get_quota(
     Params:
     -------
     type: 'user' | 'group' | 'fileset'
-    fs: 'home' | 'project' | 'scratch'
+    fs: 'home' | 'project' | 'scratch' - these may vary by site, e.g. depending on whether filesets are in use
     name: quota to query (on siku, uid/gid)
     allocation_name: cn of allocation
     friendly_name: Friendly name to show in portal
     """
 
+    # - catch case of filesets instead of file systems - assumes e.g. 'home-fileset', as at Argo
+    fs_key = "fs"
+    if re.search("fileset", fs):
+        fs_key = "fileset"
+
     usage_bytes_metric = prom.query_last(
-        'gpfs_%s_used_bytes{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_used_bytes{%s="%s", %s="%s"}' % (quota_type, fs_key, fs, quota_type, name)
     )
     quota_bytes_metric = prom.query_last(
-        'gpfs_%s_quota_bytes{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_quota_bytes{%s="%s", %s="%s"}' % (quota_type, fs_key, fs, quota_type, name)
     )
 
     usage_files_metric = prom.query_last(
-        'gpfs_%s_used_files{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_used_files{%s="%s", %s="%s"}' % (quota_type, fs_key, fs, quota_type, name)
     )
     quota_files_metric = prom.query_last(
-        'gpfs_%s_quota_files{fs="%s", %s="%s"}' % (quota_type, fs, quota_type, name)
+        'gpfs_%s_quota_files{%s="%s", %s="%s"}' % (quota_type, fs_key, fs, quota_type, name)
     )
 
     if not (usage_bytes_metric and quota_bytes_metric and usage_files_metric and quota_files_metric):
@@ -143,35 +155,42 @@ def user_getgraph(request, username):
 
     user = LdapUser.objects.get(username=username)
 
+    # - catch case of filesets instead of file systems
+    fs_key = "fs"
+    if re.search("fileset", fs):
+        fs_key = "fileset"
+
     # Validate Params
     if metric not in ["bytes", "files"]:
         return HttpResponseNotFound()
 
-    if fs == "home" or fs == "scratch":
+    if fs == fs_home or fs == fs_scratch:
         # Check the user is permitted to access this quota
         if str(user.uid) != name:
             return HttpResponseForbidden()
-        quota_type = "user"
-    elif fs == "project":
+        quota_type = fs_home_type
+    elif fs == fs_project:
         # Check the user is a member of the allocation
         if name != str(user.uid):
             alloc = LdapAllocation.objects.get(gid=name)
             if username not in alloc.members:
                 return HttpResponseForbidden()
-        quota_type = "group"
+        quota_type = fs_project_type
     else:
         return HttpResponseNotFound()
 
-    usage_query = 'gpfs_%s_used_%s{fs="%s", %s="%s"}' % (
+    usage_query = 'gpfs_%s_used_%s{%s="%s", %s="%s"}' % (
         quota_type,
         metric,
+        fs_key,
         fs,
         quota_type,
         name,
     )
-    quota_query = 'gpfs_%s_quota_%s{fs="%s", %s="%s"}' % (
+    quota_query = 'gpfs_%s_quota_%s{%s="%s", %s="%s"}' % (
         quota_type,
         metric,
+        fs_key,
         fs,
         quota_type,
         name,
@@ -237,8 +256,8 @@ def project(request, project):
 
     # get overall quota
     context["quota"] = get_quota(
-        "group",
-        "project",
+        fs_project_type,
+        fs_project,
         str(allocation.gid),
         allocation.name,
         f'{_("Project")}: {allocation.name}',
@@ -275,7 +294,7 @@ def project_getgraph(request, project):
     for memberuid in allocation.members:
         user = LdapUser.objects.filter(username=memberuid).get()
 
-        quota = get_quota("user", "project", str(user.uid), user.username, "")
+        quota = get_quota(fs_home_type, fs_project, str(user.uid), user.username, "")
         if quota is None:
             continue
 

@@ -22,7 +22,6 @@ from django.views.i18n import JavaScriptCatalog
 from rest_framework import routers
 from django.conf import settings
 from notes.views import NoteViewSet
-import djangosaml2
 
 router = routers.DefaultRouter()
 
@@ -43,7 +42,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include((router.urls, 'app_name'))),
     path('api-auth/', include('rest_framework.urls')),
-    path('saml2/', include('djangosaml2.urls')),
     path('watchman/', include('watchman.urls')),
     path('accounts/', include('django.contrib.auth.urls')),
 
@@ -55,8 +53,17 @@ if settings.DEBUG:
     import debug_toolbar
     urlpatterns += [
         path('__debug__/', include(debug_toolbar.urls)),
-        path('test/', djangosaml2.views.EchoAttributesView.as_view()),
     ]
+
+if "djangosaml2" in settings.INSTALLED_APPS:
+    import djangosaml2
+    urlpatterns += [
+        path('saml2/', include('djangosaml2.urls')),
+    ]
+    if settings.DEBUG:
+        urlpatterns += [
+            path('test/', djangosaml2.views.EchoAttributesView.as_view()),
+        ]
 
 if 'jobstats' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))

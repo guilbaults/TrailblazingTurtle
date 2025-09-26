@@ -8,8 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.translation import gettext as _
 from rest_framework import viewsets
 from rest_framework import permissions
-from jobstats.models import JobScript
-from jobstats.serializers import JobSerializer, JobScriptSerializer
+from jobstats.serializers import JobSerializer
 from notes.models import Note
 import statistics
 from jobstats.analyze_job import find_loaded_modules, analyze_jobscript
@@ -1984,12 +1983,6 @@ def value_cost(request, username, job_id):
             response['cloud_cost_dollar'] = job.parse_tres_req()['total_cores'] * settings.CLOUD_CPU_CORE_COST_PER_HOUR * hours
 
     return JsonResponse(response)
-
-
-class JobScriptViewSet(viewsets.ModelViewSet):
-    queryset = JobScript.objects.all().order_by('-last_modified')
-    serializer_class = JobScriptSerializer
-    permission_classes = [permissions.IsAdminUser]
 
 
 class JobsViewSet(viewsets.ReadOnlyModelViewSet):

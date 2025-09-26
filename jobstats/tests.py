@@ -1,6 +1,5 @@
 from django.conf import settings
 from tests.tests import CustomTestCase
-from jobstats.models import JobScript
 
 
 class JobstatsTestCase(CustomTestCase):
@@ -93,22 +92,3 @@ class JobstatsTestCase(CustomTestCase):
             self.assertContains(response, 'Details on job')
             self.assertContains(response, '({jobid})'.format(jobid=job[1]))
             self.assertContains(response, 'Submitted job script is not available')
-
-    def test_user_jobstats_jobscript(self):
-        job = settings.TESTS_JOBSTATS[0]
-        jobscript = JobScript(
-            id_job=job[1],
-            submit_script="""#!/bin/bash
-echo 'Hello World!'
-sleep 60
-echo 'Bye World!'"""
-        )
-        jobscript.save()
-
-        response = self.user_client.get('/secure/jobstats/{user}/{jobid}/'.format(
-            user=job[0],
-            jobid=job[1]))
-        self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'Submitted job script is not available')
-        self.assertContains(response, 'Hello World!')
-        self.assertContains(response, 'Line 3: sleep command is used')

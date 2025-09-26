@@ -247,6 +247,7 @@ class JobTable(models.Model):
     tres_alloc = models.TextField()
     tres_req = models.TextField()
     submit_line = models.TextField(blank=True, null=True)
+    script_hash_inx = models.PositiveBigIntegerField()
 
     class Meta:
         managed = False
@@ -404,6 +405,19 @@ class JobTable(models.Model):
                         'job': job,
                     })
         return deps
+
+
+class JobScriptTable(models.Model):
+    deleted = models.IntegerField()
+    hash_inx = models.BigAutoField(primary_key=True)
+    last_used = models.DateTimeField()
+    script_hash = models.TextField()
+    batch_script = models.TextField(null=True)
+
+    class Meta:
+        managed = False
+        db_table = settings.CLUSTER_NAME + '_job_script_table'
+        unique_together = (('hash_inx', 'script_hash'),)
 
 
 class LastRanTable(models.Model):

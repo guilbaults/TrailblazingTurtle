@@ -1,6 +1,6 @@
 from django.shortcuts import render, redirect
 from django.http import HttpResponseNotFound, JsonResponse
-from slurm.models import JobTable, AssocTable, EventTable
+from slurm.models import JobTable, AssocTable, EventTable, JobScriptTable
 from userportal.common import user_or_staff, username_to_uid, Prometheus, request_to_username, compute_allocations_by_user, get_step, parse_start_end, fixed_zoom_config
 from django.conf import settings
 from datetime import datetime, timedelta
@@ -423,15 +423,17 @@ def job(request, username, job_id):
             context['gpu_power'] = None
 
     try:
-        context['job_script'] = JobScript.objects.get(id_job=job_id)
+        context['job_script'] = JobScriptTable.objects.get(hash_inx=job.script_hash_inx)
+    except JobScriptTable.DoesNotExist:
+        context['job_script'] = None
+        context['loaded_modules'] = None
+    else:
         try:
-            modules = find_loaded_modules(context['job_script'].submit_script)
+            modules = find_loaded_modules(context['job_script'].batch_script)
             context['loaded_modules'] = modules
-            comments += analyze_jobscript(context['job_script'].submit_script, context['loaded_modules'], job)
+            comments += analyze_jobscript(context['job_script'].batch_script, context['loaded_modules'], job)
         except ValueError:
             context['loaded_modules'] = None  # Could not parse jobscript to find loaded modules
-    except JobScript.DoesNotExist:
-        context['job_script'] = None
 
     if context['cpu_used'] is not None:
         if context['cpu_used'] < 1 and context['tres_req']['total_cores'] > 1:

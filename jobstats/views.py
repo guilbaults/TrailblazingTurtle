@@ -711,60 +711,66 @@ def graph_mem(request, username, job_id):
 
     data = []
 
-    stat_types = [
-        ('slurm_job_memory_usage', _('Used')),
-    ]
-    if context['multiple_jobs'] is False:
-        stat_types = [
-            ('slurm_job_memory_usage', _('Used')),
-            ('slurm_job_memory_limit', _('Allocated')),
-            ('slurm_job_memory_max', _('Max used')),
-            ('slurm_job_memory_cache', _('Cache')),
-            ('slurm_job_memory_rss', _('RSS')),
-            ('slurm_job_memory_rss_huge', _('RSS Huge')),
-            ('slurm_job_memory_mapped_file', _('Memory mapped file')),
-            ('slurm_job_memory_active_file', _('Active file')),
-            ('slurm_job_memory_inactive_file', _('Inactive file')),
-            ('slurm_job_memory_unevictable', _('Unevictable')),
-        ]
+    stat_titles = {
+        'slurm_job_memory_usage': _('Used'),
+        'slurm_job_memory_limit': _('Allocated'),
+        'slurm_job_memory_max': _('Max used'),
+        'slurm_job_memory_cache': _('Cache'),
+        'slurm_job_memory_rss': _('RSS'),
+        'slurm_job_memory_rss_huge': _('RSS Huge'),
+        'slurm_job_memory_mapped_file': _('Memory mapped file'),
+        'slurm_job_memory_active_file': _('Active file'),
+        'slurm_job_memory_inactive_file': _('Inactive file'),
+        'slurm_job_memory_unevictable': _('Unevictable'),
+    }
+    if context['multiple_jobs']:
+        stat_titles = {'slurm_job_memory_usage': _('Used')}
 
-    for stat in stat_types:
-        query = '{}{{slurmjobid=~"{}", {}}}/(1024*1024*1024)'.format(stat[0], context['id_regex'], prom.get_filter())
-        stats = prom.query_prometheus_multiple(
-            query,
-            context['start'],
-            context['end'],
-            step=max(context['step'], prom.rate('slurm-job-exporter')))
-        for line in stats:
-            compute_name = display_compute_name(stats, line)
-            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
-            if context['multiple_jobs']:
-                name = '{} {} {}'.format(line['metric']['slurmjobid'], stat[1], compute_name)
-            else:
-                name = '{} {}'.format(stat[1], compute_name)
-            info = {
-                'x': x,
-                'y': y,
-                'type': 'scatter',
-                'name': name,
-                'hovertemplate': '%{y:.1f}',
-            }
-            if context['multiple_jobs']:
-                info['stackgroup'] = 'one'
-            data.append(info)
-        if stat[0] == 'slurm_job_memory_limit':
-            maximum = max(max(map(lambda x: x['y'], stats)))
+    query = '{{__name__=~"{}", slurmjobid=~"{}", {}}}'.format("|".join(stat_titles.keys()), context['id_regex'], prom.get_filter())
+    stats = prom.query_multiple(
+        query=query,
+        start=context['start'],
+        end=context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter'))
+    )
+
+    mem_scale_factor = 2**30  # GiB
+    multi_nodes = len(set([line.label_config[settings.PROM_NODE_HOSTNAME_LABEL] for line in stats])) > 1
+    maximum = 0
+    for line in stats:
+        x = [x.strftime('%Y-%m-%d %H:%M:%S') for x in line.metric_values.ds]
+        y = [float(y / mem_scale_factor) for y in line.metric_values['y']]
+        name = []
+        if context['multiple_jobs']:
+            name.append(line.label_config['slurmjobid'])
+        name.append(stat_titles[line.metric_name])
+        if multi_nodes:
+            compute_name = line.label_config[settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
+            name.append(compute_name)
+        info = {
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': " ".join(name),
+            'hovertemplate': '%{y:.1f}',
+        }
+        if context['multiple_jobs']:
+            info['stackgroup'] = 'one'
+        data.append(info)
+
+        if line.metric_name == 'slurm_job_memory_limit':
+            maximum = max(maximum, line.metric_values['y'].max())
 
     if context['multiple_jobs']:
-        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
-        line = prom.query_prometheus(
+        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})'.format(context['id_regex'], prom.get_filter())
+        line = prom.query(
             query_count,
             context['start'],
             context['end'],
             step=max(context['step'], prom.rate('slurm-job-exporter')))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
-        y = line[1]
+        x = [x.strftime('%Y-%m-%d %H:%M:%S') for x in line.metric_values.ds]
+        y = [float(y / mem_scale_factor) for y in line.metric_values['y']]
+        maximum = line.metric_values['y'].max()
         data.append({
             'x': x,
             'y': y,
@@ -772,12 +778,11 @@ def graph_mem(request, username, job_id):
             'name': _('Allocated memory'),
             'hovertemplate': '%{y:.1f}',
         })
-        maximum = max(y)
 
     layout = {
         'yaxis': {
             'ticksuffix': 'GiB',
-            'range': [0, maximum],
+            'range': [0, float(maximum / mem_scale_factor)],
             'title': _('Memory'),
         }
     }

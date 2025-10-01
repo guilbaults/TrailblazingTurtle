@@ -1,6 +1,7 @@
 import functools
 from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
+from prometheus_api_client.metrics_list import MetricsList
 from datetime import datetime, timedelta
 from ccldap.models import LdapAllocation, LdapUser
 from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
@@ -240,6 +241,12 @@ class Prometheus:
             raise ValueError(f"Prometheus response is empty: query:{query}, duration:{duration}, end:{end}, step:{step}")
         return (values[0]['x'], values[0]['y'])
 
+    def query(self, query, duration, end=None, step='3m'):
+        values = self.query_multiple(query, duration, end, step)
+        if len(values) == 0:
+            raise ValueError(f"Prometheus response is empty: query:{query}, duration:{duration}, end:{end}, step:{step}")
+        return values[0]
+
     def query_prometheus_multiple(self, query, start, end=None, step='3m'):
         if end is None:
             end = datetime.now()
@@ -257,6 +264,16 @@ class Prometheus:
                 'y': [float(x[1]) for x in line['values']]
             })
         return return_list
+
+    def query_multiple(self, query, start, end=None, step='3m'):
+        if end is None:
+            end = datetime.now()
+        return MetricsList(self.prom.custom_query_range(
+            query=query,
+            start_time=start,
+            end_time=end,
+            step=step,
+        ))
 
     def query_last(self, query):
         q = self.prom.custom_query(query)

@@ -300,6 +300,7 @@ def job(request, username, job_id):
 
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
+    context['nb_nodes'] = job.nodes_alloc
 
     comments = []
     if '--dependency=singleton' in job.submit_line \
@@ -387,10 +388,10 @@ def job(request, username, job_id):
             node_name = node['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
             cpu_bynode.append({'name': node_name, 'count': int(node['y'][0])})
         context['cpu_bynode'] = cpu_bynode
-        context['nb_nodes'] = len(cpu_bynode)
+        context['nb_nodes_used'] = len(cpu_bynode)
     except ValueError:
         context['cpu_bynode'] = None
-        context['nb_nodes'] = None
+        context['nb_nodes_used'] = 0
 
     try:
         query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}", {}}})'.format(job_id, prom.get_filter())

@@ -172,11 +172,13 @@ def context_job_info(request, username, job_id):
         context['gpu_count'] = 0
         for job in jobs:
             context['gpu_count'] += job.gpu_count()
+        context['nodes'] = set(node for job in context['jobs'] for node in job.nodes())
     else:
         context['job'] = jobs[0]
         context['multiple_jobs'] = False
         context['id_regex'] = str(context['job'].id_job)
         context['gpu_count'] = context['job'].gpu_count()
+        context['nodes'] = set(node for node in context['job'].nodes())
 
     context['start'] = context['job'].time_start_dt()
     if context['job'].time_end_dt() is None:
@@ -736,7 +738,6 @@ def graph_mem(request, username, job_id):
     )
 
     mem_scale_factor = 1024 * 1024 * 1024  # GiB
-    multi_nodes = len(set((series['metric'][settings.PROM_NODE_HOSTNAME_LABEL] for series in series_list))) > 1
     maximum = 0
 
     for series in series_list:
@@ -748,7 +749,7 @@ def graph_mem(request, username, job_id):
         if context['multiple_jobs']:
             name.append(series['metric']['slurmjobid'])
         name.append(series_titles[metric_name])
-        if multi_nodes:
+        if len(context['nodes']) > 1:
             compute_name = series['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
             name.append(compute_name)
 

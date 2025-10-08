@@ -30,6 +30,7 @@ GPU_MEMORY = {
     'NVIDIA H100 80GB HBM3': 80,
     'NVIDIA H100 NVL': 95,
     'NVIDIA L40': 45,
+    'NVIDIA A30': 24,
     'Quadro RTX 6000': 20,
     '1g.5gb': 5,
     '1g.10gb': 10,
@@ -49,6 +50,7 @@ GPU_FULL_POWER = {
     'NVIDIA H100 80GB HBM3': 700,
     'NVIDIA H100 NVL': 400,
     'NVIDIA L40': 300,
+    'NVIDIA A30': 165,
     'Tesla V100-PCIE-32GB': 250,
     'Quadro RTX 6000': 265,
     '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
@@ -69,6 +71,7 @@ GPU_IDLE_POWER = {
     'NVIDIA H100 80GB HBM3': 70,
     'NVIDIA H100 NVL': 66,
     'NVIDIA L40': 55,
+    'NVIDIA A30': 32,
     'Tesla V100-PCIE-32GB': 55,
     'Quadro RTX 6000': 50,
     '1g.5gb': 55,  # assuming A100 for all MIGs at the moment
@@ -95,6 +98,7 @@ GPU_SHORT_NAME = {
     'NVIDIA H100 80GB HBM3': 'H100',
     'NVIDIA H100 NVL': 'H100 NVL',
     'NVIDIA L40': 'L40',
+    'NVIDIA A30': 'A30',
     '1g.5gb': '1g.5gb',
     '1g.10gb': '1g.10gb',
     '2g.10gb': '2g.10gb',

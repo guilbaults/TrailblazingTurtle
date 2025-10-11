@@ -1,7 +1,0 @@
-[api]
-token = changeme
-host = http://localhost:8000
-script_length = 100000
-
-[slurm]
-spool = /var/spool/slurmctld

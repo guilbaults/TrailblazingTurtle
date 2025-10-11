@@ -240,7 +240,7 @@ class Prometheus:
             raise ValueError(f"Prometheus response is empty: query:{query}, duration:{duration}, end:{end}, step:{step}")
         return (values[0]['x'], values[0]['y'])
 
-    def query_prometheus_multiple(self, query, start, end=None, step='3m'):
+    def query_prometheus_multiple(self, query, start, end=None, step='3m', dtype=float):
         if end is None:
             end = datetime.now()
         q = self.prom.custom_query_range(
@@ -254,7 +254,7 @@ class Prometheus:
             return_list.append({
                 'metric': line['metric'],
                 'x': [datetime.fromtimestamp(x[0]) for x in line['values']],
-                'y': [float(x[1]) for x in line['values']]
+                'y': [dtype(x[1]) for x in line['values']]
             })
         return return_list
 

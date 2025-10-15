@@ -50,7 +50,7 @@ GPU_FULL_POWER = {
     'NVIDIA H100 80GB HBM3': 700,
     'NVIDIA H100 NVL': 400,
     'NVIDIA L40': 300,
-    'NVIDIA A30': 175,
+    'NVIDIA A30': 165,
     'Tesla V100-PCIE-32GB': 250,
     'Quadro RTX 6000': 265,
     '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
@@ -1251,7 +1251,7 @@ def graph_gpu_power(request, username, job_id):
         layout = {
             'yaxis': {
                 'ticksuffix': ' W',
-                'range': [0, GPU_FULL_POWER[gpu_type]],
+                'range': [0, GPU_FULL_POWER[gpu_type] * 1.1],
                 'title': _('GPU Power'),
             }
         }

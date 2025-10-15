@@ -1251,7 +1251,7 @@ def graph_gpu_power(request, username, job_id):
         layout = {
             'yaxis': {
                 'ticksuffix': ' W',
-                'range': [0, GPU_FULL_POWER[gpu_type]],
+                'range': [0, GPU_FULL_POWER[gpu_type] * 1.1],
                 'title': _('GPU Power'),
             }
         }

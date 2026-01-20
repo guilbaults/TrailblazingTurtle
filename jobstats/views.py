@@ -152,6 +152,17 @@ def get_job_ids_regex(jobs):
     return '|'.join([str(job.id_job) for job in jobs])
 
 
+def format_graph_name(context, series, title):
+    name = []
+    if context['multiple_jobs']:
+        name.append(series['metric']['slurmjobid'])
+    name.append(title)
+    if len(context['nodes']) > 1:
+        compute_name = series['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
+        name.append(compute_name)
+    return " ".join(name)
+
+
 def context_job_info(request, username, job_id):
     context = {'job_id': job_id, 'username': username}
     uid = username_to_uid(username)
@@ -180,11 +191,13 @@ def context_job_info(request, username, job_id):
         context['gpu_count'] = 0
         for job in jobs:
             context['gpu_count'] += job.gpu_count()
+        context['nodes'] = set(node for job in context['jobs'] for node in job.nodes())
     else:
         context['job'] = jobs[0]
         context['multiple_jobs'] = False
         context['id_regex'] = str(context['job'].id_job)
         context['gpu_count'] = context['job'].gpu_count()
+        context['nodes'] = set(node for node in context['job'].nodes())
 
     context['start'] = context['job'].time_start_dt()
     if context['job'].time_end_dt() is None:
@@ -215,16 +228,6 @@ def context_job_info(request, username, job_id):
 def instances_regex(context):
     regex = settings.HOSTNAME_DOMAIN + '(:.*)?'
     return '|'.join([s + regex for s in context['job'].nodes()])
-
-
-def display_compute_name(lines, line):
-    # Display compute name as needed, only if multiple nodes are used
-    names = [entry['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0] for entry in lines]
-    if len(set(names)) == 1:
-        # if its a single node job, don't return anything
-        return ""
-    else:
-        return line['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
 
 
 def display_gpu_id(line):
@@ -582,13 +585,9 @@ def graph_cpu(request, username, job_id):
     data = []
     for line in stats:
         core_num = int(line['metric']['core'])
-        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if context['multiple_jobs']:
-            name = '{} Core {} {}'.format(line['metric']['slurmjobid'], core_num, compute_name)
-        else:
-            name = 'Core {} {}'.format(core_num, compute_name)
+        name = format_graph_name(context, line, _(f'Core {core_num}'))
         data.append({
             'x': x,
             'y': y,
@@ -719,60 +718,62 @@ def graph_mem(request, username, job_id):
 
     data = []
 
-    stat_types = [
-        ('slurm_job_memory_usage', _('Used')),
-    ]
-    if context['multiple_jobs'] is False:
-        stat_types = [
-            ('slurm_job_memory_usage', _('Used')),
-            ('slurm_job_memory_limit', _('Allocated')),
-            ('slurm_job_memory_max', _('Max used')),
-            ('slurm_job_memory_cache', _('Cache')),
-            ('slurm_job_memory_rss', _('RSS')),
-            ('slurm_job_memory_rss_huge', _('RSS Huge')),
-            ('slurm_job_memory_mapped_file', _('Memory mapped file')),
-            ('slurm_job_memory_active_file', _('Active file')),
-            ('slurm_job_memory_inactive_file', _('Inactive file')),
-            ('slurm_job_memory_unevictable', _('Unevictable')),
-        ]
+    series_titles = {
+        'slurm_job_memory_usage': _('Used'),
+        'slurm_job_memory_limit': _('Allocated'),
+        'slurm_job_memory_max': _('Max used'),
+        'slurm_job_memory_cache': _('Cache'),
+        'slurm_job_memory_rss': _('RSS'),
+        'slurm_job_memory_rss_huge': _('RSS Huge'),
+        'slurm_job_memory_mapped_file': _('Memory mapped file'),
+        'slurm_job_memory_active_file': _('Active file'),
+        'slurm_job_memory_inactive_file': _('Inactive file'),
+        'slurm_job_memory_unevictable': _('Unevictable'),
+    }
+    if context['multiple_jobs']:
+        series_titles = {'slurm_job_memory_usage': _('Used')}
 
-    for stat in stat_types:
-        query = '{}{{slurmjobid=~"{}", {}}}/(1024*1024*1024)'.format(stat[0], context['id_regex'], prom.get_filter())
-        stats = prom.query_prometheus_multiple(
-            query,
-            context['start'],
-            context['end'],
-            step=max(context['step'], prom.rate('slurm-job-exporter')))
-        for line in stats:
-            compute_name = display_compute_name(stats, line)
-            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
-            if context['multiple_jobs']:
-                name = '{} {} {}'.format(line['metric']['slurmjobid'], stat[1], compute_name)
-            else:
-                name = '{} {}'.format(stat[1], compute_name)
-            info = {
-                'x': x,
-                'y': y,
-                'type': 'scatter',
-                'name': name,
-                'hovertemplate': '%{y:.1f}',
-            }
-            if context['multiple_jobs']:
-                info['stackgroup'] = 'one'
-            data.append(info)
-        if stat[0] == 'slurm_job_memory_limit':
-            maximum = max(max(map(lambda x: x['y'], stats)))
+    query = '{{__name__=~"{}", slurmjobid=~"{}", {}}}'.format("|".join(series_titles.keys()), context['id_regex'], prom.get_filter())
+    series_list = prom.query_prometheus_multiple(
+        query=query,
+        start=context['start'],
+        end=context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')),
+        dtype=int,
+    )
+
+    mem_scale_factor = 1024 * 1024 * 1024  # GiB
+    maximum = 0
+
+    for series in series_list:
+        metric_name = series['metric']['__name__']
+        x = [xi.strftime('%Y-%m-%d %H:%M:%S') for xi in series['x']]
+        y = [yi / mem_scale_factor for yi in series['y']]
+        name = format_graph_name(context, series, series_titles[metric_name])
+
+        info = {
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': name,
+            'hovertemplate': '%{y:.1f}',
+        }
+        if context['multiple_jobs']:
+            info['stackgroup'] = 'one'
+        data.append(info)
+
+        if metric_name == 'slurm_job_memory_limit':
+            maximum = max(maximum, max(y))
 
     if context['multiple_jobs']:
-        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
-        line = prom.query_prometheus(
+        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/{}'.format(context['id_regex'], prom.get_filter(), mem_scale_factor)
+        series = prom.query_prometheus(
             query_count,
             context['start'],
             context['end'],
             step=max(context['step'], prom.rate('slurm-job-exporter')))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
-        y = line[1]
+        x = [xi.strftime('%Y-%m-%d %H:%M:%S') for xi in series['x']]
+        y = series['y']
         data.append({
             'x': x,
             'y': y,
@@ -807,13 +808,9 @@ def graph_thread(request, username, job_id):
         context['end'],
         step=max(context['step'], prom.rate('slurm-job-exporter')))
     for line in stats_procs:
-        compute_name = display_compute_name(stats_procs, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if context['multiple_jobs']:
-            name = '{} {} {}'.format(line['metric']['slurmjobid'], _('Processes'), compute_name)
-        else:
-            name = '{} {}'.format(_('Processes'), compute_name)
+        name = format_graph_name(context, line, _('Processes'))
         data.append({
             'x': x,
             'y': y,
@@ -832,7 +829,6 @@ def graph_thread(request, username, job_id):
         if line['metric']['state'] == '?':
             # ignore "?" state
             continue
-        compute_name = display_compute_name(stats_threads, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
 
@@ -842,10 +838,7 @@ def graph_thread(request, username, job_id):
         except KeyError:
             state = 'total'
 
-        if context['multiple_jobs']:
-            name = '{} {} {} {}'.format(line['metric']['slurmjobid'], state.capitalize(), _('threads'), compute_name)
-        else:
-            name = '{} {} {}'.format(state.capitalize(), _('threads'), compute_name)
+        name = format_graph_name(context, line, '{} {}'.format(state.capitalize(), _('threads')))
         data.append({
             'x': x,
             'y': y,
@@ -1074,13 +1067,9 @@ def graph_gpu_utilization(request, username, job_id):
 
         for line in stats:
             gpu_id = display_gpu_id(line)
-            compute_name = display_compute_name(stats, line)
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
-            if context['multiple_jobs']:
-                name = '{} {} GPU {} {}'.format(line['metric']['slurmjobid'], q[1], gpu_id, compute_name)
-            else:
-                name = '{} GPU {} {}'.format(q[1], gpu_id, compute_name)
+            name = format_graph_name(context, line, f'{q[1]} GPU {gpu_id}')
             data.append({
                 'x': x,
                 'y': y,
@@ -1148,13 +1137,9 @@ def graph_gpu_memory_utilization(request, username, job_id):
     data = []
     for line in stats:
         gpu_id = display_gpu_id(line)
-        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if context['multiple_jobs']:
-            name = '{} GPU {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
-        else:
-            name = 'GPU {} {}'.format(gpu_id, compute_name)
+        name = format_graph_name(context, line, f'GPU {gpu_id}')
         data.append({
             'x': x,
             'y': y,
@@ -1188,13 +1173,9 @@ def graph_gpu_memory(request, username, job_id):
     for line in stats:
         gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
-        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if context['multiple_jobs']:
-            name = 'GPU {} {} {}'.format(line['metric']['slurmjobid'], gpu_id, compute_name)
-        else:
-            name = 'GPU {} {}'.format(gpu_id, compute_name)
+        name = format_graph_name(context, line, f'GPU {gpu_id}')
         data.append({
             'x': x,
             'y': y,
@@ -1228,13 +1209,9 @@ def graph_gpu_power(request, username, job_id):
     for line in stats:
         gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
-        compute_name = display_compute_name(stats, line)
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
-        if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
-        else:
-            name = '{} GPU {} {}'.format(GPU_SHORT_NAME[gpu_type], gpu_id, compute_name)
+        name = format_graph_name(context, line, f'{GPU_SHORT_NAME[gpu_type]} GPU {gpu_id}')
         data.append({
             'x': x,
             'y': y,
@@ -1329,17 +1306,13 @@ def graph_gpu_pcie(request, username, job_id):
 
     for line in stats:
         gpu_id = display_gpu_id(line)
-        compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
             y = line['y']
         else:
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
-        else:
-            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
+        name = format_graph_name(context, line, f'{direction} GPU {gpu_id}')
         data.append({
             'x': x,
             'y': y,
@@ -1374,17 +1347,13 @@ def graph_gpu_nvlink(request, username, job_id):
 
     for line in stats:
         gpu_id = display_gpu_id(line)
-        compute_name = display_compute_name(stats, line)
         direction = line['metric']['direction']
         if direction == 'RX':
             y = line['y']
         else:
             y = [-x for x in line['y']]
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-        if context['multiple_jobs']:
-            name = '{} GPU {} {} {}'.format(line['metric']['slurmjobid'], direction, gpu_id, compute_name)
-        else:
-            name = '{} GPU {} {}'.format(direction, gpu_id, compute_name)
+        name = format_graph_name(context, line, f'{direction} GPU {gpu_id}')
         data.append({
             'x': x,
             'y': y,
@@ -1424,16 +1393,16 @@ def graph_ethernet_bdw(request, username, job_id):
             context['end'],
             step=step)
         for line in stats:
-            compute_name = display_compute_name(stats, line)
             if direction == 'receive':
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
+            name = format_graph_name(context, line, direction)
             data.append({
                 'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, compute_name),
+                'name': name,
                 'hovertemplate': '%{y:.1f}',
             })
 
@@ -1469,16 +1438,16 @@ def graph_infiniband_bdw(request, username, job_id):
             context['end'],
             step=step)
         for line in stats:
-            compute_name = display_compute_name(stats, line)
             if direction == 'received':
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
+            name = format_graph_name(context, line, direction)
             data.append({
                 'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, compute_name),
+                'name': name,
                 'hovertemplate': '%{y:.1f}',
             })
 
@@ -1514,19 +1483,17 @@ def graph_disk_iops(request, username, job_id):
             context['end'],
             step=step)
         for line in stats:
-            compute_name = "{} {}".format(
-                line['metric']['device'],
-                display_compute_name(stats, line))
             y = line['y']
             if direction == 'reads':
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
+            name = format_graph_name(context, line, f'{direction} {line["metric"]["device"]}')
             data.append({
                 'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, compute_name),
+                'name': name,
                 'hovertemplate': '%{y:.1f} IOPS',
             })
 
@@ -1561,18 +1528,16 @@ def graph_disk_bdw(request, username, job_id):
             context['end'],
             step=step)
         for line in stats:
-            compute_name = "{} {}".format(
-                line['metric']['device'],
-                display_compute_name(stats, line))
             if direction == 'read':
                 y = line['y']
             else:
                 y = [-x for x in line['y']]
+            name = format_graph_name(context, line, f'{direction} {line["metric"]["device"]}')
             data.append({
                 'x': list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x'])),
                 'y': y,
                 'type': 'scatter',
-                'name': '{} {}'.format(direction, compute_name),
+                'name': name,
                 'hovertemplate': '%{y:.1f}',
             })
 
@@ -1605,16 +1570,14 @@ def graph_disk_used(request, username, job_id):
         context['end'],
         step=max(context['step'], prom.rate('node_exporter')))
     for line in stats_disk:
-        compute_name = "{} {}".format(
-            line['metric']['device'],
-            display_compute_name(stats_disk, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        name = format_graph_name(context, line, line['metric']['device'])
         data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': compute_name,
+            'name': name,
             'hovertemplate': '%{y:.1f} GB',
         })
 
@@ -1650,17 +1613,14 @@ def graph_mem_bdw(request, username, job_id):
         for line in stats:
             if 'socket' not in line['metric']:
                 continue
-            compute_name = "{} socket {} {}".format(
-                direction,
-                line['metric']['socket'],
-                display_compute_name(stats, line))
             x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
             y = line['y']
+            name = format_graph_name(context, line, f'{direction} socket {line["metric"]["socket"]}')
             data.append({
                 'x': x,
                 'y': y,
                 'type': 'scatter',
-                'name': compute_name,
+                'name': name,
                 'hovertemplate': '%{y:.1f} GB/s',
             })
 
@@ -1737,7 +1697,7 @@ def map_pcm_cores(request, context):
     return used_mapping, reverse_mapping
 
 
-def filter_stats(stats, used_mapping, reverse_mapping):
+def filter_stats(context, stats, used_mapping, reverse_mapping):
     filtered_stats = []
     data = []
     for line in stats:
@@ -1748,16 +1708,14 @@ def filter_stats(stats, used_mapping, reverse_mapping):
 
     for line in filtered_stats:
         phys_core = (int(line['metric']['socket']), int(line['metric']['core']), int(line['metric']['thread']))
-        compute_name = "Core {} {}".format(
-            reverse_mapping[line['metric']['instance'].split(':')[0]][phys_core],
-            display_compute_name(filtered_stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        name = format_graph_name(context, line, f'Core {reverse_mapping[line["metric"]["instance"].split(":")[0]][phys_core]}')
         data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': compute_name,
+            'name': name,
             'hovertemplate': '%{y:.1f}',
         })
     return data
@@ -1784,7 +1742,7 @@ def graph_cache_rate(request, username, job_id, l_cache):
         step=max(context['step'], prom.rate('pcm-sensor-server')))
 
     # from all the L3 cache hits and misses, keep only the ones used by the job
-    data = filter_stats(stats_cache, used_mapping, reverse_mapping)
+    data = filter_stats(context, stats_cache, used_mapping, reverse_mapping)
 
     layout = {
         'yaxis': {
@@ -1821,7 +1779,7 @@ def graph_ipc(request, username, job_id):
         context['end'],
         step=max(context['step'], prom.rate('pcm-sensor-server')))
 
-    data = filter_stats(stats_ipc, used_mapping, reverse_mapping)
+    data = filter_stats(context, stats_ipc, used_mapping, reverse_mapping)
 
     layout = {
         'yaxis': {
@@ -1852,16 +1810,14 @@ def graph_cpu_interconnect(request, username, job_id):
         context['end'],
         step=max(context['step'], prom.rate('pcm-sensor-server')))
     for line in stats:
-        compute_name = "Received socket {} {}".format(
-            line['metric']['socket'],
-            display_compute_name(stats, line))
         x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
         y = line['y']
+        name = format_graph_name(context, line, f'Received socket {line["metric"]["socket"]}')
         data.append({
             'x': x,
             'y': y,
             'type': 'scatter',
-            'name': compute_name,
+            'name': name,
             'hovertemplate': '%{y:.1f} GB/s',
         })
 

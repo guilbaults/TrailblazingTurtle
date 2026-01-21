@@ -29,8 +29,7 @@ router.register(r'notes', NoteViewSet)
 last_modified_date = timezone.now()
 
 if 'jobstats' in settings.INSTALLED_APPS:
-    from jobstats.views import JobScriptViewSet, JobsViewSet
-    router.register(r'jobscripts', JobScriptViewSet)
+    from jobstats.views import JobsViewSet
     router.register(r'jobs', JobsViewSet, basename='jobs')
 
 urlpatterns = [

@@ -180,11 +180,13 @@ def context_job_info(request, username, job_id):
         context['gpu_count'] = 0
         for job in jobs:
             context['gpu_count'] += job.gpu_count()
+        context['nodes'] = set(node for job in context['jobs'] for node in job.nodes())
     else:
         context['job'] = jobs[0]
         context['multiple_jobs'] = False
         context['id_regex'] = str(context['job'].id_job)
         context['gpu_count'] = context['job'].gpu_count()
+        context['nodes'] = set(node for node in context['job'].nodes())
 
     context['start'] = context['job'].time_start_dt()
     if context['job'].time_end_dt() is None:
@@ -719,60 +721,69 @@ def graph_mem(request, username, job_id):
 
     data = []
 
-    stat_types = [
-        ('slurm_job_memory_usage', _('Used')),
-    ]
-    if context['multiple_jobs'] is False:
-        stat_types = [
-            ('slurm_job_memory_usage', _('Used')),
-            ('slurm_job_memory_limit', _('Allocated')),
-            ('slurm_job_memory_max', _('Max used')),
-            ('slurm_job_memory_cache', _('Cache')),
-            ('slurm_job_memory_rss', _('RSS')),
-            ('slurm_job_memory_rss_huge', _('RSS Huge')),
-            ('slurm_job_memory_mapped_file', _('Memory mapped file')),
-            ('slurm_job_memory_active_file', _('Active file')),
-            ('slurm_job_memory_inactive_file', _('Inactive file')),
-            ('slurm_job_memory_unevictable', _('Unevictable')),
-        ]
+    series_titles = {
+        'slurm_job_memory_usage': _('Used'),
+        'slurm_job_memory_limit': _('Allocated'),
+        'slurm_job_memory_max': _('Max used'),
+        'slurm_job_memory_cache': _('Cache'),
+        'slurm_job_memory_rss': _('RSS'),
+        'slurm_job_memory_rss_huge': _('RSS Huge'),
+        'slurm_job_memory_mapped_file': _('Memory mapped file'),
+        'slurm_job_memory_active_file': _('Active file'),
+        'slurm_job_memory_inactive_file': _('Inactive file'),
+        'slurm_job_memory_unevictable': _('Unevictable'),
+    }
+    if context['multiple_jobs']:
+        series_titles = {'slurm_job_memory_usage': _('Used')}
 
-    for stat in stat_types:
-        query = '{}{{slurmjobid=~"{}", {}}}/(1024*1024*1024)'.format(stat[0], context['id_regex'], prom.get_filter())
-        stats = prom.query_prometheus_multiple(
-            query,
-            context['start'],
-            context['end'],
-            step=max(context['step'], prom.rate('slurm-job-exporter')))
-        for line in stats:
-            compute_name = display_compute_name(stats, line)
-            x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line['x']))
-            y = line['y']
-            if context['multiple_jobs']:
-                name = '{} {} {}'.format(line['metric']['slurmjobid'], stat[1], compute_name)
-            else:
-                name = '{} {}'.format(stat[1], compute_name)
-            info = {
-                'x': x,
-                'y': y,
-                'type': 'scatter',
-                'name': name,
-                'hovertemplate': '%{y:.1f}',
-            }
-            if context['multiple_jobs']:
-                info['stackgroup'] = 'one'
-            data.append(info)
-        if stat[0] == 'slurm_job_memory_limit':
-            maximum = max(max(map(lambda x: x['y'], stats)))
+    query = '{{__name__=~"{}", slurmjobid=~"{}", {}}}'.format("|".join(series_titles.keys()), context['id_regex'], prom.get_filter())
+    series_list = prom.query_prometheus_multiple(
+        query=query,
+        start=context['start'],
+        end=context['end'],
+        step=max(context['step'], prom.rate('slurm-job-exporter')),
+        dtype=int,
+    )
+
+    mem_scale_factor = 1024 * 1024 * 1024  # GiB
+    maximum = 0
+
+    for series in series_list:
+        metric_name = series['metric']['__name__']
+        x = [xi.strftime('%Y-%m-%d %H:%M:%S') for xi in series['x']]
+        y = [yi / mem_scale_factor for yi in series['y']]
+
+        name = []
+        if context['multiple_jobs']:
+            name.append(series['metric']['slurmjobid'])
+        name.append(series_titles[metric_name])
+        if len(context['nodes']) > 1:
+            compute_name = series['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
+            name.append(compute_name)
+
+        info = {
+            'x': x,
+            'y': y,
+            'type': 'scatter',
+            'name': " ".join(name),
+            'hovertemplate': '%{y:.1f}',
+        }
+        if context['multiple_jobs']:
+            info['stackgroup'] = 'one'
+        data.append(info)
+
+        if metric_name == 'slurm_job_memory_limit':
+            maximum = max(maximum, max(y))
 
     if context['multiple_jobs']:
-        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/(1024*1024*1024)'.format(context['id_regex'], prom.get_filter())
-        line = prom.query_prometheus(
+        query_count = 'sum(slurm_job_memory_limit{{slurmjobid=~"{}", {}}})/{}'.format(context['id_regex'], prom.get_filter(), mem_scale_factor)
+        series = prom.query_prometheus(
             query_count,
             context['start'],
             context['end'],
             step=max(context['step'], prom.rate('slurm-job-exporter')))
-        x = list(map(lambda x: x.strftime('%Y-%m-%d %H:%M:%S'), line[0]))
-        y = line[1]
+        x = [xi.strftime('%Y-%m-%d %H:%M:%S') for xi in series['x']]
+        y = series['y']
         data.append({
             'x': x,
             'y': y,

@@ -19,13 +19,13 @@
     {% endif %}
 
 {% if request.user.is_staff %}
-{% include "nav_last_month.html" %}
 
   <h3>{% translate "All projects" %}</h3>
-  <h4>{% translate "CPU used" %}</h4>
-  <div id="graph_cpu"></div>
-  <h4>{% translate "Memory used" %}</h4>
-  <div id="graph_mem"></div>
+  <div class="mb-4">
+    <a href="{% url 'resource_graphs' %}" class="btn btn-primary">
+      {% translate "Resource Usage Graphs" %}
+    </a>
+  </div>
   <h4>{% translate "Projects" %}</h4>
   Total physical cores: {{physical_cores | floatformat:0}}<br>
   Total physical memory: {{physical_memory | floatformat:0}} GB<br>
@@ -58,30 +58,4 @@
   </table>
 {% endif %}
 
-{% if request.user.is_staff %}
-<script>
-  function loadGraphs(delta){
-    loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
-    loadGraph('graph_mem', 'graph/mem.json?delta=' + delta);
-}
-$(document).ready(function(){
-    loadGraphs(60*60*24*7);
-
-    $('#myTabs a').click(function (e) {
-        if($(this).attr('href') == '#last_month'){
-          loadGraphs(60*60*24*30);
-        }
-        if($(this).attr('href') == '#last_week'){
-            loadGraphs(60*60*24*7);
-        }
-        if($(this).attr('href') == '#last_day'){
-            loadGraphs(60*60*24);
-        }
-        if($(this).attr('href') == '#last_hour'){
-            loadGraphs(60*60);
-        }
-    })
-});
-</script>
-{% endif %}
 {% endblock content %}

@@ -18,6 +18,11 @@ Then you can launch the example server with:
 REMOTE_USER=someuser@alliancecan.ca affiliation=staff@alliancecan.ca python manage.py runserver
 ```
 
+Or using Docker Compose with:
+```
+docker-compose -f docker-compose.dev.yml up --build
+```
+
 This will run the portal with the user `someuser` logged in as a staff member.
 
 Automated Django tests are also available, they can be run with:

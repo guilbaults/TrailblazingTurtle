@@ -1,9 +1,10 @@
-FROM rockylinux:8
+FROM rockylinux:9
 
 ENV PYTHONDONTWRITEBYTECODE 1
 ENV PYTHONUNBUFFERED 1
 
-RUN yum install -y python36 python3-devel python3-ldap python3-pip openldap-devel gcc mariadb-devel xmlsec1 xmlsec1-openssl patch && \
+RUN yum install -y --enablerepo=crb \
+    python3.12 python3.12-devel python3.12-pip python3-ldap openldap-devel gcc mariadb-devel xmlsec1 xmlsec1-openssl patch git && \
     yum clean all && \
     rm -rf /var/cache/yum
 
@@ -11,12 +12,24 @@ WORKDIR /opt/userportal
 
 COPY requirements.txt ./
 
-RUN pip3 install --upgrade pip && \
-    pip3 install --no-cache-dir -r requirements.txt
+RUN pip3.12 install --upgrade pip && \
+    pip3.12 install --no-cache-dir -r requirements.txt && \
+    pip3.12 install --no-cache-dir whitenoise==6.11.0
 
 COPY . .
 
-RUN patch /usr/local/lib/python3.6/site-packages/ldapdb/backends/ldap/base.py < /opt/userportal/ldapdb.patch
+RUN patch /usr/local/lib/python3.12/site-packages/ldapdb/backends/ldap/base.py < /opt/userportal/ldapdb.patch
+
+RUN sed -i "/'django.middleware.security.SecurityMiddleware',/a \ \ \ \ 'whitenoise.middleware.WhiteNoiseMiddleware'," userportal/settings/10-base.py
+
+RUN cat <<'EOF' > cloud.yml
+projects:
+  someproject:
+    members:
+      - someuser
+EOF
+
+RUN python3.12 manage.py collectstatic --noinput
 
 EXPOSE 8000
-CMD ["python3", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["sh", "-c", "python3.12 manage.py migrate && python3.12 manage.py runserver 0.0.0.0:8000"]

@@ -21,9 +21,14 @@ class CloudstatsTestCase(CustomTestCase):
         self.assertContains(response, 'Your projects')
         self.assertContains(response, 'All projects')
 
+    def test_cloudstats_resource_graphs(self):
+        response = self.admin_client.get('/secure/cloudstats/resource_graphs/')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'All projects')
+
     def test_cloudstats_graph(self):
         for i in ['cpu', 'mem']:
-            response = self.admin_client.get('/secure/cloudstats/graph/{i}.json?delta=3600'.format(
+            response = self.admin_client.get('/secure/cloudstats/resource_graphs/graph/{i}.json?delta=3600'.format(
                 i=i))
             self.assertEqual(response.status_code, 200)
             self.assertJSONKeys(response, ['data', 'layout'])

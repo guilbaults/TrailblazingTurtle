@@ -4,6 +4,7 @@ The stats of the VM running on Openstack can be viewed. This is using the stats 
 ## Screenshots
 ### Overall use
 ![Overall use](cloudstats.png)
+![Overall use - Resource Usage Graphs](cloudstats_resource_graphs.png)
 ### Use within a project
 ![Use within a project](cloudstats_project.png)
 ### Use within a VM

@@ -131,6 +131,11 @@ def index(request):
 
 
 @login_required
+def resource_graphs(request):
+    return render(request, 'cloudstats/resource_graphs.html')
+
+
+@login_required
 @openstackproject_or_staff
 def project(request, project):
     context = {}

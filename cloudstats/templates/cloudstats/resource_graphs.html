@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load humanize %}
+{% load i18n %}
+
+{% block title %}{% translate "Your cloud use - Resource Usage Graphs" %}{% endblock title %}
+
+{% block content %}
+<h1>{% translate "Your cloud use" %}</h1>
+<h2>{% translate "Resource Usage Graphs" %}</h2>
+
+{% if request.user.is_staff %}
+{% include "nav_last_month.html" %}
+
+  <h3>{% translate "All projects" %}</h3>
+  <h4>{% translate "CPU used" %}</h4>
+  <div id="graph_cpu"></div>
+  <h4>{% translate "Memory used" %}</h4>
+  <div id="graph_mem"></div>
+
+<script>
+  function loadGraphs(delta){
+    loadGraph('graph_cpu', 'graph/cpu.json?delta=' + delta);
+    loadGraph('graph_mem', 'graph/mem.json?delta=' + delta);
+}
+$(document).ready(function(){
+    loadGraphs(60*60*24*7);
+
+    $('#myTabs a').click(function (e) {
+        if($(this).attr('href') == '#last_month'){
+          loadGraphs(60*60*24*30);
+        }
+        if($(this).attr('href') == '#last_week'){
+            loadGraphs(60*60*24*7);
+        }
+        if($(this).attr('href') == '#last_day'){
+            loadGraphs(60*60*24);
+        }
+        if($(this).attr('href') == '#last_hour'){
+            loadGraphs(60*60);
+        }
+    })
+});
+</script>
+{% endif %}
+{% endblock content %}

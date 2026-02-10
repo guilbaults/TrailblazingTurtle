@@ -21,12 +21,19 @@ def index(request):
         context['all_projects'] = []
         all_projects = {}
 
+        query_quota_cores = 'openstack_quota_compute_cores{{ {filter} }}'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_quota_cores = prom.query_last(query_quota_cores)
+        for line in stats_quota_cores:
+            all_projects[line['metric']['project_name']] = {'quota_cores': float(line['value'][1])}
+
         query_count_cores = 'count(libvirtd_domain_vcpu_time{{ {filter} }}) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
-        stats_avg_cores = prom.query_prometheus_multiple(query_count_cores, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
-        for line in stats_avg_cores:
-            all_projects[line['metric']['project_name']] = {'cores': statistics.mean(line['y'])}
+        stats_running_cores = prom.query_last(query_count_cores)
+        for line in stats_running_cores:
+            all_projects[line['metric']['project_name']]['running_cores'] = float(line['value'][1])
 
         query_used_cores = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[1h])/1000/1000/1000) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
@@ -35,12 +42,19 @@ def index(request):
         for line in stats_avg_used_cores:
             all_projects[line['metric']['project_name']]['used_cores'] = statistics.mean(line['y'])
 
-        query_memory = 'sum(libvirtd_domain_balloon_current{{ {filter} }}/1024/1024) by (project_name)'.format(
+        query_quota_memory = 'openstack_quota_compute_ram{{ {filter} }}/1024'.format(
             filter=prom.get_filter('cloudstats'),
         )
-        stats_memory = prom.query_prometheus_multiple(query_memory, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
-        for line in stats_memory:
-            all_projects[line['metric']['project_name']]['memory'] = statistics.mean(line['y'])
+        stats_quota_memory = prom.query_last(query_quota_memory)
+        for line in stats_quota_memory:
+            all_projects[line['metric']['project_name']]['quota_memory'] = float(line['value'][1])
+
+        query_running_memory = 'sum(libvirtd_domain_balloon_current{{ {filter} }}/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_running_memory = prom.query_last(query_running_memory)
+        for line in stats_running_memory:
+            all_projects[line['metric']['project_name']]['running_memory'] = float(line['value'][1])
 
         query_used_memory = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
@@ -50,56 +64,122 @@ def index(request):
             all_projects[line['metric']['project_name']]['used_memory'] = statistics.mean(line['y'])
 
         # infer the number of gpus from the instance_name
-        query_gpus = 'count(libvirtd_domain_balloon_current{{ {filter} }}) by (project_name, instance_type)'.format(
+        query_running_gpus = 'count(libvirtd_domain_balloon_current{{ {filter} }}) by (project_name, instance_type)'.format(
             filter=prom.get_filter('cloudstats'),
         )
-        stats_gpus = prom.query_prometheus_multiple(query_gpus, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
-        for line in stats_gpus:
+        stats_running_gpus = prom.query_last(query_running_gpus)
+        for line in stats_running_gpus:
             try:
                 gpu_qty = settings.CLOUD_INSTANCE_TYPE[line['metric']['instance_type']]['gpu']
             except KeyError:
                 gpu_qty = 0
 
-            if 'gpu_qty' in all_projects[line['metric']['project_name']]:
-                all_projects[line['metric']['project_name']]['gpu_qty'] += statistics.mean(line['y']) * gpu_qty
+            if 'running_gpus' in all_projects[line['metric']['project_name']]:
+                all_projects[line['metric']['project_name']]['running_gpus'] += float(line['value'][1]) * gpu_qty
             else:
-                all_projects[line['metric']['project_name']]['gpu_qty'] = statistics.mean(line['y']) * gpu_qty
+                all_projects[line['metric']['project_name']]['running_gpus'] = float(line['value'][1]) * gpu_qty
 
-        query_block_capacity = 'sum(libvirtd_domain_block_capacity{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
+        query_quota_block = 'openstack_quota_volume_gigabytes{{ {filter} }}'.format(
             filter=prom.get_filter('cloudstats'),
         )
-        stats_block_capacity = prom.query_prometheus_multiple(query_block_capacity, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
-        for line in stats_block_capacity:
-            all_projects[line['metric']['project_name']]['block_capacity'] = statistics.mean(line['y'])
+        stats_quota_block = prom.query_last(query_quota_block)
+        for line in stats_quota_block:
+            all_projects[line['metric']['project_name']]['quota_block'] = float(line['value'][1])
 
-        context['total_projects'] = {'cores': 0, 'used_cores': 0, 'memory': 0, 'used_memory': 0, 'gpu_qty': 0, 'block_capacity': 0}
+        query_running_block = 'sum(libvirtd_domain_block_capacity{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_running_block = prom.query_last(query_running_block)
+        for line in stats_running_block:
+            all_projects[line['metric']['project_name']]['running_block'] = float(line['value'][1])
+
+        query_used_block = 'sum(libvirtd_domain_block_allocation{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_avg_used_block = prom.query_prometheus_multiple(query_used_block, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_avg_used_block:
+            all_projects[line['metric']['project_name']]['used_block'] = statistics.mean(line['y'])
+
+        query_quota_object = 'openstack_quota_object_storage_x_account_meta_quota_bytes{{ {filter} }}/1024/1024/1024'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_quota_object = prom.query_last(query_quota_object)
+        for line in stats_quota_object:
+            all_projects[line['metric']['project_name']]['quota_object'] = float(line['value'][1])
+
+        query_used_object = 'openstack_quota_object_storage_x_account_bytes_used{{ {filter} }}/1024/1024/1024'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_avg_used_object = prom.query_prometheus_multiple(query_used_object, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
+        for line in stats_avg_used_object:
+            all_projects[line['metric']['project_name']]['used_object'] = statistics.mean(line['y'])
+
+        query_quota_cephfs = 'openstack_quota_sharefs_gigabytes{{ {filter} }}'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_quota_cephfs = prom.query_last(query_quota_cephfs)
+        for line in stats_quota_cephfs:
+            all_projects[line['metric']['project_name']]['quota_cephfs'] = float(line['value'][1])
+
+        query_running_cephfs = 'openstack_quota_sharefs_gigabytes_used{{ {filter} }}'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_running_cephfs = prom.query_last(query_running_cephfs)
+        for line in stats_running_cephfs:
+            all_projects[line['metric']['project_name']]['running_cephfs'] = float(line['value'][1])
+
+        context['total_projects'] = {'quota_cores': 0, 'running_cores': 0, 'used_cores': 0, 'quota_memory': 0, 'running_memory': 0, 'used_memory': 0, 'running_gpus': 0, 'quota_block': 0, 'running_block': 0, 'used_block': 0, 'quota_object': 0, 'used_object': 0, 'quota_cephfs': 0, 'running_cephfs': 0}
         for project in sorted(all_projects):
             context['all_projects'].append({
                 'id': project,
                 'name': project,
-                'cores': all_projects[project]['cores'],
-                'used_cores': all_projects[project]['used_cores'],
-                'memory': all_projects[project]['memory'],
-                'used_memory': all_projects[project]['used_memory'],
-                'gpu_qty': all_projects[project]['gpu_qty'],
-                'block_capacity': all_projects[project]['block_capacity'],
+                'quota_cores': all_projects[project].get('quota_cores', 0),
+                'running_cores': all_projects[project].get('running_cores', 0),
+                'used_cores': all_projects[project].get('used_cores', 0),
+                'quota_memory': all_projects[project].get('quota_memory', 0),
+                'running_memory': all_projects[project].get('running_memory', 0),
+                'used_memory': all_projects[project].get('used_memory', 0),
+                'running_gpus': all_projects[project].get('running_gpus', 0),
+                'quota_block': all_projects[project].get('quota_block', 0),
+                'running_block': all_projects[project].get('running_block', 0),
+                'used_block': all_projects[project].get('used_block', 0),
+                'quota_object': all_projects[project].get('quota_object', 0),
+                'used_object': all_projects[project].get('used_object', 0),
+                'quota_cephfs': all_projects[project].get('quota_cephfs', 0),
+                'running_cephfs': all_projects[project].get('running_cephfs', 0),
             })
-            context['total_projects']['cores'] += all_projects[project]['cores']
-            context['total_projects']['used_cores'] += all_projects[project]['used_cores']
-            context['total_projects']['memory'] += all_projects[project]['memory']
-            context['total_projects']['used_memory'] += all_projects[project]['used_memory']
-            context['total_projects']['gpu_qty'] += all_projects[project]['gpu_qty']
-            context['total_projects']['block_capacity'] += all_projects[project]['block_capacity']
+            context['total_projects']['quota_cores'] += all_projects[project].get('quota_cores', 0)
+            context['total_projects']['running_cores'] += all_projects[project].get('running_cores', 0)
+            context['total_projects']['used_cores'] += all_projects[project].get('used_cores', 0)
+            context['total_projects']['quota_memory'] += all_projects[project].get('quota_memory', 0)
+            context['total_projects']['running_memory'] += all_projects[project].get('running_memory', 0)
+            context['total_projects']['used_memory'] += all_projects[project].get('used_memory', 0)
+            context['total_projects']['running_gpus'] += all_projects[project].get('running_gpus', 0)
+            context['total_projects']['quota_block'] += all_projects[project].get('quota_block', 0)
+            context['total_projects']['running_block'] += all_projects[project].get('running_block', 0)
+            context['total_projects']['used_block'] += all_projects[project].get('used_block', 0)
+            context['total_projects']['quota_object'] += all_projects[project].get('quota_object', 0)
+            context['total_projects']['used_object'] += all_projects[project].get('used_object', 0)
+            context['total_projects']['quota_cephfs'] += all_projects[project].get('quota_cephfs', 0)
+            context['total_projects']['running_cephfs'] += all_projects[project].get('running_cephfs', 0)
 
         context['all_projects'].append({
             'id': 'total',
-            'name': _('Total'),
-            'cores': context['total_projects']['cores'],
+            'name': _('TOTAL'),
+            'quota_cores': context['total_projects']['quota_cores'],
+            'running_cores': context['total_projects']['running_cores'],
             'used_cores': context['total_projects']['used_cores'],
-            'memory': context['total_projects']['memory'],
+            'quota_memory': context['total_projects']['quota_memory'],
+            'running_memory': context['total_projects']['running_memory'],
             'used_memory': context['total_projects']['used_memory'],
-            'gpu_qty': context['total_projects']['gpu_qty'],
-            'block_capacity': context['total_projects']['block_capacity'],
+            'running_gpus': context['total_projects']['running_gpus'],
+            'quota_block': context['total_projects']['quota_block'],
+            'running_block': context['total_projects']['running_block'],
+            'used_block': context['total_projects']['used_block'],
+            'quota_object': context['total_projects']['quota_object'],
+            'used_object': context['total_projects']['used_object'],
+            'quota_cephfs': context['total_projects']['quota_cephfs'],
+            'running_cephfs': context['total_projects']['running_cephfs'],
         })
 
         # Grab the hypervisors hostnames

@@ -30,32 +30,60 @@
   Total physical cores: {{physical_cores | floatformat:0}}<br>
   Total physical memory: {{physical_memory | floatformat:0}} GB<br>
 
+  <br><i>Note: <b>Quota</b> and <b>Running</b> = latest value; <b>Used</b> = last month's average</i>
   <table class="table table-striped">
     <thead class="thead-dark">
       <tr>
         <th>{% translate "Project" %}</th>
-        <th>{% translate "Running cores" %}</th>
-        <th>{% translate "Used cores" %}</th>
-        <th>{% translate "Running memory (GB)" %}</th>
-        <th>{% translate "Used memory (GB)" %}</th>
+        <th>{% translate "Quota Cores" %}</th>
+        <th>{% translate "Running Cores" %}</th>
+        <th>{% translate "Used Cores" %}</th>
+        <th>{% translate "Quota Memory (GB)" %}</th>
+        <th>{% translate "Running Memory (GB)" %}</th>
+        <th>{% translate "Used Memory (GB)" %}</th>
         <th>{% translate "Running GPUs" %}</th>
-        <th>{% translate "Block capacity (GB)" %}</th>
+        <th>{% translate "Quota Block (GB)" %}</th>
+        <th>{% translate "Running Block (GB)" %}</th>
+        <th>{% translate "Used Block (GB)" %}</th>
+        <th>{% translate "Quota Object (GB)" %}</th>
+        <th>{% translate "Used Object (GB)" %}</th>
+        <th>{% translate "Quota CephFS (GB)" %}</th>
+        <th>{% translate "Running CephFS (GB)" %}</th>
       </tr>
     </thead>
     <tbody>
   {% for project in all_projects %}
     <tr>
       <td><a href="{{ project.id }}">{{project.name | anonymize }}</a></td>
-      <td>{{project.cores | floatformat:1}}</td>
+      <td class="delimiter">{{project.quota_cores | floatformat:1}}</td>
+      <td>{{project.running_cores | floatformat:1}}</td>
       <td>{{project.used_cores | floatformat:1}}</td>
-      <td>{{project.memory | floatformat:1}}</td>
+      <td class="delimiter">{{project.quota_memory | floatformat:1}}</td>
+      <td>{{project.running_memory | floatformat:1}}</td>
       <td>{{project.used_memory | floatformat:1}}</td>
-      <td>{{project.gpu_qty | floatformat:1}}</td>
-      <td>{{project.block_capacity | floatformat:1}}</td>
+      <td class="delimiter">{{project.running_gpus | floatformat:1}}</td>
+      <td class="delimiter">{{project.quota_block | floatformat:1}}</td>
+      <td>{{project.running_block | floatformat:1}}</td>
+      <td>{{project.used_block | floatformat:1 }}</td>
+      <td class="delimiter">{{project.quota_object | floatformat:1 }}</td>
+      <td>{{project.used_object | floatformat:1 }}</td>
+      <td class="delimiter">{{project.quota_cephfs | floatformat:1 }}</td>
+      <td>{{project.running_cephfs | floatformat:1 }}</td>
     </tr>
   {% endfor %}
     </tbody>
   </table>
+
+  <style>
+    .table thead th {
+      position: sticky;
+      top: 47px;
+    }
+
+    .table td.delimiter {
+      border-left: 1px solid currentColor;
+    }
+  </style>
 {% endif %}
 
 {% endblock content %}

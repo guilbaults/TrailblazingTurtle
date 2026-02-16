@@ -24,9 +24,9 @@ RUN sed -i "/'django.middleware.security.SecurityMiddleware',/a \ \ \ \ 'whiteno
 
 RUN cat <<'EOF' > cloud.yml
 projects:
-  someproject:
+  null:
     members:
-      - someuser
+      - null
 EOF
 
 RUN python3.12 manage.py collectstatic --noinput

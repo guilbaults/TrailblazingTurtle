@@ -311,16 +311,38 @@ class JobTable(models.Model):
             return '{:.1f}m'.format(self.timelimit)
 
     def status(self):
-        status = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
+        flags = [('Completing', 1 << 15), ('Stage Out', 1 << 23),
+                 ('Configuring', 1 << 14), ('Expediting', 1 << 24),
+                 ('Resizing', 1 << 13), ('Requeue', 1 << 10),
+                 ('Requeue Federation', 1 << 20),
+                 ('Requeue Hold', 1 << 11), ('Special Exit', 1 << 12),
+                 ('Stopped', 1 << 16), ('Revoked', 1 << 19),
+                 ('Held', 1 << 21), ('Signaling', 1 << 22)]
+        states = ['Pending', 'Running', 'Suspended', 'Complete', 'Cancelled',
                   'Failed', 'Timeout', 'Node failed', 'Preempted',
                   'Boot failed', 'End', 'OOM']
-        return status[self.state]
+        # process this the same way as slurm does, per
+        #  src/common/slurm_protocol_defs.c:job_state_string()
+        for (s, bit) in flags:
+            if (self.state & bit) != 0:
+                return s
+        base = self.state & 0xff
+        if 0 <= base < len(states):
+            return states[base]
+        return 'Unknown'
 
     def status_badge(self):
-        status = ['info', 'primary', 'warning', 'success', 'danger',
-                  'danger', 'danger', 'danger', 'warning', 'danger',
-                  'sucess', 'danger']
-        return '{}'.format(status[self.state])
+        match self.status():
+            case 'Pending':
+                return 'info'
+            case 'Running':
+                return 'primary'
+            case 'Complete' | 'End':
+                return 'success'
+            case ('Cancelled' | 'Failed' | 'Timeout' | 'Node failed' | 'Boot failed' | 'OOM'):
+                return 'danger'
+            case 'Suspended' | 'Preempted' | _:
+                return 'warning'
 
     def gpu_count(self):
         __gpu_count = 0

@@ -33,7 +33,7 @@ def index(request):
         )
         stats_running_cores = prom.query_last(query_count_cores)
         for line in stats_running_cores:
-            all_projects[line['metric']['project_name']]['running_cores'] = float(line['value'][1])
+            all_projects.setdefault(line['metric']['project_name'], {})['running_cores'] = float(line['value'][1])
 
         query_used_cores = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[1h])/1000/1000/1000) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),

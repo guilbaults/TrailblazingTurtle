@@ -33,35 +33,40 @@ def index(request):
         )
         stats_running_cores = prom.query_last(query_count_cores)
         for line in stats_running_cores:
-            all_projects.setdefault(line['metric']['project_name'], {})['running_cores'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['running_cores'] = float(line['value'][1])
 
         query_used_cores = 'sum(rate(libvirtd_domain_vcpu_time{{ {filter} }}[1h])/1000/1000/1000) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_avg_used_cores = prom.query_prometheus_multiple(query_used_cores, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
         for line in stats_avg_used_cores:
-            all_projects[line['metric']['project_name']]['used_cores'] = statistics.mean(line['y'])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['used_cores'] = statistics.mean(line['y'])
 
         query_quota_memory = 'openstack_quota_compute_ram{{ {filter} }}/1024'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_quota_memory = prom.query_last(query_quota_memory)
         for line in stats_quota_memory:
-            all_projects[line['metric']['project_name']]['quota_memory'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['quota_memory'] = float(line['value'][1])
 
         query_running_memory = 'sum(libvirtd_domain_balloon_current{{ {filter} }}/1024/1024) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_running_memory = prom.query_last(query_running_memory)
         for line in stats_running_memory:
-            all_projects[line['metric']['project_name']]['running_memory'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['running_memory'] = float(line['value'][1])
 
         query_used_memory = 'sum((libvirtd_domain_balloon_current{{ {filter} }} - libvirtd_domain_balloon_usable{{ {filter} }})/1024/1024) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_used_memory = prom.query_prometheus_multiple(query_used_memory, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
         for line in stats_used_memory:
-            all_projects[line['metric']['project_name']]['used_memory'] = statistics.mean(line['y'])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['used_memory'] = statistics.mean(line['y'])
 
         # infer the number of gpus from the instance_name
         query_running_gpus = 'count(libvirtd_domain_balloon_current{{ {filter} }}) by (project_name, instance_type)'.format(
@@ -74,59 +79,67 @@ def index(request):
             except KeyError:
                 gpu_qty = 0
 
-            if 'running_gpus' in all_projects[line['metric']['project_name']]:
-                all_projects[line['metric']['project_name']]['running_gpus'] += float(line['value'][1]) * gpu_qty
-            else:
-                all_projects[line['metric']['project_name']]['running_gpus'] = float(line['value'][1]) * gpu_qty
+            if (project := line['metric']['project_name']) in all_projects:
+                if 'running_gpus' in all_projects[project]:
+                    all_projects[project]['running_gpus'] += float(line['value'][1]) * gpu_qty
+                else:
+                    all_projects[project]['running_gpus'] = float(line['value'][1]) * gpu_qty
 
         query_quota_block = 'openstack_quota_volume_gigabytes{{ {filter} }}'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_quota_block = prom.query_last(query_quota_block)
         for line in stats_quota_block:
-            all_projects[line['metric']['project_name']]['quota_block'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['quota_block'] = float(line['value'][1])
 
         query_running_block = 'sum(libvirtd_domain_block_capacity{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_running_block = prom.query_last(query_running_block)
         for line in stats_running_block:
-            all_projects[line['metric']['project_name']]['running_block'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['running_block'] = float(line['value'][1])
 
         query_used_block = 'sum(libvirtd_domain_block_allocation{{ {filter} }}/1024/1024/1024) by (project_name)'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_avg_used_block = prom.query_prometheus_multiple(query_used_block, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
         for line in stats_avg_used_block:
-            all_projects[line['metric']['project_name']]['used_block'] = statistics.mean(line['y'])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['used_block'] = statistics.mean(line['y'])
 
         query_quota_object = 'openstack_quota_object_storage_x_account_meta_quota_bytes{{ {filter} }}/1024/1024/1024'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_quota_object = prom.query_last(query_quota_object)
         for line in stats_quota_object:
-            all_projects[line['metric']['project_name']]['quota_object'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['quota_object'] = float(line['value'][1])
 
         query_used_object = 'openstack_quota_object_storage_x_account_bytes_used{{ {filter} }}/1024/1024/1024'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_avg_used_object = prom.query_prometheus_multiple(query_used_object, datetime.now() - timedelta(days=31), datetime.now(), step='1d')
         for line in stats_avg_used_object:
-            all_projects[line['metric']['project_name']]['used_object'] = statistics.mean(line['y'])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['used_object'] = statistics.mean(line['y'])
 
         query_quota_cephfs = 'openstack_quota_sharefs_gigabytes{{ {filter} }}'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_quota_cephfs = prom.query_last(query_quota_cephfs)
         for line in stats_quota_cephfs:
-            all_projects[line['metric']['project_name']]['quota_cephfs'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['quota_cephfs'] = float(line['value'][1])
 
         query_running_cephfs = 'openstack_quota_sharefs_gigabytes_used{{ {filter} }}'.format(
             filter=prom.get_filter('cloudstats'),
         )
         stats_running_cephfs = prom.query_last(query_running_cephfs)
         for line in stats_running_cephfs:
-            all_projects[line['metric']['project_name']]['running_cephfs'] = float(line['value'][1])
+            if (project := line['metric']['project_name']) in all_projects:
+                all_projects[project]['running_cephfs'] = float(line['value'][1])
 
         context['total_projects'] = {'quota_cores': 0, 'running_cores': 0, 'used_cores': 0, 'quota_memory': 0, 'running_memory': 0, 'used_memory': 0, 'running_gpus': 0, 'quota_block': 0, 'running_block': 0, 'used_block': 0, 'quota_object': 0, 'used_object': 0, 'quota_cephfs': 0, 'running_cephfs': 0}
         for project in sorted(all_projects):

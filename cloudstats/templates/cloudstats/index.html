@@ -53,8 +53,14 @@
     </thead>
     <tbody>
   {% for project in all_projects %}
-    <tr>
-      <td><a href="{{ project.id }}">{{project.name | anonymize }}</a></td>
+    <tr{% if project.id == 'total' %} class="total-row"{% endif %}>
+      <td>
+        {% if project.id == 'total' %}
+          {{ project.name }}
+        {% else %}
+          <a href="{{ project.id }}">{{ project.name | anonymize }}</a>
+        {% endif %}
+      </td>
       <td class="delimiter">{{project.quota_cores | floatformat:1}}</td>
       <td>{{project.running_cores | floatformat:1}}</td>
       <td>{{project.used_cores | floatformat:1}}</td>
@@ -82,6 +88,10 @@
 
     .table td.delimiter {
       border-left: 1px solid currentColor;
+    }
+
+    .total-row {
+      font-weight: bold;
     }
   </style>
 {% endif %}

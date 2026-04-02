@@ -1,6 +1,6 @@
 asgiref==3.8.1
 certifi==2024.7.4
-cffi==1.16.0
+cffi==1.17.1
 charset-normalizer==3.3.2
 contourpy==1.2.1
 cryptography==43.0.1

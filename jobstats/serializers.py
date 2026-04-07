@@ -1,14 +1,7 @@
-from jobstats.models import JobScript
 from slurm.models import JobTable
 from rest_framework import serializers
 import time
 import datetime
-
-
-class JobScriptSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = JobScript
-        fields = ['id_job', 'submit_script']
 
 
 class UnixEpochDateField(serializers.DateTimeField):

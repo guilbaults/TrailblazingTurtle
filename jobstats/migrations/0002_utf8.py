@@ -10,6 +10,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE jobstats_jobscript CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
-        migrations.RunSQL('ALTER TABLE jobstats_jobscript MODIFY submit_script LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
     ]

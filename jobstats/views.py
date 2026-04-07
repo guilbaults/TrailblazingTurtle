@@ -29,7 +29,9 @@ GPU_MEMORY = {
     'NVIDIA A100 80GB PCIe': 80,
     'NVIDIA H100 80GB HBM3': 80,
     'NVIDIA H100 NVL': 95,
+    'NVIDIA H200': 140,
     'NVIDIA L40': 45,
+    'NVIDIA A30': 24,
     'Quadro RTX 6000': 20,
     '1g.5gb': 5,
     '1g.10gb': 10,
@@ -48,7 +50,9 @@ GPU_FULL_POWER = {
     'NVIDIA A100 80GB PCIe': 300,
     'NVIDIA H100 80GB HBM3': 700,
     'NVIDIA H100 NVL': 400,
+    'NVIDIA H200': 700,
     'NVIDIA L40': 300,
+    'NVIDIA A30': 165,
     'Tesla V100-PCIE-32GB': 250,
     'Quadro RTX 6000': 265,
     '1g.5gb': 400,  # assuming A100 for all MIGs at the moment
@@ -68,7 +72,9 @@ GPU_IDLE_POWER = {
     'NVIDIA A100 80GB PCIe': 55,
     'NVIDIA H100 80GB HBM3': 70,
     'NVIDIA H100 NVL': 66,
+    'NVIDIA H200': 75,
     'NVIDIA L40': 55,
+    'NVIDIA A30': 32,
     'Tesla V100-PCIE-32GB': 55,
     'Quadro RTX 6000': 50,
     '1g.5gb': 55,  # assuming A100 for all MIGs at the moment
@@ -94,7 +100,9 @@ GPU_SHORT_NAME = {
     'NVIDIA A100 80GB PCIe': 'A100 80GB',
     'NVIDIA H100 80GB HBM3': 'H100',
     'NVIDIA H100 NVL': 'H100 NVL',
+    'NVIDIA H200': 'H200',
     'NVIDIA L40': 'L40',
+    'NVIDIA A30': 'A30',
     '1g.5gb': '1g.5gb',
     '1g.10gb': '1g.10gb',
     '2g.10gb': '2g.10gb',
@@ -303,6 +311,7 @@ def job(request, username, job_id):
 
     context['tres_req'] = job.parse_tres_req()
     context['total_mem'] = context['tres_req']['total_mem'] * 1024 * 1024
+    context['nb_nodes'] = job.nodes_alloc
 
     comments = []
     if '--dependency=singleton' in job.submit_line \
@@ -390,10 +399,10 @@ def job(request, username, job_id):
             node_name = node['metric'][settings.PROM_NODE_HOSTNAME_LABEL].split(':')[0]
             cpu_bynode.append({'name': node_name, 'count': int(node['y'][0])})
         context['cpu_bynode'] = cpu_bynode
-        context['nb_nodes'] = len(cpu_bynode)
+        context['nb_nodes_used'] = len(cpu_bynode)
     except ValueError:
         context['cpu_bynode'] = None
-        context['nb_nodes'] = None
+        context['nb_nodes_used'] = 0
 
     try:
         query_mem = 'sum(slurm_job_memory_max{{slurmjobid="{}", {}}})'.format(job_id, prom.get_filter())
@@ -1224,7 +1233,7 @@ def graph_gpu_power(request, username, job_id):
         layout = {
             'yaxis': {
                 'ticksuffix': ' W',
-                'range': [0, GPU_FULL_POWER[gpu_type]],
+                'range': [0, GPU_FULL_POWER[gpu_type] * 1.1],
                 'title': _('GPU Power'),
             }
         }

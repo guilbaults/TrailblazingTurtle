@@ -1,5 +1,6 @@
 from djangosaml2.backends import Saml2Backend
 from django.contrib.auth.backends import RemoteUserBackend
+from django.conf import settings
 
 
 class staffSaml2Backend(Saml2Backend):
@@ -32,3 +33,22 @@ class staffRemoteUserBackend(RemoteUserBackend):
             user.is_staff = False
             user.save()
         return user
+
+
+try:
+    from django_auth_ldap.backend import LDAPBackend
+
+    class staffLdapBackend(LDAPBackend):
+        def get_or_build_user(self, username, ldap_user):
+            user, built = super().get_or_build_user(username, ldap_user)
+
+            user.is_staff = False
+            for attribute, value in settings.LDAP_CONFIG['staff_attributes']:
+                if attribute in ldap_user.attrs.data and value in ldap_user.attrs.data[attribute]:
+                    user.is_staff = True
+
+            return user, built
+
+
+except ImportError:
+    pass

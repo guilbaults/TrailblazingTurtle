@@ -64,4 +64,11 @@ SAML_CONFIG = {
         'key_file': '/opt/private.key',  # private part
         'cert_file': '/opt/public.cert',  # public part
     }],
+    # Use this to define if the user can login
+    'required_access_attributes': [],
+
+    # Use this to assign the staff role based on attributes returned by SAML
+    'staff_attributes': [
+        ('eduPersonAffiliation', 'staff')
+    ]
 }

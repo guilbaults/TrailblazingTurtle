@@ -698,6 +698,7 @@ def graph_mem(request, username, job_id):
     context = context_job_info(request, username, job_id)
 
     data = []
+    maximum = 0
 
     stat_types = [
         ('slurm_job_memory_usage', _('Used')),
@@ -741,7 +742,7 @@ def graph_mem(request, username, job_id):
             if context['multiple_jobs']:
                 info['stackgroup'] = 'one'
             data.append(info)
-        if stat[0] == 'slurm_job_memory_limit':
+        if stat[0] == 'slurm_job_memory_limit' and stats:
             maximum = max(max(map(lambda x: x['y'], stats)))
 
     if context['multiple_jobs']:
@@ -1165,6 +1166,7 @@ def graph_gpu_memory(request, username, job_id):
         step=max(context['step'], prom.rate('slurm-job-exporter')))
 
     data = []
+    gpu_type = None
     for line in stats:
         gpu_id = display_gpu_id(line)
         gpu_type = line['metric']['gpu_type']
@@ -1185,7 +1187,7 @@ def graph_gpu_memory(request, username, job_id):
     layout = {
         'yaxis': {
             'ticksuffix': ' GiB',
-            'range': [0, GPU_MEMORY[gpu_type]],
+            'range': [0, GPU_MEMORY[gpu_type]] if gpu_type else [],
             'title': _('GPU Memory'),
         }
     }
@@ -1223,6 +1225,7 @@ def graph_gpu_power(request, username, job_id):
             'hovertemplate': '%{y:.1f} W',
         })
 
+    layout = {}
     if len(stats) > 0:
         data.append({
             'x': x,

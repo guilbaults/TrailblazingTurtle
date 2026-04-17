@@ -12,6 +12,7 @@ try:
             for attribute, value in settings.SAML_CONFIG['required_access_attributes']:
                 if attribute not in attributes or value not in attributes[attribute]:
                     user.is_active = False
+                    break
 
             # figure out if user is staff
             user.is_staff = False
@@ -60,6 +61,7 @@ try:
             for attribute, value in settings.LDAP_CONFIG['required_access_attributes']:
                 if attribute not in ldap_user.attrs.data or value not in ldap_user.attrs.data[attribute]:
                     user.is_active = False
+                    break
 
             user.is_staff = False
             for attribute, value in settings.LDAP_CONFIG['staff_attributes']:

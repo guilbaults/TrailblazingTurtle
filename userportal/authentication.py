@@ -55,6 +55,12 @@ try:
         def get_or_build_user(self, username, ldap_user):
             user, built = super().get_or_build_user(username, ldap_user)
 
+            # figure out if user is active (i.e. can login)
+            user.is_active = True
+            for attribute, value in settings.LDAP_CONFIG['required_access_attributes']:
+                if attribute not in ldap_user.attrs.data or value not in ldap_user.attrs.data[attribute]:
+                    user.is_active = False
+
             user.is_staff = False
             for attribute, value in settings.LDAP_CONFIG['staff_attributes']:
                 if attribute in ldap_user.attrs.data and value in ldap_user.attrs.data[attribute]:

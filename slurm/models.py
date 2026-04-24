@@ -78,8 +78,6 @@ class AssocTable(models.Model):
     acct = models.TextField()
     partition = models.TextField()
     parent_acct = models.TextField()
-    lft = models.IntegerField()
-    rgt = models.IntegerField()
     shares = models.IntegerField()
     max_jobs = models.IntegerField(blank=True, null=True)
     max_jobs_accrue = models.IntegerField(blank=True, null=True)

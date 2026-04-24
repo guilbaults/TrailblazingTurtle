@@ -199,6 +199,9 @@ class JobTable(models.Model):
         END = 10
         OOM = 11
 
+    def get_state_display(self):
+        return self.state()
+
     job_db_inx = models.BigAutoField(primary_key=True)
     mod_time = models.PositiveBigIntegerField()
     deleted = models.IntegerField()
@@ -233,7 +236,7 @@ class JobTable(models.Model):
     node_inx = models.TextField(blank=True, null=True)
     partition = models.TextField()
     priority = models.PositiveIntegerField()
-    state = models.PositiveIntegerField(choices=StatesJob.choices)
+    state = models.PositiveIntegerField()
     timelimit = models.PositiveIntegerField()
     time_submit = models.PositiveBigIntegerField()
     time_eligible = models.PositiveBigIntegerField()

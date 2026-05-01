@@ -152,6 +152,8 @@ AUTHENTICATION_BACKENDS = [
 
 LDAP_BASE_DN = 'dc=computecanada,dc=ca'
 
+LDAP_CONFIG = {}
+
 LOGIN_REDIRECT_URL = '/'
 
 # Set to DEMO to True to enable demo mode with anonymized data

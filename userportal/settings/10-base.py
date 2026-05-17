@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'pages',
     'slurm',
     'notes',
+    #'maas',
 
     'jobstats',
     #'accountstats',

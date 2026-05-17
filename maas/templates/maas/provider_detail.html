@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{{ provider.name }} — {% translate "Provider Details" %}{% endblock title %}
+
+{% block content %}
+<h2>{{ provider.name }}</h2>
+
+<dl class="row">
+    <dt class="col-sm-3">{% translate "Name" %}</dt>
+    <dd class="col-sm-9">{{ provider.name }}</dd>
+
+    <dt class="col-sm-3">{% translate "Base URL" %}</dt>
+    <dd class="col-sm-9">{{ provider.url }}</dd>
+
+    <dt class="col-sm-3">{% translate "Status" %}</dt>
+    <dd class="col-sm-9">
+        {% if provider.is_active %}
+            <span class="badge bg-success">{% translate "Active" %}</span>
+        {% else %}
+            <span class="badge bg-secondary">{% translate "Inactive" %}</span>
+        {% endif %}
+    </dd>
+
+    <dt class="col-sm-3">{% translate "Created" %}</dt>
+    <dd class="col-sm-9">{{ provider.created_at|date:"Y-m-d H:i" }}</dd>
+
+    <dt class="col-sm-3">{% translate "Usage records" %}</dt>
+    <dd class="col-sm-9">{{ provider.usage_count }}</dd>
+</dl>
+
+<form method="POST" class="mb-4">{% csrf_token %}
+    {% if provider.is_active %}
+        <button type="submit" name="action" value="toggle_active" class="btn btn-warning">{% translate "Deactivate" %}</button>
+    {% else %}
+        <button type="submit" name="action" value="toggle_active" class="btn btn-success">{% translate "Activate" %}</button>
+    {% endif %}
+</form>
+
+<a href="{{settings.BASE_URL}}secure/maas/providers/" class="btn btn-secondary">{% translate "Back to Providers" %}</a>
+
+<h3 class="mt-4">{% translate "Recent Usage" %}</h3>
+<table class="table table-striped table-bordered">
+    <thead>
+        <tr>
+            <th>{% translate "Request ID" %}</th>
+            <th>{% translate "Model" %}</th>
+            <th>{% translate "User" %}</th>
+            <th>{% translate "Input tokens" %}</th>
+            <th>{% translate "Output tokens" %}</th>
+            <th>{% translate "Cost" %}</th>
+            <th>{% translate "Latency" %}</th>
+            <th>{% translate "Timestamp" %}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for record in records %}
+        <tr>
+            <td><code>{{ record.request_id }}</code></td>
+            <td>{{ record.model }}</td>
+            <td>{{ record.api_key.user.username }}</td>
+            <td>{{ record.input_tokens }}</td>
+            <td>{{ record.output_tokens }}</td>
+            <td>${{ record.cost|floatformat:4|default:"—" }}</td>
+            <td>{{ record.latency_ms }} ms</td>
+            <td>{{ record.created_at|date:"Y-m-d H:i:s" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center">{% translate "No usage records for this provider" %}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock content %}

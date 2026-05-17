@@ -145,6 +145,13 @@
               </li>
               {% endif %}
               {% endif %}
+              {% if 'maas' in settings.INSTALLED_APPS %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{settings.BASE_URL}}secure/maas/">
+                  <span data-feather="cpu"></span>{% translate "Model-as-a-Service" %}
+                </a>
+              </li>
+              {% endif %}
 
               {% if settings.EXTERNAL_LINKS %}
               <li class="nav-item">

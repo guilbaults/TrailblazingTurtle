@@ -15,6 +15,7 @@ nav:
     - 'Quotas': quotas.md
     - 'Quotas GPFS': quotasgpfs.md
     - 'CF Access': cfaccess.md
+    - 'Model-as-a-Service': maas.md
 
 theme:
   name: material

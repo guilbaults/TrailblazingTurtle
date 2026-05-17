@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Create API Key" %}{% endblock title %}
+
+{% block content %}
+<h2>{% translate "Create API Key" %}</h2>
+
+{% if raw_key %}
+<div class="alert alert-success">
+    <h4>{% translate "Your API key has been created" %}</h4>
+    <p class="mb-2">{% translate "Copy this key now — it will NOT be shown again:" %}</p>
+    <div class="input-group">
+        <input type="text" class="form-control" id="apiKey" value="{{ raw_key }}" readonly>
+        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('{{ raw_key }}');this.textContent='{% translate "Copied!" %}';setTimeout(()=>this.textContent='{% translate "Copy" %}',2000);">{% translate "Copy" %}</button>
+    </div>
+</div>
+<div class="alert alert-warning">
+    <strong>{% translate "Warning" %}:</strong> {% translate "This key will not be shown again. If you lose it, you will need to revoke this key and create a new one." %}
+</div>
+{% if is_owner %}
+<p><a class="btn btn-primary" href="{{settings.BASE_URL}}secure/maas/{{ target_user.username }}/">{% translate "Back to MaaS" %}</a></p>
+{% endif %}
+{% else %}
+<form method="POST">
+    {% csrf_token %}
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="form-group">
+        <label for="name">{% translate "Key name" %}</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+        <small class="form-text text-muted">{% translate "A descriptive name for this key (e.g., production, testing)" %}</small>
+    </div>
+    <div class="form-group">
+        <label for="expires_at">{% translate "Expires on" %} (optional)</label>
+        <input type="date" class="form-control" id="expires_at" name="expires_at">
+        <small class="form-text text-muted">{% translate "Leave empty for no expiration" %}</small>
+    </div>
+    <button type="submit" class="btn btn-primary">{% translate "Create Key" %}</button>
+    <a class="btn btn-secondary" href="{{settings.BASE_URL}}secure/maas/{{ target_user.username }}/">{% translate "Cancel" %}</a>
+</form>
+{% endif %}
+{% endblock content %}

@@ -91,3 +91,8 @@ if 'search' in settings.INSTALLED_APPS:
 
 if 'nodes' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/nodes/', include('nodes.urls')))
+
+if 'maas' in settings.INSTALLED_APPS:
+    from maas.urls import api_urls
+    urlpatterns.append(path('secure/maas/', include('maas.urls')))
+    urlpatterns += api_urls

@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% load i18n %}
+
+{% block title %}{% translate "Add Provider" %}{% endblock title %}
+
+{% block content %}
+<h2>{% translate "Add MAAS Provider" %}</h2>
+
+{% if raw_key %}
+<div class="alert alert-success">
+    <h4>{% translate "Provider key created" %}</h4>
+    <p><strong>{% translate "Name" %}:</strong> {{ provider.name }}</p>
+    <p>{% translate "Copy this provider key now — it will NOT be shown again:" %}</p>
+    <div class="input-group">
+        <input type="text" class="form-control" id="providerKey" value="{{ raw_key }}" readonly>
+        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText('{{ raw_key }}');this.textContent='{% translate "Copied!" %}';setTimeout(()=>this.textContent='{% translate "Copy" %}',2000);">{% translate "Copy" %}</button>
+    </div>
+    <p class="mt-2">{% translate "This key must be configured in the inference backend." %}</p>
+</div>
+<div class="alert alert-warning">
+    <strong>{% translate "Warning" %}:</strong> {% translate "This key will not be shown again. If you lose it, you will need to delete this provider and create a new one." %}
+</div>
+<p>
+    <a class="btn btn-primary" href="{{settings.BASE_URL}}secure/maas/providers/">{% translate "Back to Providers" %}</a>
+</p>
+{% else %}
+<form method="POST">
+    {% csrf_token %}
+    {% if error %}
+    <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    <div class="form-group">
+        <label for="name">{% translate "Provider name" %}</label>
+        <input type="text" class="form-control" id="name" name="name" required>
+        <small class="form-text text-muted">{% translate "Display name (e.g., OpenAI Production, Internal Cluster)" %}</small>
+    </div>
+    <div class="form-group">
+        <label for="url">{% translate "Base URL" %}</label>
+        <input type="url" class="form-control" id="url" name="url" required>
+        <small class="form-text text-muted">{% translate "Base URL of the inference service (e.g., https://inference.example.com)" %}</small>
+    </div>
+    <div class="form-group">
+        <label for="key">{% translate "Provider API key" %}</label>
+        <input type="text" class="form-control" id="key" name="key" required>
+        <small class="form-text text-muted">{% translate "Secret key shared with the inference backend to authenticate usage reports." %}</small>
+    </div>
+    <button type="submit" class="btn btn-primary">{% translate "Create Provider" %}</button>
+    <a class="btn btn-secondary" href="{{settings.BASE_URL}}secure/maas/providers/">{% translate "Cancel" %}</a>
+</form>
+{% endif %}
+{% endblock content %}

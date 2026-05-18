@@ -122,7 +122,7 @@ class UsageEndpoint(APIView):
         api_key_obj.save(update_fields=['last_used_at'])
 
         return Response(
-            MAASUsageRecordSerializer(record).data,
+            MAASUsageRecordSerializer(record, context={'request': request}).data,
             status=status.HTTP_201_CREATED
         )
 
@@ -150,7 +150,7 @@ class UsageEndpoint(APIView):
         if end:
             records = records.filter(created_at__lte=end)
 
-        serializer = MAASUsageRecordSerializer(records, many=True)
+        serializer = MAASUsageRecordSerializer(records, many=True, context={'request': request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

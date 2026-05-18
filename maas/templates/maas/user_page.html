@@ -8,16 +8,7 @@
 {% block content %}
 <h2>{% translate "Model-as-a-Service" %} — {{ target_user.username }}</h2>
 
-{% if is_owner %}
-<p>
-    <a class="btn btn-primary" href="{{settings.BASE_URL}}secure/maas/{{ target_user.username }}/keys/new/">{% translate "Create API Key" %}</a>
-</p>
-{% endif %}
-{% if request.user.is_staff %}
-<p><a class="btn btn-secondary" href="{{settings.BASE_URL}}secure/maas/providers/">{% translate "Providers" %}</a></p>
-{% endif %}
-
-<h3>{% translate "Recent Usage (last 100 records)" %}</h3>
+<h3>{% translate "Recent Usage" %}</h3>
 <div class="row">
     <div class="col-md-4">
         <div class="card mb-3">
@@ -45,10 +36,17 @@
     </div>
 </div>
 
+<h3>{% translate "Token Usage (last week)" %}</h3>
+<div id="graph_tokens"></div>
+<script>
+loadGraph('graph_tokens', '{{ settings.BASE_URL }}secure/maas/{{ target_user.username }}/graph/tokens.json');
+</script>
+
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
             <th>{% translate "Request ID" %}</th>
+            <th>{% translate "Key" %}</th>
             <th>{% translate "Model" %}</th>
             <th>{% translate "Provider" %}</th>
             <th>{% translate "Input tokens" %}</th>
@@ -62,6 +60,7 @@
         {% for record in records %}
         <tr>
             <td><code>{{ record.request_id }}</code></td>
+            <td>{{ record.api_key.name }}</td>
             <td>{{ record.model }}</td>
             <td>{{ record.provider.name }}</td>
             <td>{{ record.input_tokens|intcomma }}</td>
@@ -72,18 +71,23 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="8" class="text-center">{% translate "No usage records" %}</td>
+            <td colspan="9" class="text-center">{% translate "No usage records" %}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
+<p class="text-center">{% bootstrap_paginate records parameter="records_page" %}</p>
 
 <h3>{% translate "API Keys" %}</h3>
+{% if is_owner %}
+<p>
+    <a class="btn btn-primary" href="{{settings.BASE_URL}}secure/maas/{{ target_user.username }}/keys/new/">{% translate "Create API Key" %}</a>
+</p>
+{% endif %}
 <table class="table table-striped table-bordered">
     <thead>
         <tr>
             <th>{% translate "Name" %}</th>
-            <th>{% translate "Key" %}</th>
             <th>{% translate "Created" %}</th>
             <th>{% translate "Expires" %}</th>
             <th>{% translate "Last used" %}</th>
@@ -95,7 +99,6 @@
         {% for key in keys %}
         <tr>
             <td>{{ key.name }}</td>
-            <td><code>******</code></td>
             <td>{{ key.created_at|date:"Y-m-d H:i" }}</td>
             <td>
                 {% if key.expires_at %}
@@ -132,7 +135,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="7" class="text-center">{% translate "No API keys created" %}</td>
+            <td colspan="6" class="text-center">{% translate "No API keys created" %}</td>
         </tr>
         {% endfor %}
     </tbody>

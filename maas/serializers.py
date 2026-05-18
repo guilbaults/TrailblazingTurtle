@@ -22,8 +22,6 @@ class MAASUsageRecordSerializer(serializers.HyperlinkedModelSerializer):
         fields = [
             'id',
             'user',
-            'api_key',
-            'provider',
             'provider_name',
             'request_id',
             'model',

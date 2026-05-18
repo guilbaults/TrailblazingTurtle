@@ -9,6 +9,7 @@ urlpatterns = [
     path('providers/', views.provider_list, name='maas_providers'),
     path('providers/new/', views.provider_new, name='maas_provider_new'),
     path('providers/<int:provider_id>/', views.provider_detail, name='maas_provider_detail'),
+    path('<str:username>/graph/tokens.json', views.graph_tokens, name='maas_graph_tokens'),
 ]
 
 api_urls = [

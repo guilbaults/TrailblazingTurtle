@@ -1,17 +1,21 @@
 import functools
 import secrets
 import uuid
+from datetime import timedelta
 
-from django.db.models import Count
+from django.db.models import Count, F, Sum
+from django.db.models.functions import TruncHour
 from django.shortcuts import render, redirect, get_object_or_404
 from django.core.paginator import Paginator
-from django.http import HttpResponseForbidden, HttpResponseNotFound
+from django.http import HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
+
+from userportal.common import parse_start_end
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -226,24 +230,28 @@ def user_page(request, username):
     key_qs = MAASApiKey.objects.filter(user=target_user).order_by('-created_at').only(
         'id', 'name', 'created_at', 'expires_at', 'is_active', 'last_used_at', 'user_id',
     )
-    paginator = Paginator(key_qs, 100, orphans=50)
-    keys_page = paginator.get_page(request.GET.get('page'))
+    key_paginator = Paginator(key_qs, 10)
+    keys_page = key_paginator.get_page(request.GET.get('page'))
 
-    records = MAASUsageRecord.objects.filter(api_key__user=target_user).order_by('-created_at').select_related(
-        'provider', 'api_key__user',
-    )[:100]
+    record_qs = MAASUsageRecord.objects.filter(api_key__user=target_user).order_by('-created_at').select_related(
+        'provider', 'api_key',
+    )
+    record_paginator = Paginator(record_qs, 10)
+    records_page = record_paginator.get_page(request.GET.get('records_page'))
 
-    total_input = sum(r.input_tokens for r in records)
-    total_output = sum(r.output_tokens for r in records)
-    total_cost = sum((r.cost or 0) for r in records)
+    totals = MAASUsageRecord.objects.filter(api_key__user=target_user).aggregate(
+        total_input=Sum('input_tokens'),
+        total_output=Sum('output_tokens'),
+        total_cost=Sum('cost', default=0),
+    )
 
     context = {
         'target_user': target_user,
         'keys': keys_page,
-        'records': records,
-        'total_input_tokens': total_input,
-        'total_output_tokens': total_output,
-        'total_cost': total_cost,
+        'records': records_page,
+        'total_input_tokens': totals.get('total_input') or 0,
+        'total_output_tokens': totals.get('total_output') or 0,
+        'total_cost': totals.get('total_cost') or 0,
         'is_owner': request.user.username == target_user.username,
     }
     return render(request, 'maas/user_page.html', context)
@@ -373,3 +381,63 @@ def provider_detail(request, provider_id):
         'provider': provider,
         'records': records,
     })
+
+
+@login_required
+@key_owner_or_staff
+@parse_start_end(timedelta_start=timedelta(days=7))
+def graph_tokens(request, username):
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+
+    if username != request.user.username:
+        try:
+            target_user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return JsonResponse({'error': 'User not found'}, status=404)
+    else:
+        target_user = request.user
+
+    records = MAASUsageRecord.objects.filter(
+        api_key__user=target_user,
+        created_at__gte=request.start,
+        created_at__lte=request.end,
+    ).annotate(
+        hour=TruncHour('created_at'),
+    ).values('hour', 'model').annotate(
+        total=Sum(F('input_tokens') + F('output_tokens')),
+    ).order_by('hour', 'model')
+
+    models = sorted(set(r['model'] for r in records))
+    hours = sorted(set(r['hour'] for r in records))
+
+    if not records:
+        return JsonResponse({'data': [], 'layout': {
+            'yaxis': {'title': _('Tokens')},
+            'xaxis': {'title': _('Hour')},
+            'barmode': 'stack',
+        }})
+
+    data = []
+    for model in models:
+        y = {}
+        for r in records:
+            if r['model'] == model:
+                y[r['hour']] = r['total']
+
+        x = [h.strftime('%Y-%m-%d %H:%M:%S') for h in hours]
+        y_vals = [y.get(h, 0) for h in hours]
+
+        data.append({
+            'x': x,
+            'y': y_vals,
+            'type': 'bar',
+            'name': model,
+            'hovertemplate': f'<b>{model}</b><br>%{{x}}<br>Tokens: %{{y:,.0f}}<extra></extra>',
+        })
+
+    return JsonResponse({'data': data, 'layout': {
+        'barmode': 'stack',
+        'yaxis': {'title': _('Tokens')},
+        'xaxis': {'title': _('Hour')},
+    }})

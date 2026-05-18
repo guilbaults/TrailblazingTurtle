@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL('ALTER TABLE notes_note CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
-        migrations.RunSQL('ALTER TABLE notes_note MODIFY title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
-        migrations.RunSQL('ALTER TABLE notes_note MODIFY notes LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
+        #migrations.RunSQL('ALTER TABLE notes_note CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
+        #migrations.RunSQL('ALTER TABLE notes_note MODIFY title VARCHAR(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
+        #migrations.RunSQL('ALTER TABLE notes_note MODIFY notes LONGTEXT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;'),
     ]

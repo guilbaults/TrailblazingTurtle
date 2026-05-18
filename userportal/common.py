@@ -2,12 +2,8 @@ import functools
 from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
 from datetime import datetime, timedelta
-try:
-    from ccldap.models import LdapAllocation, LdapUser
-    from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
-    CCLDAP_AVAILABLE = True
-except Exception:
-    CCLDAP_AVAILABLE = False
+from ccldap.models import LdapAllocation, LdapUser
+from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
 import yaml
 from django.conf import settings
 import os

@@ -64,6 +64,7 @@ loadGraph('graph_tokens', '{{ settings.BASE_URL }}secure/maas/{{ target_user.use
 <script>
 $(document).ready(function() {
     $('#usage-records').DataTable({
+        searching: false,
         order: [[ 8, 'desc' ]],
         stateSave: true,
         columns: [

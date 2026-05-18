@@ -1,21 +1,97 @@
+from django import forms
 from django.contrib import admin
-from maas.models import MAASProvider, MAASApiKey, MAASUsageRecord
+from django.contrib.auth.hashers import make_password
+from django.utils.translation import gettext_lazy as _
+
+from maas.models import MAASProvider, MAASApiKey, MAASUsageRecord, sha256_key
+
+
+class MAASProviderAdminForm(forms.ModelForm):
+    clear_text_key = forms.CharField(
+        label=_('API key (clear text)'),
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'autocomplete': 'new-password',
+                'placeholder': _('Enter a key or click Generate'),
+            }
+        ),
+        help_text=_('Enter a clear-text key, or click Generate. It will be hashed and stored securely. Leave blank when editing to keep the existing key.'),
+    )
+
+    class Meta:
+        model = MAASProvider
+        fields = '__all__'
+        exclude = ('key', 'key_hash')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(['name', 'url', 'clear_text_key', 'is_active', 'created_at', 'updated_at'])
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        raw_key = self.cleaned_data.get('clear_text_key', '').strip()
+        if raw_key:
+            instance.key = make_password(raw_key)
+            instance.key_hash = sha256_key(raw_key)
+        if commit:
+            instance.save()
+        return instance
+
+
+class MAASApiKeyAdminForm(forms.ModelForm):
+    clear_text_key = forms.CharField(
+        label=_('API key (clear text)'),
+        required=False,
+        widget=forms.PasswordInput(
+            attrs={
+                'autocomplete': 'new-password',
+                'placeholder': _('Enter a key or click Generate'),
+            }
+        ),
+        help_text=_('Enter a clear-text key, or click Generate. It will be hashed and stored securely. Leave blank when editing to keep the existing key.'),
+    )
+
+    class Meta:
+        model = MAASApiKey
+        fields = '__all__'
+        exclude = ('key', 'key_hash')
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(['user', 'name', 'clear_text_key', 'created_at', 'expires_at', 'is_active', 'last_used_at'])
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        raw_key = self.cleaned_data.get('clear_text_key', '').strip()
+        if raw_key:
+            instance.key = make_password(raw_key)
+            instance.key_hash = sha256_key(raw_key)
+        if commit:
+            instance.save()
+        return instance
 
 
 @admin.register(MAASProvider)
 class MAASProviderAdmin(admin.ModelAdmin):
+    form = MAASProviderAdminForm
     list_display = ('name', 'url', 'is_active', 'created_at', 'updated_at')
     list_filter = ('is_active',)
     search_fields = ('name',)
     readonly_fields = ('created_at', 'updated_at', 'key_hash')
 
+    change_form_template = 'admin/maas/change_form.html'
+
 
 @admin.register(MAASApiKey)
 class MAASApiKeyAdmin(admin.ModelAdmin):
+    form = MAASApiKeyAdminForm
     list_display = ('user', 'name', 'is_active', 'is_expired', 'created_at', 'expires_at', 'last_used_at')
     list_filter = ('is_active',)
     search_fields = ('user__username', 'name')
     readonly_fields = ('created_at', 'last_used_at', 'key_hash')
+
+    change_form_template = 'admin/maas/change_form.html'
 
 
 @admin.register(MAASUsageRecord)

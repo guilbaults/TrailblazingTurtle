@@ -33,6 +33,11 @@ if 'jobstats' in settings.INSTALLED_APPS:
     router.register(r'jobscripts', JobScriptViewSet)
     router.register(r'jobs', JobsViewSet, basename='jobs')
 
+if 'maas' in settings.INSTALLED_APPS:
+    from maas.views import ApiKeysViewSet, UsageRecordsViewSet
+    router.register(r'maaskeys', ApiKeysViewSet, basename='maaskeys')
+    router.register(r'maasusage', UsageRecordsViewSet, basename='maasusage')
+
 urlpatterns = [
     path('', include('pages.urls')),
     path('i18n/', include('django.conf.urls.i18n')),

@@ -1,4 +1,4 @@
-from maas.models import MAASUsageRecord
+from maas.models import MAASApiKey, MAASUsageRecord
 from rest_framework import serializers
 
 
@@ -16,6 +16,7 @@ class MAASUsageSubmitSerializer(serializers.Serializer):
 class MAASUsageRecordSerializer(serializers.HyperlinkedModelSerializer):
     user = serializers.ReadOnlyField(source='api_key.user.username')
     provider_name = serializers.ReadOnlyField(source='provider.name')
+    key_name = serializers.ReadOnlyField(source='api_key.name')
 
     class Meta:
         model = MAASUsageRecord
@@ -23,6 +24,7 @@ class MAASUsageRecordSerializer(serializers.HyperlinkedModelSerializer):
             'id',
             'user',
             'provider_name',
+            'key_name',
             'request_id',
             'model',
             'endpoint',
@@ -31,6 +33,25 @@ class MAASUsageRecordSerializer(serializers.HyperlinkedModelSerializer):
             'cost',
             'latency_ms',
             'created_at',
+        ]
+
+
+class MAASApiKeySerializer(serializers.ModelSerializer):
+    is_expired = serializers.SerializerMethodField()
+
+    def get_is_expired(self, obj):
+        return obj.is_expired
+
+    class Meta:
+        model = MAASApiKey
+        fields = [
+            'id',
+            'name',
+            'created_at',
+            'expires_at',
+            'is_active',
+            'last_used_at',
+            'is_expired',
         ]
 
 

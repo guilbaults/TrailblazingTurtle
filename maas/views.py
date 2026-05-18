@@ -6,7 +6,6 @@ from datetime import timedelta
 from django.db.models import Count, F, Sum
 from django.db.models.functions import TruncHour
 from django.shortcuts import render, redirect, get_object_or_404
-from django.core.paginator import Paginator
 from django.http import HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
@@ -17,7 +16,8 @@ from django.views.decorators.http import require_POST
 
 from userportal.common import parse_start_end
 
-from rest_framework import status
+from rest_framework import status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.authentication import BaseAuthentication
@@ -25,6 +25,7 @@ from rest_framework.exceptions import AuthenticationFailed
 
 from maas.models import MAASProvider, MAASApiKey, MAASUsageRecord, sha256_key
 from maas.serializers import (
+    MAASApiKeySerializer,
     MAASUsageSubmitSerializer,
     MAASUsageRecordSerializer,
     MAASVerifyRequestSerializer,
@@ -206,6 +207,42 @@ class PublicKeyRevokeEndpoint(APIView):
         return Response({}, status=status.HTTP_200_OK)
 
 
+class ApiKeysViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = MAASApiKeySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        username = self.request.query_params.get('username')
+        if username is not None and self.request.user.is_staff:
+            target_user = User.objects.get(username=username)
+        else:
+            target_user = self.request.user
+
+        return MAASApiKey.objects.filter(
+            user=target_user
+        ).order_by('-created_at')
+
+
+class UsageRecordsViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = MAASUsageRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        username = self.request.query_params.get('username')
+        if username is not None and self.request.user.is_staff:
+            target_user = User.objects.get(username=username)
+        else:
+            target_user = self.request.user
+
+        return MAASUsageRecord.objects.filter(
+            api_key__user=target_user
+        ).select_related('api_key', 'provider').order_by('-created_at')
+
+
 # --- Web Views ---
 
 @login_required
@@ -227,18 +264,6 @@ def user_page(request, username):
     else:
         target_user = request.user
 
-    key_qs = MAASApiKey.objects.filter(user=target_user).order_by('-created_at').only(
-        'id', 'name', 'created_at', 'expires_at', 'is_active', 'last_used_at', 'user_id',
-    )
-    key_paginator = Paginator(key_qs, 10)
-    keys_page = key_paginator.get_page(request.GET.get('page'))
-
-    record_qs = MAASUsageRecord.objects.filter(api_key__user=target_user).order_by('-created_at').select_related(
-        'provider', 'api_key',
-    )
-    record_paginator = Paginator(record_qs, 10)
-    records_page = record_paginator.get_page(request.GET.get('records_page'))
-
     totals = MAASUsageRecord.objects.filter(api_key__user=target_user).aggregate(
         total_input=Sum('input_tokens'),
         total_output=Sum('output_tokens'),
@@ -247,8 +272,6 @@ def user_page(request, username):
 
     context = {
         'target_user': target_user,
-        'keys': keys_page,
-        'records': records_page,
         'total_input_tokens': totals.get('total_input') or 0,
         'total_output_tokens': totals.get('total_output') or 0,
         'total_cost': totals.get('total_cost') or 0,

@@ -1,5 +1,4 @@
 from datetime import datetime, timedelta
-from django.contrib.auth.hashers import make_password
 from tests.tests import CustomTestCase
 from maas.models import MAASProvider, MAASApiKey, MAASUsageRecord, sha256_key
 
@@ -9,8 +8,7 @@ class MaasTestCase(CustomTestCase):
         return MAASProvider.objects.create(
             name=name,
             url=url,
-            key=make_password(key),
-            key_hash=sha256_key(key),
+            key=sha256_key(key),
             is_active=True,
         )
 
@@ -18,8 +16,7 @@ class MaasTestCase(CustomTestCase):
         return MAASApiKey.objects.create(
             user=user,
             name=name,
-            key=make_password(key),
-            key_hash=sha256_key(key),
+            key=sha256_key(key),
             expires_at=expires_at,
             is_active=True,
         )
@@ -290,6 +287,25 @@ class MaasTestCase(CustomTestCase):
         self.assertEqual(response.status_code, 200)
 
 
+def _create_provider(name='Test Provider', url='https://test.example.com', key='test-provider-key'):
+    return MAASProvider.objects.create(
+        name=name,
+        url=url,
+        key=sha256_key(key),
+        is_active=True,
+    )
+
+
+def _create_api_key(user, name='Test Key', key='test-user-key', expires_at=None):
+    return MAASApiKey.objects.create(
+        user=user,
+        name=name,
+        key=sha256_key(key),
+        expires_at=expires_at,
+        is_active=True,
+    )
+
+
 class MaasAdminTestCase(CustomTestCase):
     def test_admin_provider_key_hashed_on_create(self):
         response = self.admin_client.post('/admin/maas/maasprovider/add/', {
@@ -301,7 +317,7 @@ class MaasAdminTestCase(CustomTestCase):
         self.assertRedirects(response, '/admin/maas/maasprovider/')
         provider = MAASProvider.objects.get(name='Test Provider')
         self.assertNotEqual(provider.key, 'my-secret-key')
-        self.assertEqual(provider.key_hash, sha256_key('my-secret-key'))
+        self.assertEqual(provider.key, sha256_key('my-secret-key'))
 
     def test_admin_provider_key_not_plaintext(self):
         self.admin_client.post('/admin/maas/maasprovider/add/', {
@@ -311,11 +327,11 @@ class MaasAdminTestCase(CustomTestCase):
             'is_active': True,
         })
         provider = MAASProvider.objects.get(name='Secret Provider')
-        self.assertTrue(provider.key.startswith('pbkdf2_') or provider.key.startswith('argon2') or provider.key.startswith('bcrypt'))
+        self.assertEqual(provider.key, sha256_key('super-secret-value'))
 
     def test_admin_provider_edit_blank_key_preserves_existing(self):
-        provider = self._create_provider(key='original-key')
-        original_key_hash = provider.key_hash
+        provider = _create_provider(key='original-key')
+        original_key = provider.key
         response = self.admin_client.post(f'/admin/maas/maasprovider/{provider.id}/change/', {
             'name': 'Updated Provider',
             'url': 'https://updated.example.com',
@@ -325,10 +341,10 @@ class MaasAdminTestCase(CustomTestCase):
         self.assertRedirects(response, '/admin/maas/maasprovider/')
         provider.refresh_from_db()
         self.assertEqual(provider.name, 'Updated Provider')
-        self.assertEqual(provider.key_hash, original_key_hash)
+        self.assertEqual(provider.key, original_key)
 
     def test_admin_provider_edit_new_key_overwrites(self):
-        provider = self._create_provider(key='original-key')
+        provider = _create_provider(key='original-key')
         self.admin_client.post(f'/admin/maas/maasprovider/{provider.id}/change/', {
             'name': 'Updated Provider',
             'url': 'https://updated.example.com',
@@ -336,7 +352,7 @@ class MaasAdminTestCase(CustomTestCase):
             'is_active': True,
         })
         provider.refresh_from_db()
-        self.assertEqual(provider.key_hash, sha256_key('new-secret-key'))
+        self.assertEqual(provider.key, sha256_key('new-secret-key'))
 
     def test_admin_api_key_hashed_on_create(self):
         response = self.admin_client.post('/admin/maas/maasapikey/add/', {
@@ -352,7 +368,7 @@ class MaasAdminTestCase(CustomTestCase):
         self.assertRedirects(response, '/admin/maas/maasapikey/')
         api_key = MAASApiKey.objects.get(name='Admin Created Key')
         self.assertNotEqual(api_key.key, 'admin-api-secret')
-        self.assertEqual(api_key.key_hash, sha256_key('admin-api-secret'))
+        self.assertEqual(api_key.key, sha256_key('admin-api-secret'))
 
     def test_admin_api_key_not_plaintext(self):
         self.admin_client.post('/admin/maas/maasapikey/add/', {
@@ -366,11 +382,11 @@ class MaasAdminTestCase(CustomTestCase):
             'last_used_at_1': '',
         })
         api_key = MAASApiKey.objects.get(name='Secret API Key')
-        self.assertTrue(api_key.key.startswith('pbkdf2_') or api_key.key.startswith('argon2') or api_key.key.startswith('bcrypt'))
+        self.assertEqual(api_key.key, sha256_key('secret-api-value'))
 
     def test_admin_api_key_edit_blank_preserves_existing(self):
-        api_key = self._create_api_key(self.testuser, key='original-api-key')
-        original_hash = api_key.key_hash
+        api_key = _create_api_key(self.testuser, key='original-api-key')
+        original_hash = api_key.key
         self.admin_client.post(f'/admin/maas/maasapikey/{api_key.id}/change/', {
             'user': self.testuser.pk,
             'name': 'Updated API Key',
@@ -383,4 +399,4 @@ class MaasAdminTestCase(CustomTestCase):
         })
         api_key.refresh_from_db()
         self.assertEqual(api_key.name, 'Updated API Key')
-        self.assertEqual(api_key.key_hash, original_hash)
+        self.assertEqual(api_key.key, original_hash)

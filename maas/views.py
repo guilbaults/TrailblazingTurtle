@@ -9,7 +9,6 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden, HttpResponseNotFound, JsonResponse
 from django.contrib.auth.decorators import login_required
 from django.contrib.admin.views.decorators import staff_member_required
-from django.contrib.auth.hashers import make_password, check_password
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
@@ -60,11 +59,8 @@ class BearerKeyAuthentication(BaseAuthentication):
 
         key_hash = sha256_key(raw_key)
         try:
-            candidate = MAASApiKey.objects.get(is_active=True, key_hash=key_hash)
+            candidate = MAASApiKey.objects.get(is_active=True, key=key_hash)
         except MAASApiKey.DoesNotExist:
-            raise AuthenticationFailed(_('Invalid API key'))
-
-        if not check_password(raw_key, candidate.key):
             raise AuthenticationFailed(_('Invalid API key'))
 
         if candidate.is_expired:
@@ -82,12 +78,9 @@ def lookup_provider(provider_key):
     """Find an active provider by its plaintext API key."""
     key_hash = sha256_key(provider_key)
     try:
-        candidate = MAASProvider.objects.get(is_active=True, key_hash=key_hash)
+        return MAASProvider.objects.get(is_active=True, key=key_hash)
     except MAASProvider.DoesNotExist:
         return None
-    if not check_password(provider_key, candidate.key):
-        return None
-    return candidate
 
 
 # --- API Endpoints ---
@@ -198,10 +191,9 @@ class PublicKeyRevokeEndpoint(APIView):
             if raw_key:
                 key_hash = sha256_key(raw_key)
                 try:
-                    candidate = MAASApiKey.objects.get(is_active=True, key_hash=key_hash)
-                    if check_password(raw_key, candidate.key):
-                        candidate.is_active = False
-                        candidate.save(update_fields=['is_active'])
+                    candidate = MAASApiKey.objects.get(is_active=True, key=key_hash)
+                    candidate.is_active = False
+                    candidate.save(update_fields=['is_active'])
                 except MAASApiKey.DoesNotExist:
                     pass
         return Response({}, status=status.HTTP_200_OK)
@@ -304,7 +296,6 @@ def key_new(request, username):
             })
 
         raw_key = secrets.token_urlsafe(48)
-        hashed_key = make_password(raw_key)
         key_hash = sha256_key(raw_key)
 
         expires_at = None
@@ -315,8 +306,7 @@ def key_new(request, username):
         api_key = MAASApiKey.objects.create(
             user=target_user,
             name=name,
-            key=hashed_key,
-            key_hash=key_hash,
+            key=key_hash,
             expires_at=expires_at,
         )
 
@@ -370,12 +360,10 @@ def provider_new(request):
                 'error': _('All fields are required'),
             })
 
-        hashed_key = make_password(raw_key)
         provider = MAASProvider.objects.create(
             name=name,
             url=url,
-            key=hashed_key,
-            key_hash=sha256_key(raw_key),
+            key=sha256_key(raw_key),
         )
 
         return render(request, 'maas/provider_new.html', {

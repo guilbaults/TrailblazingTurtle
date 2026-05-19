@@ -11,8 +11,7 @@ def sha256_key(raw_key):
 class MAASProvider(models.Model):
     name = models.CharField(_('name'), max_length=255, unique=True)
     url = models.URLField(_('base URL'), max_length=500)
-    key = models.CharField(_('API key (hashed)'), max_length=255)
-    key_hash = models.CharField(_('key hash (lookup)'), max_length=64, db_index=True)
+    key = models.CharField(_('key hash (lookup)'), max_length=64, db_index=True)
     is_active = models.BooleanField(_('active'), default=True)
     created_at = models.DateTimeField(_('created'), auto_now_add=True)
     updated_at = models.DateTimeField(_('updated'), auto_now=True)
@@ -29,8 +28,7 @@ class MAASProvider(models.Model):
 class MAASApiKey(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='maas_keys', verbose_name=_('user'))
     name = models.CharField(_('name'), max_length=255)
-    key = models.CharField(_('API key (hashed)'), max_length=255)
-    key_hash = models.CharField(_('key hash (lookup)'), max_length=64, db_index=True)
+    key = models.CharField(_('key hash (lookup)'), max_length=64, db_index=True)
     created_at = models.DateTimeField(_('created'), auto_now_add=True)
     expires_at = models.DateTimeField(_('expires'), null=True, blank=True)
     is_active = models.BooleanField(_('active'), default=True)

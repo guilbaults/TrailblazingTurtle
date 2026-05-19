@@ -1,6 +1,5 @@
 from django import forms
 from django.contrib import admin
-from django.contrib.auth.hashers import make_password
 from django.utils.translation import gettext_lazy as _
 
 from maas.models import MAASProvider, MAASApiKey, MAASUsageRecord, sha256_key
@@ -16,13 +15,13 @@ class MAASProviderAdminForm(forms.ModelForm):
                 'placeholder': _('Enter a key or click Generate'),
             }
         ),
-        help_text=_('Enter a clear-text key, or click Generate. It will be hashed and stored securely. Leave blank when editing to keep the existing key.'),
+        help_text=_('Enter a clear-text key, or click Generate. It will be hashed (SHA-256) and stored. Leave blank when editing to keep the existing key.'),
     )
 
     class Meta:
         model = MAASProvider
         fields = '__all__'
-        exclude = ('key', 'key_hash')
+        exclude = ('key',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -32,8 +31,7 @@ class MAASProviderAdminForm(forms.ModelForm):
         instance = super().save(commit=False)
         raw_key = self.cleaned_data.get('clear_text_key', '').strip()
         if raw_key:
-            instance.key = make_password(raw_key)
-            instance.key_hash = sha256_key(raw_key)
+            instance.key = sha256_key(raw_key)
         if commit:
             instance.save()
         return instance
@@ -49,13 +47,13 @@ class MAASApiKeyAdminForm(forms.ModelForm):
                 'placeholder': _('Enter a key or click Generate'),
             }
         ),
-        help_text=_('Enter a clear-text key, or click Generate. It will be hashed and stored securely. Leave blank when editing to keep the existing key.'),
+        help_text=_('Enter a clear-text key, or click Generate. It will be hashed (SHA-256) and stored. Leave blank when editing to keep the existing key.'),
     )
 
     class Meta:
         model = MAASApiKey
         fields = '__all__'
-        exclude = ('key', 'key_hash')
+        exclude = ('key',)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -65,8 +63,7 @@ class MAASApiKeyAdminForm(forms.ModelForm):
         instance = super().save(commit=False)
         raw_key = self.cleaned_data.get('clear_text_key', '').strip()
         if raw_key:
-            instance.key = make_password(raw_key)
-            instance.key_hash = sha256_key(raw_key)
+            instance.key = sha256_key(raw_key)
         if commit:
             instance.save()
         return instance
@@ -78,7 +75,7 @@ class MAASProviderAdmin(admin.ModelAdmin):
     list_display = ('name', 'url', 'is_active', 'created_at', 'updated_at')
     list_filter = ('is_active',)
     search_fields = ('name',)
-    readonly_fields = ('created_at', 'updated_at', 'key_hash')
+    readonly_fields = ('created_at', 'updated_at', 'key')
 
     change_form_template = 'admin/maas/change_form.html'
 
@@ -89,7 +86,7 @@ class MAASApiKeyAdmin(admin.ModelAdmin):
     list_display = ('user', 'name', 'is_active', 'is_expired', 'created_at', 'expires_at', 'last_used_at')
     list_filter = ('is_active',)
     search_fields = ('user__username', 'name')
-    readonly_fields = ('created_at', 'last_used_at', 'key_hash')
+    readonly_fields = ('created_at', 'last_used_at', 'key')
 
     change_form_template = 'admin/maas/change_form.html'
 

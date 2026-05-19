@@ -1,5 +1,3 @@
-# Generated migration for maas module
-
 from django.conf import settings
 from django.db import migrations, models
 import django.db.models.deletion
@@ -20,8 +18,7 @@ class Migration(migrations.Migration):
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=255, unique=True, verbose_name='name')),
                 ('url', models.URLField(max_length=500, verbose_name='base URL')),
-                ('key', models.CharField(max_length=255, verbose_name='API key (hashed)')),
-                ('key_hash', models.CharField(db_index=True, max_length=64, verbose_name='key hash (lookup)')),
+                ('key', models.CharField(db_index=True, max_length=64, verbose_name='key hash (lookup)')),
                 ('is_active', models.BooleanField(default=True, verbose_name='active')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created')),
                 ('updated_at', models.DateTimeField(auto_now=True, verbose_name='updated')),
@@ -37,8 +34,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(max_length=255, verbose_name='name')),
-                ('key', models.CharField(max_length=255, verbose_name='API key (hashed)')),
-                ('key_hash', models.CharField(db_index=True, max_length=64, verbose_name='key hash (lookup)')),
+                ('key', models.CharField(db_index=True, max_length=64, verbose_name='key hash (lookup)')),
                 ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created')),
                 ('expires_at', models.DateTimeField(blank=True, null=True, verbose_name='expires')),
                 ('is_active', models.BooleanField(default=True, verbose_name='active')),

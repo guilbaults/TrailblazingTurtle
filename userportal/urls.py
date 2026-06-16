@@ -65,6 +65,12 @@ if "djangosaml2" in settings.INSTALLED_APPS:
             path('test/', djangosaml2.views.EchoAttributesView.as_view()),
         ]
 
+if "mozilla_django_oidc" in settings.INSTALLED_APPS:
+    urlpatterns += [
+        path('oidc/', include('mozilla_django_oidc.urls')),
+    ]
+
+
 if 'jobstats' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))
 

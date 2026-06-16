@@ -114,7 +114,8 @@ Listen 8000
 ```
 
 # Django Authentication
-This portal is using the standard django authentication, multiple backends are supported, we are using SAML2 and the FreeIPA backend, on different clusters. Users with the is_staff attribute can access other users pages and the `top` module. 
+This portal is using standard Django authentication. Multiple backends are supported; we are using SAML2, OIDC/OAuth, and the FreeIPA/LDAP backend on different clusters. Users with the is_staff attribute can access other users' pages and the `top` module.
+
 
 ## SAML2
 For SAML2, certificates need to be generated and the metadata.xml need a little modification.

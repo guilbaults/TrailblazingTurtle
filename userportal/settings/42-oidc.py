@@ -19,7 +19,7 @@
 # OpenID Connect Provider configurations:
 OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://your-idp.example.com/auth'
 OIDC_OP_TOKEN_ENDPOINT = 'https://your-idp.example.com/token'
-OIDC_OP_USERINFO_ENDPOINT = 'https://your-idp.example.com/userinfo'
+OIDC_OP_USER_ENDPOINT = 'https://your-idp.example.com/userinfo'
 OIDC_OP_JWKS_ENDPOINT = 'https://your-idp.example.com/jwks'
 
 OIDC_RP_CLIENT_ID = 'your-client-id'
@@ -29,7 +29,7 @@ OIDC_RP_CLIENT_SECRET = 'your-client-secret'
 OIDC_RP_SIGN_ALGO = 'RS256'
 
 # Custom scopes if needed
-OIDC_RP_SCOPES = ['openid', 'email', 'profile']
+OIDC_RP_SCOPES = 'openid email profile'
 
 # If set to True, a new Django user will be created if one does not exist
 OIDC_CREATE_USER = True

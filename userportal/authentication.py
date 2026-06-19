@@ -39,6 +39,15 @@ try:
     from django.conf import settings
 
     class staffOIDCBackend(OIDCAuthenticationBackend):
+        """Claims verifications is done in _update_user_attributes"""
+        def verify_claims(self, claims):
+            return True
+
+        """Get users that match by username"""
+        def filter_users_by_claims(self, claims):
+            username = self.get_username(claims)
+            return self.UserModel.objects.filter(username__iexact=username)
+
         """This will add/remove the is_staff and is_active attributes from the user as appropriate based on OIDC claims."""
         def get_username(self, claims):
             username = claims.get('preferred_username')
@@ -94,4 +103,3 @@ try:
             return self._update_user_attributes(user, claims)
 except ImportError:
     pass
-

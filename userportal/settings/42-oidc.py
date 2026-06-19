@@ -9,6 +9,13 @@
 # LOGIN_REDIRECT_URL = '/'
 # LOGOUT_REDIRECT_URL = '/'
 
+# if behind a proxy
+# USE_X_FORWARDED_HOST = True
+# SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+# for the case of multiple proxies, this is needed
+# MIDDLEWARE = ['multipleproxy.middleware.MultipleProxyMiddleware'] + MIDDLEWARE
+
+
 # OpenID Connect Provider configurations:
 OIDC_OP_AUTHORIZATION_ENDPOINT = 'https://your-idp.example.com/auth'
 OIDC_OP_TOKEN_ENDPOINT = 'https://your-idp.example.com/token'

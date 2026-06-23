@@ -103,3 +103,139 @@ try:
             return self._update_user_attributes(user, claims)
 except ImportError:
     pass
+
+
+class staffOpenEdxBackend(RemoteUserBackend):
+    """Authentication backend for OpenEdX OAuth2 + JWT tokens, using RemoteUserBackend."""
+
+    @property
+    def create_unknown_user(self):
+        return getattr(settings, 'OPENEDX_CREATE_UNKNOWN_USER', True)
+
+    def verify_token(self, token):
+        import jwt
+        try:
+            verify_signature = getattr(settings, 'OPENEDX_VERIFY_SIGNATURE', False)
+            if verify_signature:
+                from jwt import PyJWKClient
+                jwks_endpoint = getattr(settings, 'OPENEDX_JWKS_ENDPOINT', None)
+                if not jwks_endpoint and hasattr(settings, 'OPENEDX_LMS_URL'):
+                    jwks_endpoint = f"{settings.OPENEDX_LMS_URL.rstrip('/')}/oauth2/jwks/"
+
+                algorithms = [getattr(settings, 'OPENEDX_SIGN_ALGO', 'RS256')]
+                audience = getattr(settings, 'OPENEDX_CLIENT_ID', None)
+
+                if jwks_endpoint and 'RS256' in algorithms:
+                    jwk_client = PyJWKClient(jwks_endpoint)
+                    signing_key = jwk_client.get_signing_key_from_jwt(token)
+                    key = signing_key.key
+                else:
+                    key = getattr(settings, 'OPENEDX_SECRET_KEY', getattr(settings, 'OPENEDX_CLIENT_SECRET', None))
+
+                if not key:
+                    raise ValueError("No signature verification key or JWKS endpoint configured.")
+
+                payload = jwt.decode(
+                    token,
+                    key,
+                    algorithms=algorithms,
+                    audience=audience,
+                    options={"verify_aud": bool(audience)}
+                )
+            else:
+                # Decode user info without verification, inspired by openedx_sso_security_manager in tutor-contrib-aspects
+                payload = jwt.decode(
+                    token,
+                    options={"verify_signature": False}
+                )
+            return payload
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to decode/verify OpenEdX JWT token: {e}")
+            return None
+
+    def verify_claims(self, claims):
+        req_attrs = getattr(settings, 'OPENEDX_REQUIRED_ACCESS_ATTRIBUTES', [])
+        for attribute, value in req_attrs:
+            claim_val = claims.get(attribute)
+            if claim_val is None:
+                return False
+            if isinstance(claim_val, list):
+                if value not in claim_val:
+                    return False
+            else:
+                if value != claim_val:
+                    return False
+        return True
+
+    def clean_username(self, username):
+        if username and '@' in username:
+            username = username.split('@')[0]
+        return username
+
+    def configure_user(self, request, user, created=True):
+        """Configure user based on the decoded claims stored in request or backend."""
+        claims = getattr(request, '_openedx_claims', getattr(self, '_temp_claims', None))
+        if not claims:
+            return user
+
+        user.first_name = claims.get('given_name', claims.get('first_name', claims.get('name', '')))
+        user.last_name = claims.get('family_name', claims.get('last_name', ''))
+        user.email = claims.get('email', '')
+
+        # Set staff status
+        user.is_staff = False
+        staff_attrs = getattr(settings, 'OPENEDX_STAFF_ATTRIBUTES', [('administrator', True)])
+        for attribute, value in staff_attrs:
+            claim_val = claims.get(attribute)
+            if claim_val is not None:
+                if isinstance(claim_val, list):
+                    if value in claim_val:
+                        user.is_staff = True
+                        break
+                else:
+                    if value == claim_val:
+                        user.is_staff = True
+                        break
+
+        # Set superuser status
+        if claims.get('superuser') is True:
+            user.is_superuser = True
+
+        user.save()
+        return user
+
+    def authenticate(self, request, remote_user=None, token=None, **kwargs):
+        """
+        Authenticate with either remote_user (standard RemoteUserBackend)
+        or OpenEdX JWT token.
+        """
+        if token:
+            claims = self.verify_token(token)
+            if not claims:
+                return None
+            if not self.verify_claims(claims):
+                return None
+
+            username = claims.get('preferred_username') or claims.get('username')
+            if not username:
+                username = claims.get('sub')
+
+            if not username:
+                return None
+
+            # Store claims temporarily where configure_user can access them
+            self._temp_claims = claims
+            if request:
+                request._openedx_claims = claims
+
+            user = super().authenticate(request, remote_user=username)
+
+            self._temp_claims = None
+            if request and hasattr(request, '_openedx_claims'):
+                delattr(request, '_openedx_claims')
+
+            return user
+
+        return super().authenticate(request, remote_user=remote_user)

@@ -70,6 +70,14 @@ if "mozilla_django_oidc" in settings.INSTALLED_APPS:
         path('oidc/', include('mozilla_django_oidc.urls')),
     ]
 
+if getattr(settings, 'OPENEDX_AUTH_ENABLED', False):
+    from userportal.views import OpenEdxLoginView, OpenEdxCallbackView
+    urlpatterns += [
+        path('openedx/login/', OpenEdxLoginView.as_view(), name='openedx_login'),
+        path('openedx/callback/', OpenEdxCallbackView.as_view(), name='openedx_callback'),
+    ]
+
+
 
 if 'jobstats' in settings.INSTALLED_APPS:
     urlpatterns.append(path('secure/jobstats/', include('jobstats.urls')))

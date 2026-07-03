@@ -16,6 +16,7 @@ nav:
     - 'Quotas GPFS': quotasgpfs.md
     - 'CF Access': cfaccess.md
     - 'OIDC / OAuth': oidc.md
+    - 'OAuth2 + JWT': oauth2jwt.md
 
 
 theme:

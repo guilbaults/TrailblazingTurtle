@@ -30,31 +30,32 @@ from django.test import override_settings
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
 
-class OpenEdxAuthTestCase(TestCase):
+class OAuth2JWTAuthTestCase(TestCase):
     databases = '__all__'
 
     @override_settings(
-        OPENEDX_AUTH_ENABLED=True,
-        OPENEDX_LMS_URL='https://lms.example.com',
-        OPENEDX_CLIENT_ID='test-client-id',
-        OPENEDX_CLIENT_SECRET='test-client-secret',
-        OPENEDX_VERIFY_SIGNATURE=False,
+        JWT_OAUTH2_AUTH_ENABLED=True,
+        JWT_OAUTH2_PROVIDER_URL='https://idp.example.com',
+        JWT_OAUTH2_CLIENT_ID='test-client-id',
+        JWT_OAUTH2_CLIENT_SECRET='test-client-secret',
+        JWT_OAUTH2_VERIFY_SIGNATURE=False,
     )
     def test_login_redirect(self):
         client = Client()
-        response = client.get(reverse('openedx_login'))
+        response = client.get(reverse('oauth2_jwt_login'))
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(response['Location'].startswith('https://lms.example.com/oauth2/authorize/'))
+        self.assertTrue(response['Location'].startswith('https://idp.example.com/oauth2/authorize/'))
         self.assertIn('client_id=test-client-id', response['Location'])
         self.assertIn('response_type=code', response['Location'])
 
     @override_settings(
-        OPENEDX_AUTH_ENABLED=True,
-        OPENEDX_LMS_URL='https://lms.example.com',
-        OPENEDX_CLIENT_ID='test-client-id',
-        OPENEDX_CLIENT_SECRET='test-client-secret',
-        OPENEDX_VERIFY_SIGNATURE=False,
-        OPENEDX_STAFF_ATTRIBUTES=[('administrator', True)],
+        JWT_OAUTH2_AUTH_ENABLED=True,
+        JWT_OAUTH2_PROVIDER_URL='https://idp.example.com',
+        JWT_OAUTH2_CLIENT_ID='test-client-id',
+        JWT_OAUTH2_CLIENT_SECRET='test-client-secret',
+        JWT_OAUTH2_VERIFY_SIGNATURE=False,
+        JWT_OAUTH2_STAFF_ATTRIBUTES=[('administrator', True)],
+        AUTHENTICATION_BACKENDS=['userportal.authentication.staffOAuth2JWTBackend'] + settings.AUTHENTICATION_BACKENDS,
     )
     @patch('requests.post')
     @patch('jwt.decode')
@@ -67,10 +68,10 @@ class OpenEdxAuthTestCase(TestCase):
 
         # Mock jwt.decode for payload extraction
         mock_jwt_decode.return_value = {
-            'username': 'openedxuser',
-            'email': 'openedxuser@example.com',
-            'given_name': 'Open',
-            'family_name': 'EdX',
+            'username': 'oauth2user',
+            'email': 'oauth2user@example.com',
+            'given_name': 'OAuth2',
+            'family_name': 'User',
             'administrator': True,
             'superuser': False,
         }
@@ -78,10 +79,10 @@ class OpenEdxAuthTestCase(TestCase):
         # Set session state
         client = Client()
         session = client.session
-        session['openedx_oauth_state'] = 'teststate'
+        session['oauth2_jwt_state'] = 'teststate'
         session.save()
 
-        response = client.get(reverse('openedx_callback'), {'state': 'teststate', 'code': 'testcode'})
+        response = client.get(reverse('oauth2_jwt_callback'), {'state': 'teststate', 'code': 'testcode'})
         
         # Verify redirect to home
         self.assertEqual(response.status_code, 302)
@@ -89,10 +90,10 @@ class OpenEdxAuthTestCase(TestCase):
 
         # Verify user was created
         User = get_user_model()
-        user = User.objects.get(username='openedxuser')
-        self.assertEqual(user.email, 'openedxuser@example.com')
-        self.assertEqual(user.first_name, 'Open')
-        self.assertEqual(user.last_name, 'EdX')
+        user = User.objects.get(username='oauth2user')
+        self.assertEqual(user.email, 'oauth2user@example.com')
+        self.assertEqual(user.first_name, 'OAuth2')
+        self.assertEqual(user.last_name, 'User')
         self.assertTrue(user.is_staff)
         self.assertFalse(user.is_superuser)
 

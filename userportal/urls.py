@@ -70,11 +70,11 @@ if "mozilla_django_oidc" in settings.INSTALLED_APPS:
         path('oidc/', include('mozilla_django_oidc.urls')),
     ]
 
-if getattr(settings, 'OPENEDX_AUTH_ENABLED', False):
-    from userportal.views import OpenEdxLoginView, OpenEdxCallbackView
+if getattr(settings, 'JWT_OAUTH2_AUTH_ENABLED', False):
+    from userportal.views import OAuth2JWTLoginView, OAuth2JWTCallbackView
     urlpatterns += [
-        path('openedx/login/', OpenEdxLoginView.as_view(), name='openedx_login'),
-        path('openedx/callback/', OpenEdxCallbackView.as_view(), name='openedx_callback'),
+        path('oauth2/login/', OAuth2JWTLoginView.as_view(), name='oauth2_jwt_login'),
+        path('oauth2/callback/', OAuth2JWTCallbackView.as_view(), name='oauth2_jwt_callback'),
     ]
 
 

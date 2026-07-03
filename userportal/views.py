@@ -10,25 +10,31 @@ import requests
 logger = logging.getLogger(__name__)
 
 
-class OpenEdxLoginView(View):
-    """View to redirect users to OpenEdX LMS for authorization."""
+class OAuth2JWTLoginView(View):
+    """View to redirect users to OAuth2 Identity Provider for authorization."""
 
     def get(self, request, *args, **kwargs):
         # Generate a random state to prevent CSRF
         state = secrets.token_urlsafe(32)
-        request.session['openedx_oauth_state'] = state
+        request.session['oauth2_jwt_state'] = state
 
-        lms_url = settings.OPENEDX_LMS_URL.rstrip('/')
-        auth_url = f"{lms_url}/oauth2/authorize/"
+        auth_url = getattr(settings, 'JWT_OAUTH2_AUTHORIZATION_URL', None)
+        if not auth_url:
+            provider_url = getattr(settings, 'JWT_OAUTH2_PROVIDER_URL', None)
+            if provider_url:
+                auth_url = f"{provider_url.rstrip('/')}/oauth2/authorize/"
+
+        if not auth_url:
+            return HttpResponseBadRequest("Authorization URL is not configured.")
 
         # Build authorization redirect URL
-        redirect_uri = request.build_absolute_uri(reverse('openedx_callback'))
+        redirect_uri = request.build_absolute_uri(reverse('oauth2_jwt_callback'))
 
         params = {
             'response_type': 'code',
-            'client_id': settings.OPENEDX_CLIENT_ID,
+            'client_id': getattr(settings, 'JWT_OAUTH2_CLIENT_ID', None),
             'redirect_uri': redirect_uri,
-            'scope': getattr(settings, 'OPENEDX_SCOPE', 'read write email profile'),
+            'scope': getattr(settings, 'JWT_OAUTH2_SCOPE', 'read write email profile'),
             'state': state,
         }
 
@@ -36,13 +42,13 @@ class OpenEdxLoginView(View):
         return HttpResponseRedirect(url_with_params)
 
 
-class OpenEdxCallbackView(View):
-    """View to handle OpenEdX OAuth callback and authenticate the user."""
+class OAuth2JWTCallbackView(View):
+    """View to handle OAuth2 callback and authenticate the user using JWT token."""
 
     def get(self, request, *args, **kwargs):
         # Validate state
         state = request.GET.get('state')
-        session_state = request.session.pop('openedx_oauth_state', None)
+        session_state = request.session.pop('oauth2_jwt_state', None)
         if not state or state != session_state:
             return HttpResponseBadRequest("Invalid state parameter.")
 
@@ -50,32 +56,40 @@ class OpenEdxCallbackView(View):
         if not code:
             return HttpResponseBadRequest("Missing authorization code.")
 
-        lms_url = settings.OPENEDX_LMS_URL.rstrip('/')
-        token_url = f"{lms_url}/oauth2/access_token/"
+        token_url = getattr(settings, 'JWT_OAUTH2_TOKEN_URL', None)
+        if not token_url:
+            provider_url = getattr(settings, 'JWT_OAUTH2_PROVIDER_URL', None)
+            if provider_url:
+                token_url = f"{provider_url.rstrip('/')}/oauth2/access_token/"
 
-        redirect_uri = request.build_absolute_uri(reverse('openedx_callback'))
+        if not token_url:
+            return HttpResponseBadRequest("Token URL is not configured.")
 
-        # Exchange authorization code for JWT access token
+        redirect_uri = request.build_absolute_uri(reverse('oauth2_jwt_callback'))
+
+        # Exchange authorization code for access token
         data = {
             'grant_type': 'authorization_code',
-            'client_id': settings.OPENEDX_CLIENT_ID,
-            'client_secret': settings.OPENEDX_CLIENT_SECRET,
+            'client_id': getattr(settings, 'JWT_OAUTH2_CLIENT_ID', None),
+            'client_secret': getattr(settings, 'JWT_OAUTH2_CLIENT_SECRET', None),
             'code': code,
             'redirect_uri': redirect_uri,
-            'token_type': 'jwt',  # OpenEdX specific parameter to request a JWT
         }
+
+        extra_params = getattr(settings, 'JWT_OAUTH2_EXTRA_TOKEN_PARAMS', {})
+        data.update(extra_params)
 
         try:
             response = requests.post(token_url, data=data, timeout=10)
             response.raise_for_status()
             res_data = response.json()
         except Exception as e:
-            logger.error(f"Failed to exchange code for OpenEdX token: {e}")
+            logger.error(f"Failed to exchange code for OAuth2 token: {e}")
             return HttpResponseBadRequest("Token exchange failed.")
 
         access_token = res_data.get('access_token')
         if not access_token:
-            return HttpResponseBadRequest("No access token returned from OpenEdX.")
+            return HttpResponseBadRequest("No access token returned from Identity Provider.")
 
         # Authenticate user with the token using the custom backend
         user = authenticate(request, token=access_token)

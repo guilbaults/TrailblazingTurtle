@@ -107,7 +107,7 @@ try:
                             user.is_staff = True
                             break
                     else:
-                        if value == claim_val:
+                        if str(value).lower() == str(claim_val).lower():
                             user.is_staff = True
                             break
 
@@ -123,7 +123,7 @@ try:
                         user.is_active = False
                         break
                 else:
-                    if value != claim_val:
+                    if str(value).lower() != str(claim_val).lower():
                         user.is_active = False
                         break
 
@@ -205,7 +205,7 @@ class staffOAuth2JWTBackend(ModelBackend):
                 if value not in claim_val:
                     return False
             else:
-                if value != claim_val:
+                if str(value).lower() != str(claim_val).lower():
                     return False
         return True
 
@@ -251,7 +251,7 @@ class staffOAuth2JWTBackend(ModelBackend):
                         user.is_staff = True
                         break
                 else:
-                    if value == claim_val:
+                    if str(value).lower() == str(claim_val).lower():
                         user.is_staff = True
                         break
 

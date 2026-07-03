@@ -1,5 +1,5 @@
 from djangosaml2.backends import Saml2Backend
-from django.contrib.auth.backends import RemoteUserBackend
+from django.contrib.auth.backends import ModelBackend, RemoteUserBackend
 
 
 class staffSaml2Backend(Saml2Backend):
@@ -105,8 +105,13 @@ except ImportError:
     pass
 
 
-class staffOpenEdxBackend(RemoteUserBackend):
-    """Authentication backend for OpenEdX OAuth2 + JWT tokens, using RemoteUserBackend."""
+class staffOpenEdxBackend(ModelBackend):
+    """Authentication backend for OpenEdX OAuth2 + JWT tokens, using ModelBackend."""
+
+    @property
+    def UserModel(self):
+        from django.contrib.auth import get_user_model
+        return get_user_model()
 
     @property
     def create_unknown_user(self):
@@ -208,8 +213,7 @@ class staffOpenEdxBackend(RemoteUserBackend):
 
     def authenticate(self, request, remote_user=None, token=None, **kwargs):
         """
-        Authenticate with either remote_user (standard RemoteUserBackend)
-        or OpenEdX JWT token.
+        Authenticate with OpenEdX JWT token.
         """
         if token:
             claims = self.verify_token(token)
@@ -230,12 +234,25 @@ class staffOpenEdxBackend(RemoteUserBackend):
             if request:
                 request._openedx_claims = claims
 
-            user = super().authenticate(request, remote_user=username)
+            # Find or create user
+            username = self.clean_username(username)
+            if self.create_unknown_user:
+                user, created = self.UserModel._default_manager.get_or_create(**{
+                    self.UserModel.USERNAME_FIELD: username
+                })
+                user = self.configure_user(request, user, created=created)
+            else:
+                try:
+                    user = self.UserModel._default_manager.get_by_natural_key(username)
+                    user = self.configure_user(request, user, created=False)
+                except self.UserModel.DoesNotExist:
+                    user = None
 
             self._temp_claims = None
             if request and hasattr(request, '_openedx_claims'):
                 delattr(request, '_openedx_claims')
 
-            return user
+            if user and self.user_can_authenticate(user):
+                return user
 
-        return super().authenticate(request, remote_user=remote_user)
+        return None

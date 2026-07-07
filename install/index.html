@@ -630,6 +630,62 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../oidc/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OIDC / OAuth
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../oauth2jwt/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OAuth2 + JWT
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -767,7 +823,7 @@ The various recommendations for any normal Django production deployment can be f
 &lt;/VirtualHost&gt;
 </code></pre></div>
 <h1 id="django-authentication">Django Authentication</h1>
-<p>This portal is using the standard django authentication, multiple backends are supported, we are using SAML2 and the FreeIPA backend, on different clusters. Users with the is_staff attribute can access other users pages and the <code>top</code> module. </p>
+<p>This portal is using standard Django authentication. Multiple backends are supported; we are using SAML2, OIDC/OAuth, and the FreeIPA/LDAP backend on different clusters. Users with the is_staff attribute can access other users' pages and the <code>top</code> module.</p>
 <h2 id="saml2">SAML2</h2>
 <p>For SAML2, certificates need to be generated and the metadata.xml need a little modification.</p>
 <div class="highlight"><pre><span></span><code>openssl req -nodes -new -x509 -newkey rsa:2048 -days 3650 -keyout private.key -out public.cert

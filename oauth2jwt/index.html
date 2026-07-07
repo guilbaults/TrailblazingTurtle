@@ -9,10 +9,8 @@
       
       
       
-        <link rel="prev" href="../top/">
+        <link rel="prev" href="../oidc/">
       
-      
-        <link rel="next" href="../accountstats/">
       
       
         
@@ -23,7 +21,7 @@
     
     
       
-        <title>User Summary - TrailblazingTurtle</title>
+        <title>OAuth2 + JWT - TrailblazingTurtle</title>
       
     
     
@@ -64,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#user-summary" class="md-skip">
+        <a href="#generic-oauth2-jwt-authentication" class="md-skip">
           Skip to content
         </a>
       
@@ -100,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              User Summary
+              OAuth2 + JWT
             
           </span>
         </div>
@@ -430,37 +428,10 @@
                 
   
   
-    
   
   
-  
-    <li class="md-nav__item md-nav__item--active">
-      
-      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
-      
-      
-        
-      
-      
-        <label class="md-nav__link md-nav__link--active" for="__toc">
-          
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    User Summary
-  
-
-    
-  </span>
-  
-  
-
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <a href="./" class="md-nav__link md-nav__link--active">
+    <li class="md-nav__item">
+      <a href="../usersummary/" class="md-nav__link">
         
   
   
@@ -476,65 +447,6 @@
   
 
       </a>
-      
-        
-
-<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
-  
-  
-  
-    
-  
-  
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#screenshots" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Screenshots
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Screenshots">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quotas-and-jobs-of-a-user" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quotas and jobs of a user
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Requirements
-      
-    </span>
-  </a>
-  
-</li>
-      
-    </ul>
-  
-</nav>
-      
     </li>
   
 
@@ -740,10 +652,37 @@
                 
   
   
+    
   
   
-    <li class="md-nav__item">
-      <a href="../oauth2jwt/" class="md-nav__link">
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    OAuth2 + JWT
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
         
   
   
@@ -759,6 +698,48 @@
   
 
       </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#how-it-works" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How it Works
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Configuration
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
     </li>
   
 
@@ -798,38 +779,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#screenshots" class="md-nav__link">
+  <a href="#how-it-works" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Screenshots
+        How it Works
       
     </span>
   </a>
-  
-    <nav class="md-nav" aria-label="Screenshots">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#quotas-and-jobs-of-a-user" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quotas and jobs of a user
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#requirements" class="md-nav__link">
+  <a href="#configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Requirements
+        Configuration
       
     </span>
   </a>
@@ -856,16 +820,59 @@
   
 
 
-<h1 id="user-summary">User Summary</h1>
-<p>The usersummary page can be used for a quick diagnostic of a user to see their current quotas and last jobs.</p>
-<h2 id="screenshots">Screenshots</h2>
-<h3 id="quotas-and-jobs-of-a-user">Quotas and jobs of a user</h3>
-<p><img alt="Quotas and jobs of a user" src="../usersummary.png" /></p>
-<h2 id="requirements">Requirements</h2>
-<ul>
-<li>Access to the database of Slurm</li>
-<li>slurm-job-exporter</li>
-</ul>
+<h1 id="generic-oauth2-jwt-authentication">Generic OAuth2 + JWT Authentication</h1>
+<p>This backend allows users to authenticate against any Identity Provider using OAuth 2.0 and JWT tokens.</p>
+<h2 id="how-it-works">How it Works</h2>
+<ol>
+<li><strong>Authorization Redirect</strong>: When a user goes to <code>/oauth2/login/</code>, they are redirected to the Identity Provider authorization endpoint.</li>
+<li><strong>Authorization Code Grant</strong>: After successful login at the Identity Provider, the user is redirected back to the callback view (<code>/oauth2/callback/</code>) with an authorization code.</li>
+<li><strong>JWT Access Token Exchange</strong>: The callback view sends a POST request to the Provider token endpoint to exchange the authorization code for a JWT access token.</li>
+<li><strong>Token Decoding</strong>: The custom <code>staffOAuth2JWTBackend</code> decodes the JWT payload.</li>
+<li>By default, it decodes with <code>verify_signature=False</code>.</li>
+<li>Alternatively, it supports signature verification (like RS256) if <code>JWT_OAUTH2_VERIFY_SIGNATURE</code> is set to <code>True</code>.</li>
+<li><strong>User Mapping</strong>: The backend updates user fields and roles in <code>configure_user</code>:</li>
+<li>Synchronizes first name, last name, and email based on claims list.</li>
+<li>Determines <code>is_staff</code> using <code>JWT_OAUTH2_STAFF_ATTRIBUTES</code>.</li>
+<li>Determines <code>is_superuser</code> if the <code>superuser</code> claim is <code>True</code>.</li>
+<li>Checks access restrictions via <code>JWT_OAUTH2_REQUIRED_ACCESS_ATTRIBUTES</code>.</li>
+</ol>
+<h2 id="configuration">Configuration</h2>
+<p>To enable generic OAuth2 + JWT authentication:</p>
+<ol>
+<li><strong>Register the OAuth Application in your Identity Provider</strong> and retrieve the <strong>Client ID</strong> and <strong>Client Secret</strong>. Configure the Redirect URI:</li>
+<li>
+<p><strong>Redirect URI</strong>: <code>https://&lt;your-portal-domain&gt;/oauth2/callback/</code></p>
+</li>
+<li>
+<p><strong>Enable the application and backend</strong> in <code>userportal/settings/43-oauth2jwt.py</code> by uncommenting the setup lines:</p>
+</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">JWT_OAUTH2_AUTH_ENABLED</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">AUTHENTICATION_BACKENDS</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;userportal.authentication.staffOAuth2JWTBackend&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">AUTHENTICATION_BACKENDS</span>
+<span class="n">LOGIN_URL</span> <span class="o">=</span> <span class="s1">&#39;/oauth2/login/&#39;</span>
+</code></pre></div>
+<ol>
+<li><strong>Configure your Credentials and Endpoints</strong> in <code>userportal/settings/43-oauth2jwt.py</code>:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="n">JWT_OAUTH2_PROVIDER_URL</span> <span class="o">=</span> <span class="s1">&#39;https://idp.example.com&#39;</span>
+<span class="n">JWT_OAUTH2_CLIENT_ID</span> <span class="o">=</span> <span class="s1">&#39;your-client-id&#39;</span>
+<span class="n">JWT_OAUTH2_CLIENT_SECRET</span> <span class="o">=</span> <span class="s1">&#39;your-client-secret&#39;</span>
+</code></pre></div>
+<p>You can also specify <code>JWT_OAUTH2_AUTHORIZATION_URL</code> and <code>JWT_OAUTH2_TOKEN_URL</code> explicitly, which by default have the value of <code>JWT_OAUTH2_PROVIDER_URL/oauth2/authorize/</code> and <code>JWT_OAUTH2_PROVIDER_URL/oauth2/access_token/</code> respectively.</p>
+<p>If needed, you can specify extra token parameters with <code>JWT_OAUTH2_EXTRA_TOKEN_PARAMS</code>. This allows to pass additional information to the OAUTH2 endpoint. For OpenEdX, define
+   <div class="highlight"><pre><span></span><code><span class="n">JWT_OAUTH2_EXTRA_TOKEN_PARAMS</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;token_type&#39;</span><span class="p">:</span> <span class="s1">&#39;jwt&#39;</span><span class="p">}</span>
+</code></pre></div></p>
+<ol>
+<li><strong>Map access and staff roles</strong> based on the claims structure:</li>
+</ol>
+<div class="highlight"><pre><span></span><code><span class="c1"># Only allow users with specific claims to log in</span>
+<span class="n">JWT_OAUTH2_REQUIRED_ACCESS_ATTRIBUTES</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="c1"># Automatically set user.is_staff based on claim values</span>
+<span class="n">JWT_OAUTH2_STAFF_ATTRIBUTES</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="p">(</span><span class="s1">&#39;administrator&#39;</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+<span class="p">]</span>
+</code></pre></div>
 
 
 

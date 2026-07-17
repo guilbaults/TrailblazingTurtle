@@ -16,5 +16,4 @@ Optional:
 * node\_exporter (show node information)
 * redfish\_exporter (show power information)
 * lustre\_exporter and lustre\_exporter\_slurm (show Lustre information)
-* slurm_jobscripts.py (show the submitted jobscript)
 * pcm-sensor-server from Intel PCM (show CPU information like memory bandwidth, cache misses, etc.)

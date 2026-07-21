@@ -35,6 +35,7 @@
     <thead class="thead-dark">
       <tr>
         <th>{% translate "Project" %}</th>
+        <th>{% translate "PI(s)" %}</th>
         <th>{% translate "Quota Cores" %}</th>
         <th>{% translate "Running Cores" %}</th>
         <th>{% translate "Used Cores" %}</th>
@@ -61,6 +62,7 @@
           <a href="{{ project.id }}">{{ project.name | anonymize }}</a>
         {% endif %}
       </td>
+      <td>{{ project.pi | anonymize }}</td>
       <td class="delimiter">{{project.quota_cores | floatformat:1}}</td>
       <td>{{project.running_cores | floatformat:1}}</td>
       <td>{{project.used_cores | floatformat:1}}</td>

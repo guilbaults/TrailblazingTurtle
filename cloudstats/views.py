@@ -20,6 +20,14 @@ def index(request):
     if request.user.is_staff:
         context['all_projects'] = []
         all_projects = {}
+        pi_by_project = {}
+
+        query_pi = 'openstack_quota_compute_instances{{ {filter} }}'.format(
+            filter=prom.get_filter('cloudstats'),
+        )
+        stats_pi = prom.query_last(query_pi)
+        for line in stats_pi:
+            pi_by_project[line['metric']['project_name']] = line['metric']['pi']
 
         query_quota_cores = 'openstack_quota_compute_cores{{ {filter} }}'.format(
             filter=prom.get_filter('cloudstats'),
@@ -146,6 +154,7 @@ def index(request):
             context['all_projects'].append({
                 'id': project,
                 'name': project,
+                'pi': pi_by_project.get(project, ''),
                 'quota_cores': all_projects[project].get('quota_cores', 0),
                 'running_cores': all_projects[project].get('running_cores', 0),
                 'used_cores': all_projects[project].get('used_cores', 0),
@@ -179,6 +188,7 @@ def index(request):
         context['all_projects'].append({
             'id': 'total',
             'name': _('TOTAL'),
+            'pi': _('ALL'),
             'quota_cores': context['total_projects']['quota_cores'],
             'running_cores': context['total_projects']['running_cores'],
             'used_cores': context['total_projects']['used_cores'],

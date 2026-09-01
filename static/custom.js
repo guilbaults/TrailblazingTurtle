@@ -1,6 +1,11 @@
-function replace_div_alert(container_div){
-    const alertString = gettext('Error while loading data');
-    $(container_div).html('<div class="alert alert-warning" role="alert">' + alertString + '</div>');
+function replace_div_alert(container_div, message){
+    const alertString = message || gettext('Error while loading data');
+    const alert = $('<div>', {
+        'class': 'alert alert-warning',
+        'role': 'alert',
+        'text': alertString,
+    });
+    $(container_div).empty().append(alert);
 }
 
 function replace_div_nodata(container_div){
@@ -105,6 +110,11 @@ function loadGraph(container, url){
             }
         },
         error : function(xhr, textStatus, errorThrown ) {
+            if (xhr.status == 503) {
+                const message = xhr.responseJSON?.error || gettext('Metrics are temporarily unavailable');
+                replace_div_alert(container_div, message);
+                return;
+            }
             if (textStatus == 'timeout' || textStatus == 'error') {
                 this.tryCount++;
                 if (this.tryCount <= this.retryLimit) {

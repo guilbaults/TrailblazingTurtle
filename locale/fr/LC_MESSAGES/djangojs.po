@@ -49,6 +49,10 @@ msgstr "Pas de données"
 msgid "Error while loading data"
 msgstr "Erreur lors du chargement des données"
 
+#: static/custom.js:114
+msgid "Metrics are temporarily unavailable"
+msgstr "Les métriques sont temporairement indisponibles"
+
 #: static/custom.js:7
 msgid "No data available"
 msgstr "Pas de données disponibles"

@@ -1,6 +1,8 @@
 PROMETHEUS = {
     'url': 'https://thanos.dant.computecanada.ca',
     'headers': {'Authorization': 'Basic changeme_base64'},
+    'timeout': 5,
+    'retries': 0,
     'filter': {
         'default': "cluster='narval'",
         'cloudstats': "cluster='narval', instance=~'blg.*'" # example to override the default filter for a specific module

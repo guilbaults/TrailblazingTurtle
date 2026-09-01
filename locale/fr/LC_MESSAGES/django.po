@@ -18,6 +18,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
+#: userportal/middleware.py:31
+msgid "Metrics are temporarily unavailable"
+msgstr "Les métriques sont temporairement indisponibles"
+
 #: accountstats/templates/accountstats/account.html:5
 #: accountstats/templates/accountstats/account.html:13
 msgid "Account use of"

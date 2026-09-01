@@ -1,8 +1,18 @@
-from django.test import Client, override_settings, TestCase
+import json
+
+from django.test import Client, override_settings, RequestFactory, SimpleTestCase, TestCase
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.urls import reverse
 from unittest.mock import patch, MagicMock
+from prometheus_api_client.exceptions import PrometheusApiClientException
+from requests.exceptions import ConnectionError
+from urllib3.util.retry import Retry
+
+from userportal.common import Prometheus
+from userportal.exceptions import PrometheusUnavailable
+from userportal.logging_filters import SkipHandledPrometheusUnavailable
+from userportal.middleware import PrometheusUnavailableMiddleware
 
 
 class CustomTestCase(TestCase):
@@ -25,6 +35,83 @@ class CustomTestCase(TestCase):
 
     def assertJSONKeys(self, response, keys):
         self.assertEqual(set(response.json().keys()), set(keys))
+
+
+class PrometheusFailureTestCase(SimpleTestCase):
+    @patch('userportal.common.PrometheusConnect')
+    def test_connection_failure_is_wrapped(self, prometheus_connect):
+        prometheus_connect.return_value.custom_query_range.side_effect = ConnectionError('Connection refused')
+        prometheus = Prometheus({'url': 'http://prometheus:9090', 'headers': {}})
+
+        with self.assertRaises(PrometheusUnavailable):
+            prometheus.query_prometheus_multiple('up', MagicMock(), MagicMock())
+
+        call_kwargs = prometheus_connect.call_args.kwargs
+        self.assertEqual(call_kwargs['url'], 'http://prometheus:9090')
+        self.assertEqual(call_kwargs['headers'], {})
+        self.assertEqual(call_kwargs['timeout'], 5)
+        self.assertIsInstance(call_kwargs['retry'], Retry)
+        self.assertEqual(call_kwargs['retry'].total, 0)
+
+    @patch('userportal.common.PrometheusConnect')
+    def test_server_error_is_wrapped(self, prometheus_connect):
+        prometheus_connect.return_value.custom_query.side_effect = PrometheusApiClientException(
+            "HTTP Status Code 503 (b'Service Unavailable')"
+        )
+        prometheus = Prometheus({'url': 'http://prometheus:9090', 'headers': {}})
+
+        with self.assertRaises(PrometheusUnavailable) as raised:
+            prometheus.query_last('up')
+
+        self.assertEqual(raised.exception.status_code, 503)
+        self.assertEqual(str(raised.exception), "Prometheus instant query failed")
+
+    @patch('userportal.common.PrometheusConnect')
+    def test_client_error_is_not_wrapped(self, prometheus_connect):
+        prometheus_connect.return_value.custom_query_range.side_effect = PrometheusApiClientException(
+            "HTTP Status Code 400 (b'Bad Request')"
+        )
+        prometheus = Prometheus({'url': 'http://prometheus:9090', 'headers': {}})
+
+        with self.assertRaises(PrometheusApiClientException):
+            prometheus.query_prometheus_multiple('invalid query', MagicMock(), MagicMock())
+
+    def test_json_request_gets_service_unavailable_response(self):
+        request = RequestFactory().get('/logins/graph/load/login1.json')
+        middleware = PrometheusUnavailableMiddleware(lambda request: None)
+
+        response = middleware.process_exception(
+            request,
+            PrometheusUnavailable('Prometheus range query failed'),
+        )
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(json.loads(response.content), {'error': 'Metrics are temporarily unavailable'})
+        self.assertEqual(response['Retry-After'], '30')
+        self.assertTrue(request.prometheus_unavailable)
+
+    @patch('userportal.middleware._', return_value='Les métriques sont temporairement indisponibles')
+    def test_service_unavailable_response_is_translated(self, gettext):
+        request = RequestFactory().get('/logins/graph/load/login1.json')
+        middleware = PrometheusUnavailableMiddleware(lambda request: None)
+
+        response = middleware.process_exception(
+            request,
+            PrometheusUnavailable('Prometheus range query failed'),
+        )
+
+        self.assertEqual(
+            json.loads(response.content),
+            {'error': 'Les métriques sont temporairement indisponibles'},
+        )
+        gettext.assert_called_once_with('Metrics are temporarily unavailable')
+
+    def test_duplicate_django_request_log_is_filtered(self):
+        request = RequestFactory().get('/logins/graph/load/login1.json')
+        request.prometheus_unavailable = True
+        record = MagicMock(status_code=503, request=request)
+
+        self.assertFalse(SkipHandledPrometheusUnavailable().filter(record))
 
 
 class OAuth2JWTAuthTestCase(TestCase):

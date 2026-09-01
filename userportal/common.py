@@ -1,6 +1,10 @@
 import functools
+import re
 from django.http import HttpResponseForbidden
 from prometheus_api_client import PrometheusConnect
+from prometheus_api_client.exceptions import PrometheusApiClientException
+from requests.exceptions import RequestException
+from urllib3.util.retry import Retry
 from datetime import datetime, timedelta
 from ccldap.models import LdapAllocation, LdapUser
 from ccldap.common import cc_storage_allocations, cc_compute_allocations_by_user, cc_compute_allocations_by_account
@@ -8,12 +12,30 @@ import yaml
 from django.conf import settings
 import os
 import userportal.petname as petname
+from userportal.exceptions import PrometheusUnavailable
 
 
 # How many points in the X axis of the graphs
 RESOLUTION = 500
 
 PET = petname.petname('roh8evuLohRohgheesoh')
+
+PROMETHEUS_HTTP_STATUS_RE = re.compile(r'^HTTP Status Code (\d{3})\b')
+
+
+def translate_prometheus_api_exception(exception, message):
+    """Return the application exception corresponding to a Prometheus API error.
+    Currently, only supports status code [500, 600[, meaning Prometheus
+    server is unavailable.
+    """
+    match = PROMETHEUS_HTTP_STATUS_RE.match(str(exception))
+    if match is None:
+        return
+    status_code = int(match.group(1))
+    if 500 <= status_code < 600:
+        return PrometheusUnavailable(message, status_code=status_code)
+    else:
+        return
 
 
 def user_or_staff(func):
@@ -228,7 +250,9 @@ class Prometheus:
     def __init__(self, config):
         self.prom = PrometheusConnect(
             url=config['url'],
-            headers=config['headers'])
+            headers=config['headers'],
+            timeout=config.get('timeout', 5),
+            retry=Retry(total=config.get('retries', 0)))
         self.filter = {'default': ''} | config.get('filter', {})
 
     def get_filter(self, module='default'):
@@ -243,12 +267,21 @@ class Prometheus:
     def query_prometheus_multiple(self, query, start, end=None, step='3m', dtype=float):
         if end is None:
             end = datetime.now()
-        q = self.prom.custom_query_range(
-            query=query,
-            start_time=start,
-            end_time=end,
-            step=step,
-        )
+        try:
+            q = self.prom.custom_query_range(
+                query=query,
+                start_time=start,
+                end_time=end,
+                step=step,
+            )
+        except RequestException as exc:
+            raise PrometheusUnavailable("Prometheus range query failed") from exc
+        except PrometheusApiClientException as exc:
+            new_exc = translate_prometheus_api_exception(exc, "Prometheus range query failed")
+            if new_exc:
+                raise new_exc from exc
+            raise
+
         return_list = []
         for line in q:
             return_list.append({
@@ -259,8 +292,15 @@ class Prometheus:
         return return_list
 
     def query_last(self, query):
-        q = self.prom.custom_query(query)
-        return q
+        try:
+            return self.prom.custom_query(query)
+        except RequestException as exc:
+            raise PrometheusUnavailable("Prometheus instant query failed") from exc
+        except PrometheusApiClientException as exc:
+            new_exc = translate_prometheus_api_exception(exc, "Prometheus instant query failed")
+            if new_exc:
+                raise new_exc from exc
+            raise
 
     def rate(self, exporter_name):
         # return twice the sampling rate of the exporter in seconds
